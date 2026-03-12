@@ -1,0 +1,36 @@
+{
+  "name": "inventory-node",
+  "version": "1.0.0",
+  "description": "Inventory system built with Hexagonal Architecture + DDD (backend) and Angular (frontend), using TypeORM and a relational DB",
+  "main": "index.js",
+  "scripts": {
+    "typeorm": "typeorm-ts-node-commonjs",
+    "migration:generate": "npm run typeorm migration:generate -- -d src/data-source.ts",
+    "migration:run": "npm run typeorm migration:run -- -d src/data-source.ts",
+    "migration:revert": "npm run typeorm migration:revert -- -d src/data-source.ts",
+    "dev": "ts-node src/index.ts",
+    "start": "node dist/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "hexagonal",
+    "ddd",
+    "nodejs",
+    "tyorm",
+    "keycloak",
+    "angular"
+  ],
+  "author": "Mauricio Parra",
+  "license": "ISC",
+  "dependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^25.3.3",
+    "express": "^5.2.1",
+    "mysql2": "^3.18.2",
+    "pg": "^8.19.0",
+    "reflect-metadata": "^0.2.2",
+    "ts-node": "^10.9.2",
+    "typeorm": "^0.3.28",
+    "typescript": "^5.9.3"
+  }
+}

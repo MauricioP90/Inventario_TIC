@@ -23,8 +23,5 @@ export class TypeORMSIMCardRepository implements ISIMCardRepository {
         const entities = await this.repository.find({ relations: ['activo'] });
         return entities.map(entity => SIMCardMapper.toDomain(entity));
     }
-    async delete(id: string): Promise<void> {
-        await this.repository.delete(id);
-    }
 }
 

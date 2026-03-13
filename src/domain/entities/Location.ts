@@ -37,6 +37,7 @@ export class Location {
     get nombre() { return this.props.nombre; }
     get direccion() { return this.props.direccion; }
     get estado() { return this.props.estado; }
+    get responsableId() { return this.props.responsableId; }
 
     public create(props: LocationProps) {
         this.props = {

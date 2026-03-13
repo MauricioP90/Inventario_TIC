@@ -43,5 +43,20 @@ export class Responsible {
     get telefono() { return this.props.telefono; }
     get estado() { return this.props.estado; }
 
+    public create(props: ResponsibleProps) {
+        this.props = {
+            ...props,
+            id: props.id || randomUUID(),
+        };
 
+        this.validar();
+    }
+
+    public update(props: Partial<ResponsibleProps>) {
+        this.props = {
+            ...this.props,
+            ...props,
+            id: this.props.id // El ID nunca cambia
+        };
+    }
 }

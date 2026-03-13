@@ -27,5 +27,11 @@ export class TypeORMResponsibleRepository implements IResponsibleRepository {
     async findAll(): Promise<Responsible[]> {
         const entities = await this.repository.find();
         return entities.map(entity => ResponsibleMapper.toDomain(entity));
+
+    }
+
+    async findByNombre(nombre: string): Promise<Responsible | null> {
+        const entity = await this.repository.findOne({ where: { nombre } });
+        return entity ? ResponsibleMapper.toDomain(entity) : null;
     }
 }

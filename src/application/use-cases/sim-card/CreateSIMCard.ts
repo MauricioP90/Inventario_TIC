@@ -17,10 +17,16 @@ export class CreateSIMCard {
         // 1. Creamos la entidad de dominio
         const simCard = new SIMCard(input);
 
-        // 2. La guardamos usando el repositorio
+        // 2. Validamos que no exista
+        const existe = await this.simCardRepository.findByIccid(input.iccid);
+        if (existe) {
+            throw new Error('La SIM con ICCID ' + input.iccid + ' ya existe');
+        }
+
+        // 3. La guardamos usando el repositorio
         await this.simCardRepository.save(simCard);
 
-        // 3. Devolvemos la entidad creada
+        // 4. Devolvemos la entidad creada
         return simCard;
     }
 }

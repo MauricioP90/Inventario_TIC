@@ -23,5 +23,9 @@ export class TypeORMSIMCardRepository implements ISIMCardRepository {
         const entities = await this.repository.find({ relations: ['activo'] });
         return entities.map(entity => SIMCardMapper.toDomain(entity));
     }
+    async findByIccid(iccid: string): Promise<SIMCard | null> {
+        const entity = await this.repository.findOne({ where: { iccid }, relations: ['activo'] });
+        return entity ? SIMCardMapper.toDomain(entity) : null;
+    }
 }
 

@@ -6,6 +6,9 @@ export class LocationEntity {
     id!: string;
 
     @Column()
+    code!: string;
+
+    @Column()
     nombre!: string;
 
     @Column()

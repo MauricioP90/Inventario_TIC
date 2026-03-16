@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 export interface LocationProps {
     id?: string;
+    code: string;
     nombre: string;
     direccion: string;
     estado: EstadoLocation;
@@ -31,9 +32,11 @@ export class Location {
         if (!this.props.estado) throw new Error('El estado es obligatorio');
         if (this.props.estado !== EstadoLocation.ACTIVO && this.props.estado !== EstadoLocation.INACTIVO) throw new Error('El estado debe ser ACTIVO o INACTIVO');
         if (!this.props.responsableId) throw new Error('El responsable es obligatorio');
+        if (!this.props.code) throw new Error('El codigo es obligatorio');
     }
 
     get id() { return this.props.id; }
+    get code() { return this.props.code; }
     get nombre() { return this.props.nombre; }
     get direccion() { return this.props.direccion; }
     get estado() { return this.props.estado; }
@@ -51,16 +54,7 @@ export class Location {
         this.props = {
             ...this.props,
             ...props,
-            id: this.props.id, // El ID nunca cambia
-            responsableId: this.props.responsableId // El responsableId nunca cambia
+            id: this.props.id,// El ID nunca cambia
         };
-    }
-
-    public active() {
-        this.props.estado = EstadoLocation.ACTIVO;
-    }
-
-    public inactive() {
-        this.props.estado = EstadoLocation.INACTIVO;
     }
 }

@@ -5,6 +5,7 @@ export class LocationMapper {
     public static toDomain(entity: LocationEntity): Location {
         return new Location({
             id: entity.id,
+            code: entity.code,
             nombre: entity.nombre,
             direccion: entity.direccion,
             estado: entity.estado as EstadoLocation,
@@ -15,6 +16,7 @@ export class LocationMapper {
     public static toPersistence(domain: Location): LocationEntity {
         const entity = new LocationEntity();
         entity.id = domain.id!;
+        entity.code = domain.code;
         entity.nombre = domain.nombre;
         entity.direccion = domain.direccion;
         entity.estado = domain.estado;

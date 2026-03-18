@@ -1,6 +1,4 @@
 import { ISIMCardRepository } from "../../../domain/repositories/ISIMCardRepository";
-import { SIMCard } from "../../../domain/entities/SIMCard";
-import { Activo } from "../../../domain/entities/Activo";
 import { IActivoRepository } from "../../../domain/repositories/IActivoRepository";
 
 interface AssignSIMToActivoInput {

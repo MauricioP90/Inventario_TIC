@@ -1,4 +1,4 @@
-import { DataSource, Repository } from "typeorm";
+import { Repository } from "typeorm";
 import { Location } from "../../../../domain/entities/Location";
 import { ILocationRepository } from "../../../../domain/repositories/ILocationRepository";
 import { LocationEntity } from "../entities/LocationEntity";

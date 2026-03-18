@@ -1,5 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { SIMCard } from './SIMCard';
+import { Location, EstadoLocation } from './Location';
+import { Responsible } from './Responsible';
 
 export enum EstadoActivo {
     BODEGA = 'BODEGA',
@@ -15,6 +17,8 @@ export interface ActivoProps {
     marca: string;
     modelo: string;
     serial: string;
+    location?: Location;
+    responsable?: Responsible;
     estado: EstadoActivo;
     facturaUrl?: string;
     fechaIngreso: Date;
@@ -40,6 +44,8 @@ export class Activo {
         if (!this.props.modelo) throw new Error('El modelo es obligatorio');
         if (!this.props.estado) throw new Error('El estado es obligatorio');
         if (!this.props.fechaIngreso) throw new Error('La fecha de ingreso es obligatoria');
+        if (!this.props.location) throw new Error('La ubicación es obligatoria');
+        if (!this.props.responsable) throw new Error('El responsable es obligatorio');
     }
 
     // Getters
@@ -52,6 +58,8 @@ export class Activo {
     get tipo() { return this.props.tipo; }
     get facturaUrl() { return this.props.facturaUrl; }
     get fechaIngreso() { return this.props.fechaIngreso; }
+    get location() { return this.props.location; }
+    get responsable() { return this.props.responsable; }
 
     // Lógica de negocio: Cambiar estado
     public darDeBaja() {
@@ -67,4 +75,27 @@ export class Activo {
     }
     get simCards() { return this._simCards; }
 
+    // Lógica de negocio: Asignar Responsable
+    public asignarResponsable(responsable: Responsible) {
+
+        if (!responsable) throw new Error('El responsable es obligatorio');
+        this.props.responsable = responsable;
+    }
+
+    // Lógica de negocio: Asignar Ubicación
+    public asignarUbicacion(location: Location) {
+        if (!location) throw new Error('La ubicación es obligatoria');
+        if (location.estado !== EstadoLocation.ACTIVO) throw new Error('La ubicación debe estar activa');
+        if (this.props.location && this.props.location.id === location.id) throw new Error('El activo no puede estar en mas de una ubicacion');
+        this.props.location = location;
+    }
+
+
+    public update(props: Partial<ActivoProps>) {
+        this.props = {
+            ...this.props,
+            ...props,
+            id: this.props.id // El ID nunca cambia
+        };
+    }
 }

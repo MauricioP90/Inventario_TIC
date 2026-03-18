@@ -19,6 +19,17 @@ export class TypeORMActivoRepository implements IActivoRepository {
     }
     async findAll(): Promise<Activo[]> {
         const entities = await this.repository.find();
-        return entities.map(ActivoMapper.toDomain);
+        return entities.map(ActivoMapper.toDomain)
+    }
+
+    async findBySerial(serial: string): Promise<Activo | null> {
+        const entity = await this.repository.findOne({ where: { serial } });
+        return entity ? ActivoMapper.toDomain(entity) : null;
+    }
+
+    async update(activo: Activo): Promise<Activo> {
+        const entity = ActivoMapper.toPersistence(activo);
+        await this.repository.save(entity);
+        return ActivoMapper.toDomain(entity);
     }
 }

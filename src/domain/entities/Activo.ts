@@ -18,7 +18,9 @@ export interface ActivoProps {
     modelo: string;
     serial: string;
     location?: Location;
+    locationId?: string;
     responsable?: Responsible;
+    responsibleId?: string;
     estado: EstadoActivo;
     facturaUrl?: string;
     fechaIngreso: Date;
@@ -44,8 +46,8 @@ export class Activo {
         if (!this.props.modelo) throw new Error('El modelo es obligatorio');
         if (!this.props.estado) throw new Error('El estado es obligatorio');
         if (!this.props.fechaIngreso) throw new Error('La fecha de ingreso es obligatoria');
-        if (!this.props.location) throw new Error('La ubicación es obligatoria');
-        if (!this.props.responsable) throw new Error('El responsable es obligatorio');
+        if (!this.props.location && !this.props.locationId) throw new Error('La ubicación es obligatoria');
+        if (!this.props.responsable && !this.props.responsibleId) throw new Error('El responsable es obligatorio');
     }
 
     // Getters
@@ -59,7 +61,9 @@ export class Activo {
     get facturaUrl() { return this.props.facturaUrl; }
     get fechaIngreso() { return this.props.fechaIngreso; }
     get location() { return this.props.location; }
+    get locationId() { return this.props.locationId; }
     get responsable() { return this.props.responsable; }
+    get responsibleId() { return this.props.responsibleId; }
 
     // Lógica de negocio: Cambiar estado
     public darDeBaja() {

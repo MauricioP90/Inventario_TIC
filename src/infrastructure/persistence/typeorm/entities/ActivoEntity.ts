@@ -1,4 +1,6 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { LocationEntity } from './LocationEntity';
+import { ResponsibleEntity } from './ResponsibleEntity';
 
 @Entity('activos') // Nombre de la tabla en SQL
 export class ActivoEntity {
@@ -28,4 +30,18 @@ export class ActivoEntity {
 
     @CreateDateColumn({ name: 'fecha_ingreso' })
     fechaIngreso!: Date;
+
+    @Column({ name: 'location_id', nullable: true })
+    locationId?: string;
+
+    @ManyToOne(() => LocationEntity)
+    @JoinColumn({ name: 'location_id' })
+    location?: LocationEntity;
+
+    @Column({ name: 'responsible_id', nullable: true })
+    responsibleId?: string;
+
+    @ManyToOne(() => ResponsibleEntity)
+    @JoinColumn({ name: 'responsible_id' })
+    responsible?: ResponsibleEntity;
 }

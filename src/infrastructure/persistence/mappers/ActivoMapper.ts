@@ -13,7 +13,9 @@ export class ActivoMapper {
             serial: entity.serial,
             estado: entity.estado as EstadoActivo,
             fechaIngreso: entity.fechaIngreso,
-            facturaUrl: entity.facturaUrl
+            facturaUrl: entity.facturaUrl,
+            locationId: entity.locationId,
+            responsibleId: entity.responsibleId
         });
     }
 
@@ -29,6 +31,8 @@ export class ActivoMapper {
         entity.estado = domain.estado;
         entity.fechaIngreso = domain.fechaIngreso;
         entity.facturaUrl = domain.facturaUrl;
+        entity.locationId = domain.locationId;
+        entity.responsibleId = domain.responsibleId;
         return entity;
     }
 }

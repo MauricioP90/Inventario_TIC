@@ -12,7 +12,7 @@ export interface CreateLocationInput {
     responsableId: string;
 }
 
-export class CreateLocationUseCase {
+export class CreateLocation {
     constructor(private readonly locationRepository: ILocationRepository, private readonly responsibleRepository: IResponsibleRepository) { }
 
     async execute(input: CreateLocationInput): Promise<Location> {

@@ -5,7 +5,7 @@ export interface GetOneLocationInput {
     code: string;
 }
 
-export class GetOneLocationUseCase {
+export class GetOneLocation {
     constructor(private readonly locationRepository: ILocationRepository) { }
 
     async execute(input: GetOneLocationInput): Promise<Location> {

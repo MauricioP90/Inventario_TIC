@@ -12,7 +12,7 @@ export interface UpdateLocationInput {
     responsableId?: string;
 }
 
-export class UpdateLocationUseCase {
+export class UpdateLocation {
     constructor(
         private readonly locationRepository: ILocationRepository,
         private readonly responsibleRepository: IResponsibleRepository

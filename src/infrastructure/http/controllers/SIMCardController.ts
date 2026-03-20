@@ -16,7 +16,22 @@ export class SIMCardController {
         private readonly getOneSIMCard: GetOneSIMCard
     ) { }
 
-    // Método para crear una SIM
+    /**
+     * @swagger
+     * /api/sim-cards:
+     *   post:
+     *     summary: Crear una nueva SIM Card
+     *     tags: [SIM Cards]
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/SIMCard'
+     *     responses:
+     *       201:
+     *         description: SIM Card creada
+     */
     async create(req: Request, res: Response) {
         try {
             const simCard = await this.createSIMCard.execute(req.body);
@@ -26,7 +41,22 @@ export class SIMCardController {
         }
     }
 
-    // Método para listar todas
+    /**
+     * @swagger
+     * /api/sim-cards:
+     *   get:
+     *     summary: Listar todas las SIM Cards
+     *     tags: [SIM Cards]
+     *     responses:
+     *       200:
+     *         description: Lista de SIM Cards
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: array
+     *               items:
+     *                 $ref: '#/components/schemas/SIMCard'
+     */
     async getAll(req: Request, res: Response) {
         try {
             const sims = await this.getAllSIMCards.execute();
@@ -36,7 +66,32 @@ export class SIMCardController {
         }
     }
 
-    // Método para asignar a un activo
+    /**
+     * @swagger
+     * /api/sim-cards/{simCardId}/assign:
+     *   put:
+     *     summary: Asignar una SIM Card a un activo (por placa)
+     *     tags: [SIM Cards]
+     *     parameters:
+     *       - in: path
+     *         name: simCardId
+     *         required: true
+     *         schema:
+     *           type: string
+     *           format: uuid
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               placaActivo:
+     *                 type: string
+     *     responses:
+     *       200:
+     *         description: SIM asignada correctamente
+     */
     async assign(req: Request, res: Response) {
         try {
             // Recibimos simCardId de la URL y placaActivo del body
@@ -53,7 +108,23 @@ export class SIMCardController {
         }
     }
 
-    // Método para dar de baja una SIM
+    /**
+     * @swagger
+     * /api/sim-cards/{id}/desactivate:
+     *   patch:
+     *     summary: Desactivar una SIM Card
+     *     tags: [SIM Cards]
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *           format: uuid
+     *     responses:
+     *       200:
+     *         description: SIM desactivada
+     */
     async desactivate(req: Request, res: Response) {
         try {
             const { id } = req.params;
@@ -65,7 +136,29 @@ export class SIMCardController {
     }
 
 
-    // Método para actualizar una SIM
+    /**
+     * @swagger
+     * /api/sim-cards/{id}:
+     *   put:
+     *     summary: Actualizar una SIM Card
+     *     tags: [SIM Cards]
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *           format: uuid
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             $ref: '#/components/schemas/SIMCard'
+     *     responses:
+     *       200:
+     *         description: SIM actualizada
+     */
     async update(req: Request, res: Response) {
         try {
             const { id } = req.params;
@@ -76,7 +169,30 @@ export class SIMCardController {
         }
     }
 
-    // Método para obtener una SIM
+    /**
+     * @swagger
+     * /api/sim-cards/{id}:
+     *   get:
+     *     summary: Obtener una SIM Card por su ID
+     *     tags: [SIM Cards]
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *           format: uuid
+     *         description: ID único de la SIM Card
+     *     responses:
+     *       200:
+     *         description: SIM Card encontrada
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/SIMCard'
+     *       400:
+     *         description: Error en la solicitud
+     */
     async getOne(req: Request, res: Response) {
         try {
             const { id } = req.params;

@@ -26,4 +26,9 @@ export class TypeORMLocationRepository implements ILocationRepository {
         const entity = await this.repository.findOne({ where: { code } });
         return entity ? LocationMapper.toDomain(entity) : null;
     }
+
+    async findById(id: string): Promise<Location | null> {
+        const entity = await this.repository.findOne({ where: { id } });
+        return entity ? LocationMapper.toDomain(entity) : null;
+    }
 }

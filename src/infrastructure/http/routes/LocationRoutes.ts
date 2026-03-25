@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { AppDataSource } from "../../../data-source";
 import { LocationController } from "../controllers/LocationController";
+import { keycloak } from "../middleware/KeycloakConfig";
 import { CreateLocation } from "../../../application/use-cases/location/createLocation";
 import { GetAllLocations } from "../../../application/use-cases/location/GetAllLocations";
 import { UpdateLocation } from "../../../application/use-cases/location/updateLocation";

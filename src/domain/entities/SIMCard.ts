@@ -49,4 +49,10 @@ export class SIMCard {
         };
     }
 
+    public toJSON() {
+        return {
+            ...this.props,
+            id: this.id
+        };
+    }
 }

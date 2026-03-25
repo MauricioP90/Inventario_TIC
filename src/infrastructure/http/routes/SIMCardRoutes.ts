@@ -32,15 +32,17 @@ const getOneUC = new GetOneSIMCard(simRepo);
 const updateUC = new UpdateSIMCard(simRepo);//ya lo cree
 const bajaUC = new DarDeBajaSIM(simRepo);//ya lo cree
 
-//3. Inicializamos el controlador
-const controller = new SIMCardController(createUC, assignUC, bajaUC, getAllUC, getOneUC, updateUC);
+import { keycloak } from "../middleware/KeycloakConfig";
 
-//4. Definimos las rutas
+// 3. Inicializamos el controlador
+const controller = new SIMCardController(createUC, getAllUC, assignUC, updateUC, bajaUC, getOneUC);
+
+// 4. Definimos las rutas
 simCardRouter.post("/", keycloak.protect(), (req, res) => controller.create(req, res));
 simCardRouter.get("/", keycloak.protect(), (req, res) => controller.getAll(req, res));
 simCardRouter.get("/:id", keycloak.protect(), (req, res) => controller.getOne(req, res));
 simCardRouter.put("/:id", keycloak.protect(), (req, res) => controller.update(req, res));
 simCardRouter.post("/assign", keycloak.protect(), (req, res) => controller.assign(req, res));
-simCardRouter.patch("/:id/deactivate", keycloak.protect(), (req, res) => controller.deactivate(req, res));
+simCardRouter.patch("/:id/desactivate", keycloak.protect(), (req, res) => controller.desactivate(req, res));
 
 export { simCardRouter };

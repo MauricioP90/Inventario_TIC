@@ -102,4 +102,12 @@ export class Activo {
             id: this.props.id // El ID nunca cambia
         };
     }
+
+    public toJSON() {
+        return {
+            ...this.props,
+            id: this.id, // Asegurar que el ID esté presente
+            simCards: this._simCards // Incluir SIMCards
+        };
+    }
 }

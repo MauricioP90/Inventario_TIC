@@ -3,6 +3,7 @@ dotenv.config();
 
 import "reflect-metadata";
 import express from "express";
+import cors from "cors";
 import session from "express-session";
 import { AppDataSource } from "./data-source";
 import { simCardRouter } from "./infrastructure/http/routes/SIMCardRoutes";
@@ -17,6 +18,12 @@ const PORT = 3000;
 
 // Middleware para leer JSON
 app.use(express.json());
+
+// Habilitar CORS
+app.use(cors({
+    origin: 'http://localhost:4200',
+    credentials: true
+}));
 
 // Configuración de Sesión (Requerido por Keycloak-connect)
 app.use(

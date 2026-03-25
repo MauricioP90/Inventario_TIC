@@ -59,4 +59,11 @@ export class Responsible {
             id: this.props.id // El ID nunca cambia
         };
     }
+
+    public toJSON() {
+        return {
+            ...this.props,
+            id: this.id
+        };
+    }
 }

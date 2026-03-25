@@ -32,9 +32,9 @@ const getOneLocationUC = new GetOneLocation(locationRepo);
 const locationController = new LocationController(createLocationUC, getAllLocationsUC, updateLocationUC, getOneLocationUC);
 
 //5. definimos las rutas
-LocationRouter.post("/", (req, res) => locationController.create(req, res));
-LocationRouter.get("/", (req, res) => locationController.getAll(req, res));
-LocationRouter.get("/:code", (req, res) => locationController.getOne(req, res));
-LocationRouter.put("/:code", (req, res) => locationController.update(req, res));
+LocationRouter.post("/", keycloak.protect(), (req, res) => locationController.create(req, res));
+LocationRouter.get("/", keycloak.protect(), (req, res) => locationController.getAll(req, res));
+LocationRouter.get("/:code", keycloak.protect(), (req, res) => locationController.getOne(req, res));
+LocationRouter.put("/:code", keycloak.protect(), (req, res) => locationController.update(req, res));
 
 export { LocationRouter };

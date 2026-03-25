@@ -20,21 +20,19 @@ export const options: swaggerJsdoc.Options = {
         ],
         components: {
             securitySchemes: {
-                keycloak: {
-                    type: 'oauth2',
-                    flows: {
-                        implicit: {
-                            authorizationUrl: 'http://keycloak-server/auth/realms/your-realm/protocol/openid-connect/auth',
-                            scopes: {
-                                profile: 'Access to profile information',
-                                email: 'Access to email address',
-                            },
-                        },
-                    },
+                bearerAuth: {
+                    type: 'http',
+                    scheme: 'bearer',
+                    bearerFormat: 'JWT',
                 },
             },
             schemas: swaggerSchemas
         },
+        security: [
+            {
+                bearerAuth: [],
+            },
+        ],
     },
     apis: [
         './src/infrastructure/http/controllers/*.ts',

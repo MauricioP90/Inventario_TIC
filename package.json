@@ -38,5 +38,10 @@
     "ts-node": "^10.9.2",
     "typeorm": "^0.3.28",
     "typescript": "^5.9.3"
+  },
+  "devDependencies": {
+    "@types/dotenv": "^6.1.1",
+    "@types/express-session": "^1.18.2",
+    "dotenv": "^17.3.1"
   }
 }

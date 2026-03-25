@@ -33,14 +33,14 @@ const updateUC = new UpdateSIMCard(simRepo);//ya lo cree
 const bajaUC = new DarDeBajaSIM(simRepo);//ya lo cree
 
 //3. Inicializamos el controlador
-const simCardController = new SIMCardController(createUC, getAllUC, assignUC, updateUC, bajaUC, getOneUC);
+const controller = new SIMCardController(createUC, assignUC, bajaUC, getAllUC, getOneUC, updateUC);
 
 //4. Definimos las rutas
-simCardRouter.get("/", (req, res) => simCardController.getAll(req, res));
-simCardRouter.post("/", (req, res) => simCardController.create(req, res));
-simCardRouter.put("/:simCardId/assign", (req, res) => simCardController.assign(req, res));
-simCardRouter.get("/:id", (req, res) => simCardController.getOne(req, res));
-simCardRouter.put("/:id", (req, res) => simCardController.update(req, res));
-simCardRouter.patch("/:id/desactivate", (req, res) => simCardController.desactivate(req, res));
+simCardRouter.post("/", keycloak.protect(), (req, res) => controller.create(req, res));
+simCardRouter.get("/", keycloak.protect(), (req, res) => controller.getAll(req, res));
+simCardRouter.get("/:id", keycloak.protect(), (req, res) => controller.getOne(req, res));
+simCardRouter.put("/:id", keycloak.protect(), (req, res) => controller.update(req, res));
+simCardRouter.post("/assign", keycloak.protect(), (req, res) => controller.assign(req, res));
+simCardRouter.patch("/:id/deactivate", keycloak.protect(), (req, res) => controller.deactivate(req, res));
 
 export { simCardRouter };

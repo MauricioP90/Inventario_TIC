@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { AppDataSource } from "../../../data-source";
 import { ActivoController } from "../controllers/ActivoController";
+import { keycloak } from "../middleware/KeycloakConfig";
 
 // Entidades y Repositorios
 import { ActivoEntity } from "../../persistence/typeorm/entities/ActivoEntity";
@@ -40,11 +41,11 @@ const assignSIMUC = new AssingSIMToActivo(activoRepo, simCardRepo);
 const controller = new ActivoController(createUC, getAllUC, getOneUC, updateUC, darDeBajaUC, assignSIMUC);
 
 // 4. Definimos Rutas
-activoRouter.post("/", (req, res) => controller.create(req, res));
-activoRouter.get("/", (req, res) => controller.getAll(req, res));
-activoRouter.get("/:placa", (req, res) => controller.getOne(req, res));
-activoRouter.put("/:placa", (req, res) => controller.update(req, res));
-activoRouter.patch("/:placa/baja", (req, res) => controller.darDeBaja(req, res));
-activoRouter.post("/:placa/sim", (req, res) => controller.assignSIM(req, res));
+activoRouter.post("/", keycloak.protect(), (req, res) => controller.create(req, res));
+activoRouter.get("/", keycloak.protect(), (req, res) => controller.getAll(req, res));
+activoRouter.get("/:placa", keycloak.protect(), (req, res) => controller.getOne(req, res));
+activoRouter.put("/:placa", keycloak.protect(), (req, res) => controller.update(req, res));
+activoRouter.patch("/:placa/baja", keycloak.protect(), (req, res) => controller.darDeBaja(req, res));
+activoRouter.post("/:placa/sim", keycloak.protect(), (req, res) => controller.assignSIM(req, res));
 
 export { activoRouter };

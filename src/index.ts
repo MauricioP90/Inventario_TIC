@@ -1,17 +1,35 @@
+import * as dotenv from "dotenv";
+dotenv.config();
+
 import "reflect-metadata";
 import express from "express";
+import session from "express-session";
 import { AppDataSource } from "./data-source";
 import { simCardRouter } from "./infrastructure/http/routes/SIMCardRoutes";
 import { LocationRouter } from "./infrastructure/http/routes/LocationRoutes";
 import { responsibleRouter } from "./infrastructure/http/routes/ResponsibleRoutes";
 import { activoRouter } from "./infrastructure/http/routes/ActivoRoutes";
 import { setupSwagger } from "./infrastructure/http/swagger";
+import { keycloak, memoryStore } from "./infrastructure/http/middleware/KeycloakConfig";
 
 const app = express();
 const PORT = 3000;
 
 // Middleware para leer JSON
 app.use(express.json());
+
+// Configuración de Sesión (Requerido por Keycloak-connect)
+app.use(
+    session({
+        secret: process.env.SESSION_SECRET || 'secret',
+        resave: false,
+        saveUninitialized: true,
+        store: memoryStore
+    })
+);
+
+// Inicialización de Keycloak
+app.use(keycloak.middleware());
 
 // Registro de Swagger
 setupSwagger(app);

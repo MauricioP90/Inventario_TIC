@@ -21,14 +21,16 @@ const getOneUC = new GetOneResponsible(repo);
 const updateUC = new UpdateResponsible(repo);
 const inactiveUC = new InactiveResponsible(repo);
 
+import { keycloak } from "../middleware/KeycloakConfig";
+
 // 3. Inicializamos Controlador
 const controller = new ResponsibleController(createUC, getAllUC, getOneUC, updateUC, inactiveUC);
 
 // 4. Definimos Rutas
-responsibleRouter.post("/", (req, res) => controller.create(req, res));
-responsibleRouter.get("/", (req, res) => controller.getAll(req, res));
-responsibleRouter.get("/:id", (req, res) => controller.getOne(req, res));
-responsibleRouter.put("/:id", (req, res) => controller.update(req, res));
-responsibleRouter.patch("/:id/inactive", (req, res) => controller.inactive(req, res));
+responsibleRouter.post("/", keycloak.protect(), (req, res) => controller.create(req, res));
+responsibleRouter.get("/", keycloak.protect(), (req, res) => controller.getAll(req, res));
+responsibleRouter.get("/:id", keycloak.protect(), (req, res) => controller.getOne(req, res));
+responsibleRouter.put("/:id", keycloak.protect(), (req, res) => controller.update(req, res));
+responsibleRouter.patch("/:id/inactive", keycloak.protect(), (req, res) => controller.inactive(req, res));
 
 export { responsibleRouter };

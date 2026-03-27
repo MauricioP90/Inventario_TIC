@@ -18,13 +18,13 @@ export const swaggerSchemas = {
     },
     Location: {
         type: 'object',
-        required: ['code', 'nombre', 'responsableId', 'direccion', 'estado'],
+        required: ['code', 'nombre', 'estado'],
         properties: {
             id: { type: 'string', format: 'uuid' },
             code: { type: 'string' },
             nombre: { type: 'string' },
-            responsableId: { type: 'string', format: 'uuid' },
-            direccion: { type: 'string' },
+            responsableId: { type: 'string', format: 'uuid', nullable: true },
+            coordenadas: { type: 'string', nullable: true },
             estado: { type: 'string', enum: ['ACTIVO', 'INACTIVO'] }
         }
     },

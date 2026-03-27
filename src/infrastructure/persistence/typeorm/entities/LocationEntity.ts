@@ -5,7 +5,7 @@ export class LocationEntity {
     @PrimaryColumn('uuid')
     id!: string;
 
-    @Column()
+    @Column({ unique: true })
     code!: string;
 
     @Column()
@@ -14,8 +14,8 @@ export class LocationEntity {
     @Column()
     responsableId!: string;
 
-    @Column()
-    direccion!: string;
+    @Column({ nullable: true })
+    coordenadas?: string;
 
     @Column()
     estado!: string;

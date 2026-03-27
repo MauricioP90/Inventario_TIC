@@ -125,8 +125,8 @@ export class LocationController {
      */
     async getOne(req: Request, res: Response) {
         try {
-            const { id } = req.params;
-            const location = await this.getOneLocation.execute({ code: id as string });
+            const { code } = req.params;
+            const location = await this.getOneLocation.execute({ code: code as string });
             res.json(location);
         } catch (error: any) {
             res.status(400).json({ message: error.message });

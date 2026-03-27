@@ -1,0 +1,653 @@
+[
+    {
+        "code": "1",
+        "nombre": "TERMINAL SALITRE",
+        "coordenadas": "4.653827,-74.1164715",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "10",
+        "nombre": "PUENTE QUETAME",
+        "coordenadas": "4.272711, -73.833177",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "111",
+        "nombre": "PUERTO CONCORDIA",
+        "coordenadas": "2.622037, -72.762873",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "112",
+        "nombre": "SAN JOSE DEL GUAVIARE",
+        "coordenadas": "2.565692, -72.643167",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "127",
+        "nombre": "MAPIRIPAN",
+        "coordenadas": "2.89076,-72.13",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "170",
+        "nombre": "ALTO MENEGUA",
+        "coordenadas": "4.100578, -72.908351",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "173",
+        "nombre": "REMOLINO",
+        "coordenadas": "4.3051458,-72.7140428",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "18",
+        "nombre": "MONTECARLO PORFIA",
+        "coordenadas": "4.087664, -73.669710",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "184",
+        "nombre": "PUERTO GAITAN",
+        "coordenadas": "4.3125908,-72.0778441",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "187",
+        "nombre": "LA CRISTALINA",
+        "coordenadas": "4.263203, -71.633056",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "19",
+        "nombre": "ACACIAS",
+        "coordenadas": "3.9866,-73.7645",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "2",
+        "nombre": "TERMINAL VILLAVICENCIO",
+        "coordenadas": "4.13182,-73.6047",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "20",
+        "nombre": "ACACIAS TAXI",
+        "coordenadas": "3.987266,-73.764114",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "215",
+        "nombre": "PUERTO CARREÑO",
+        "coordenadas": "6.190294, -67.484019",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "225",
+        "nombre": "CUMARIBO",
+        "coordenadas": "4.44499,-69.7951",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "232",
+        "nombre": "CRUCE RESTREPO",
+        "coordenadas": "4.252615,-73.566147",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "241",
+        "nombre": "CUMARAL",
+        "coordenadas": "4.268112, -73.483141",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "268",
+        "nombre": "MEDINA",
+        "coordenadas": "4.5098293,-73.3507334",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "270",
+        "nombre": "PARATEBUENO",
+        "coordenadas": "4.376336, -73.215087",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "280",
+        "nombre": "BARRANCA DE UPIA",
+        "coordenadas": "4.5449089,-72.9666669",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "282",
+        "nombre": "VILLANUEVA",
+        "coordenadas": "4.617293, -72.934856",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "287",
+        "nombre": "MONTERREY",
+        "coordenadas": "4.884417, -72.894317",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "289",
+        "nombre": "TAURAMENA",
+        "coordenadas": "5.01096, -72.74518",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "3",
+        "nombre": "GRANADA",
+        "coordenadas": "3.5386823,-73.7073832",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "329",
+        "nombre": "MESITAS",
+        "coordenadas": "4.580596,-74.443595",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "330",
+        "nombre": "CHUSACA",
+        "coordenadas": "4.5413603,-74.2554582",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "335",
+        "nombre": "VIOTA",
+        "coordenadas": "4.437939,-74.521596",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "340",
+        "nombre": "GIRARDOT",
+        "coordenadas": "4.302805,-74.805164",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "35",
+        "nombre": "SAN CARLOS DE GUAROA",
+        "coordenadas": "3.711349, -73.246013",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "360",
+        "nombre": "LA URIBE",
+        "coordenadas": "3.241800, -74.353556",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "37",
+        "nombre": "GUAMAL",
+        "coordenadas": "3.87894,-73.772",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "383",
+        "nombre": "PACHAVITA",
+        "coordenadas": "5.1401406, -73.3979786",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "384",
+        "nombre": "CHINAVITA",
+        "coordenadas": "5.16782,-73.3692",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "393",
+        "nombre": "MACHETA",
+        "coordenadas": "5.07827,-73.6061",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "399",
+        "nombre": "GUATEQUE",
+        "coordenadas": "5.007325, -73.474373",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "4",
+        "nombre": "PUERTO LOPEZ",
+        "coordenadas": "4.083850, -72.964787",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "401",
+        "nombre": "GUAYATA",
+        "coordenadas": "4.9644725, -73.4906988",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "404",
+        "nombre": "LAS JUNTAS",
+        "coordenadas": "5.01644,-73.3879",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "409",
+        "nombre": "MACANAL",
+        "coordenadas": "4.97411,-73.3224",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "433",
+        "nombre": "TENZA",
+        "coordenadas": "5.07582,-73.4205",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "434",
+        "nombre": "LA CAPILLA",
+        "coordenadas": "5.095525, -73.445058",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "435",
+        "nombre": "GARAGOA",
+        "coordenadas": "5.0843562,-73.3649342",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "439",
+        "nombre": "BOGOTA YOMASA FLM",
+        "coordenadas": "4.507044, -74.113428",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "441",
+        "nombre": "TERMINAL NORTE",
+        "coordenadas": "4.75379,-74.0459",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "461",
+        "nombre": "TERMINAL DEL SUR",
+        "coordenadas": "4.5974643,-74.1791217",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "155",
+        "nombre": "EL VISO",
+        "coordenadas": "4.35155779, -72.7960280",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "484",
+        "nombre": "APIAY",
+        "coordenadas": "4.08664,-73.5671",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "500",
+        "nombre": "BARZAL",
+        "coordenadas": "4.142583, -73.638835",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "59",
+        "nombre": "CUBARRAL",
+        "coordenadas": "3.792750, -73.841708",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "599",
+        "nombre": "SUB GRANADA",
+        "coordenadas": "3.570649,-73.716413",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "62",
+        "nombre": "EL DORADO",
+        "coordenadas": "3.740448, -73.835866",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "670",
+        "nombre": "CHORILLANO",
+        "coordenadas": "4.114977, -73.608609",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "68",
+        "nombre": "EL CASTILLO",
+        "coordenadas": "3.563279,-73.794994",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "69",
+        "nombre": "SAN MARTIN",
+        "coordenadas": "3.695371, -73.699878",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "700",
+        "nombre": "LIMONCITOS",
+        "coordenadas": "4.413198, -73.945243",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "739",
+        "nombre": "IBAGUE",
+        "coordenadas": "4.436773, -75.234674",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "77",
+        "nombre": "LEJANIAS",
+        "coordenadas": "3.527642,-74.022403",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "798",
+        "nombre": "MELGAR",
+        "coordenadas": "4.228071, -74.622071",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "81",
+        "nombre": "SAN JUAN DE ARAMA",
+        "coordenadas": "3.370525, -73.873625",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "82",
+        "nombre": "MESETAS",
+        "coordenadas": "3.384832, -74.043921",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "88",
+        "nombre": "VISTAHERMOSA",
+        "coordenadas": "3.126154, -73.753313",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "91",
+        "nombre": "FUENTE ORO",
+        "coordenadas": "3.459071, -73.619541",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "925",
+        "nombre": "PALMERAS",
+        "coordenadas": "3.916862, -73.236817",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "954",
+        "nombre": "TERMINAL NEIVA",
+        "coordenadas": "2.916718, -75.282693",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "957",
+        "nombre": "TERMINAL GARZON",
+        "coordenadas": "2.195590, -75.641748",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "960",
+        "nombre": "TERMINAL PITALITO",
+        "coordenadas": "1.865103, -76.033147",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "962",
+        "nombre": "ISNOS (SAN JOSE DE ISNOS)",
+        "coordenadas": "1.930055, -76.215333",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "97",
+        "nombre": "PUERTO LLERAS",
+        "coordenadas": "3.270482, -73.374952",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "99",
+        "nombre": "PUERTO RICO",
+        "coordenadas": "2.939170, -73.211521",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "464",
+        "nombre": "AGUAZUL",
+        "coordenadas": "5.106582,-72.547146",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "680",
+        "nombre": "EL PORVENIR RUBIALES",
+        "coordenadas": "3.764884, -71.363091",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "660",
+        "nombre": "EL OASIS",
+        "coordenadas": "3.773850, -71.657523",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "380",
+        "nombre": "TIBANA",
+        "coordenadas": "5.3181684, -73.3956368",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "788",
+        "nombre": "HONDA",
+        "coordenadas": "5.199937,-74.744024",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "820",
+        "nombre": "LA DORADA CALDAS",
+        "coordenadas": "5.44633,-74.6678",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "1012",
+        "nombre": "REDBUS",
+        "coordenadas": "0",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "1002",
+        "nombre": "PINBUS",
+        "coordenadas": "0",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "1003",
+        "nombre": "FLOTALAMACARENA.COM",
+        "coordenadas": "0",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "965",
+        "nombre": "YOPAL",
+        "coordenadas": "5.3327951,-72.4116007",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "418",
+        "nombre": "SAN LUIS GACENO",
+        "coordenadas": "4.819654,-73.168548",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "505",
+        "nombre": "LA JULIA",
+        "coordenadas": "2.9907669,-74.2182795",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "413",
+        "nombre": "SANTA MARIA",
+        "coordenadas": "4.8630405, -73.2646057",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "251",
+        "nombre": "VERACRUZ",
+        "coordenadas": "4.2354886, -73.2249069,15",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "377",
+        "nombre": "TURMEQUE",
+        "coordenadas": "5.32251,-73.4909",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "785",
+        "nombre": "VILLETA",
+        "coordenadas": "5.003237, -74.473516",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "786",
+        "nombre": "GUADUAS",
+        "coordenadas": "5.06897,-74.5997",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "153",
+        "nombre": "CABUYARO",
+        "coordenadas": "4.28246, -72.79477",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "1009",
+        "nombre": "TELETIQUETE",
+        "coordenadas": "0",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "2010",
+        "nombre": "BODEGA TI - CALLE 127",
+        "coordenadas": "",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "2011",
+        "nombre": "BODEGA TI - CALLE 24",
+        "coordenadas": "",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "2012",
+        "nombre": "DIRECCION OPERATIVA - SALITRE",
+        "coordenadas": "",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "2013",
+        "nombre": "COORDINACION REGIONALES - SALITRE",
+        "coordenadas": "",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    },
+    {
+        "code": "2014",
+        "nombre": "DISPOSICION FINAL AMBIENTAL",
+        "coordenadas": "",
+        "responsableId": "77f1f7d5-d14c-474c-87d2-646c1a843e93",
+        "estado": "ACTIVO"
+    }
+]

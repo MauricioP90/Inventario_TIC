@@ -7,7 +7,7 @@ export class LocationMapper {
             id: entity.id,
             code: entity.code,
             nombre: entity.nombre,
-            direccion: entity.direccion,
+            coordenadas: entity.coordenadas,
             estado: entity.estado as EstadoLocation,
             responsableId: entity.responsableId
         });
@@ -18,7 +18,7 @@ export class LocationMapper {
         entity.id = domain.id!;
         entity.code = domain.code;
         entity.nombre = domain.nombre;
-        entity.direccion = domain.direccion;
+        entity.coordenadas = domain.coordenadas || undefined;
         entity.estado = domain.estado;
         entity.responsableId = domain.responsableId;
         return entity;

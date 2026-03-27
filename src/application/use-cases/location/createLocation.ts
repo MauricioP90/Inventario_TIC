@@ -7,7 +7,7 @@ export interface CreateLocationInput {
     id: string;
     code: string;
     nombre: string;
-    direccion: string;
+    coordenadas: string;
     estado: EstadoLocation;
     responsableId: string;
 }

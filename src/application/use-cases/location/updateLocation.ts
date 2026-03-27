@@ -7,7 +7,7 @@ import { IResponsibleRepository } from "../../../domain/repositories/IResponsibl
 export interface UpdateLocationInput {
     code: string;
     nombre?: string;
-    direccion?: string;
+    coordenadas?: string;
     estado?: EstadoLocation;
     responsableId?: string;
 }
@@ -42,7 +42,7 @@ export class UpdateLocation {
         // 3. Actualizar la entidad con los nuevos datos
         location.update({
             nombre: input.nombre,
-            direccion: input.direccion,
+            coordenadas: input.coordenadas,
             estado: input.estado,
             responsableId: input.responsableId
         });

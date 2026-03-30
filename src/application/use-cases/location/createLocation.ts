@@ -9,7 +9,7 @@ export interface CreateLocationInput {
     nombre: string;
     coordenadas: string;
     estado: EstadoLocation;
-    responsableId: string;
+    responsibleId: string;
 }
 
 export class CreateLocation {
@@ -23,13 +23,13 @@ export class CreateLocation {
             throw new Error('La ubicacion con codigo ' + location.code + ' ya existe');
         }
 
-        if (location.responsableId) {
-            const responsable = await this.responsibleRepository.findById(location.responsableId);
+        if (location.responsibleId) {
+            const responsable = await this.responsibleRepository.findById(location.responsibleId);
             if (!responsable) {
-                throw new Error('El responsable con id ' + location.responsableId + ' no existe');
+                throw new Error('El responsable con id ' + location.responsibleId + ' no existe');
             }
             if (responsable.estado === EstadoResponsable.INACTIVO) {
-                throw new Error('El responsable con id ' + location.responsableId + ' esta inactivo');
+                throw new Error('El responsable con id ' + location.responsibleId + ' esta inactivo');
             }
         }
 

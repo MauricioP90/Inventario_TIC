@@ -12,7 +12,7 @@ export class LocationEntity {
     nombre!: string;
 
     @Column()
-    responsableId!: string;
+    responsibleId!: string;
 
     @Column({ nullable: true })
     coordenadas?: string;

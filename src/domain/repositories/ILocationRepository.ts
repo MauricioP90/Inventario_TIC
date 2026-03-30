@@ -6,4 +6,5 @@ export interface ILocationRepository {
     update(location: Location): Promise<void>;
     findByCode(code: string): Promise<Location | null>;
     findById(id: string): Promise<Location | null>;
+    countByResponsibleId(responsibleId: string): Promise<number>;
 }

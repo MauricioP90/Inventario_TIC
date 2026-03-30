@@ -4,6 +4,8 @@ import { GetAllResponsible } from "../../../application/use-cases/responsible/Ge
 import { GetOneResponsible } from "../../../application/use-cases/responsible/GetOneResponsible";
 import { UpdateResponsible } from "../../../application/use-cases/responsible/UpdateResponsible";
 import { InactiveResponsible } from "../../../application/use-cases/responsible/InactiveResponsible";
+import { IActivoRepository } from "../../../domain/repositories/IActivoRepository";
+import { ILocationRepository } from "../../../domain/repositories/ILocationRepository";
 
 export class ResponsibleController {
     constructor(
@@ -134,6 +136,11 @@ export class ResponsibleController {
         try {
             const responsible = await this.inactiveResponsible.execute({ id: req.params.id as string });
             res.status(200).json(responsible);
+            const activos = await this.activoRepository.countByResponsibleId(req.params.id as string);
+            const locations = await this.locationRepository.countByResponsibleId(req.params.id as string);
+            if (activos > 0 || locations > 0) {
+                throw new Error('El responsable tiene activos o ubicaciones asignadas');
+            }
         } catch (error: any) {
             res.status(500).json({ message: error.message });
         }

@@ -31,4 +31,8 @@ export class TypeORMLocationRepository implements ILocationRepository {
         const entity = await this.repository.findOne({ where: { id } });
         return entity ? LocationMapper.toDomain(entity) : null;
     }
+
+    async countByResponsibleId(responsibleId: string): Promise<number> {
+        return this.repository.count({ where: { responsibleId } });
+    }
 }

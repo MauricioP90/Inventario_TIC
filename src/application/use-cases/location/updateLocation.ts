@@ -9,7 +9,7 @@ export interface UpdateLocationInput {
     nombre?: string;
     coordenadas?: string;
     estado?: EstadoLocation;
-    responsableId?: string;
+    responsibleId?: string;
 }
 
 export class UpdateLocation {
@@ -26,16 +26,21 @@ export class UpdateLocation {
             throw new Error('La ubicacion con codigo ' + input.code + ' no existe');
         }
 
-        // 2. Si se está cambiando el responsable, validar que exista y esté activo
-        if (input.responsableId && input.responsableId !== location.responsableId) {
-            const responsible = await this.responsibleRepository.findById(input.responsableId);
+        // 2. Validar que la ubicación no esté INACTIVA (Regla de negocio)
+        if (location.estado === EstadoLocation.INACTIVO) {
+            throw new Error('No se puede editar una ubicacion inactiva');
+        }
+
+        // 3. Si se está cambiando el responsable, validar que exista y esté activo
+        if (input.responsibleId && input.responsibleId !== location.responsibleId) {
+            const responsible = await this.responsibleRepository.findById(input.responsibleId);
 
             if (!responsible) {
-                throw new Error('El responsable con id ' + input.responsableId + ' no existe');
+                throw new Error('El responsable con id ' + input.responsibleId + ' no existe');
             }
 
             if (responsible.estado === EstadoResponsable.INACTIVO) {
-                throw new Error('El responsable con id ' + input.responsableId + ' esta inactivo');
+                throw new Error('El responsable con id ' + input.responsibleId + ' esta inactivo');
             }
         }
 
@@ -44,7 +49,7 @@ export class UpdateLocation {
             nombre: input.nombre,
             coordenadas: input.coordenadas,
             estado: input.estado,
-            responsableId: input.responsableId
+            responsibleId: input.responsibleId
         });
 
         // 4. Persistir los cambios

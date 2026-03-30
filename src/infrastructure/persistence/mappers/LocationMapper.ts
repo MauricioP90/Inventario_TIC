@@ -9,7 +9,7 @@ export class LocationMapper {
             nombre: entity.nombre,
             coordenadas: entity.coordenadas,
             estado: entity.estado as EstadoLocation,
-            responsableId: entity.responsableId
+            responsibleId: entity.responsibleId
         });
     }
 
@@ -20,7 +20,7 @@ export class LocationMapper {
         entity.nombre = domain.nombre;
         entity.coordenadas = domain.coordenadas || undefined;
         entity.estado = domain.estado;
-        entity.responsableId = domain.responsableId;
+        entity.responsibleId = domain.responsibleId;
         return entity;
     }
 }   

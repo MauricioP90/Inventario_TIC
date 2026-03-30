@@ -6,7 +6,7 @@ export interface LocationProps {
     nombre: string;
     coordenadas?: string | null;
     estado: EstadoLocation;
-    responsableId: string;
+    responsibleId: string;
 }
 
 export enum EstadoLocation {
@@ -31,7 +31,7 @@ export class Location {
         if (!this.props.estado) throw new Error('El estado es obligatorio');
         if (this.props.estado !== EstadoLocation.ACTIVO && this.props.estado !== EstadoLocation.INACTIVO) throw new Error('El estado debe ser ACTIVO o INACTIVO');
         if (!this.props.code) throw new Error('El codigo es obligatorio');
-        if (!this.props.responsableId) throw new Error('El responsableId es obligatorio');
+        if (!this.props.responsibleId) throw new Error('El responsable es obligatorio');
     }
 
     get id() { return this.props.id; }
@@ -39,7 +39,7 @@ export class Location {
     get nombre() { return this.props.nombre; }
     get coordenadas() { return this.props.coordenadas; }
     get estado() { return this.props.estado; }
-    get responsableId() { return this.props.responsableId; }
+    get responsibleId() { return this.props.responsibleId; }
 
     public static create(props: LocationProps) {
         return new Location(props);

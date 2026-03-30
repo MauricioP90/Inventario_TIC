@@ -32,4 +32,8 @@ export class TypeORMActivoRepository implements IActivoRepository {
         await this.repository.save(entity);
         return ActivoMapper.toDomain(entity);
     }
+
+    async countByResponsibleId(responsibleId: string): Promise<number> {
+        return this.repository.count({ where: { responsibleId } });
+    }
 }

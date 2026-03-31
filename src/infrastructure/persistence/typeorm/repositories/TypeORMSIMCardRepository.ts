@@ -27,5 +27,10 @@ export class TypeORMSIMCardRepository implements ISIMCardRepository {
         const entity = await this.repository.findOne({ where: { iccid }, relations: ['activo'] });
         return entity ? SIMCardMapper.toDomain(entity) : null;
     }
+    async countByResponsibleId(responsibleId: string): Promise<number> {
+        return await this.repository.createQueryBuilder("sim")
+            .innerJoin("sim.activo", "activo")
+            .where("activo.responsibleId = :responsibleId", { responsibleId })
+            .getCount();
+    }
 }
-

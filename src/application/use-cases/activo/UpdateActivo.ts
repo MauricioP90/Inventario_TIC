@@ -33,6 +33,13 @@ export class UpdateActivo {
         if (input.responsibleId) {
             const responsible = await this.responsibleRepository.findById(input.responsibleId);
             if (!responsible) throw new Error('Responsable no encontrado');
+
+            const targetLocationId = input.locationId || activo.locationId;
+
+            if (targetLocationId && !responsible.locationIds.includes(targetLocationId)) {
+                throw new Error('Conflicto: El responsable seleccionado no tiene permisos asignados en la sede a la cual está vinculado este activo.');
+            }
+
             activo.asignarResponsable(responsible);
         }
 

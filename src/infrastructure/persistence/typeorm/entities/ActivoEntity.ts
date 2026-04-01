@@ -1,6 +1,7 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, OneToMany } from 'typeorm';
 import { LocationEntity } from './LocationEntity';
 import { ResponsibleEntity } from './ResponsibleEntity';
+import { SIMCardEntity } from './SIMCardEntity';
 
 @Entity('activos') // Nombre de la tabla en SQL
 export class ActivoEntity {
@@ -44,4 +45,7 @@ export class ActivoEntity {
     @ManyToOne(() => ResponsibleEntity)
     @JoinColumn({ name: 'responsible_id' })
     responsible?: ResponsibleEntity;
+
+    @OneToMany(() => SIMCardEntity, simCard => simCard.activo)
+    simCards?: SIMCardEntity[];
 }

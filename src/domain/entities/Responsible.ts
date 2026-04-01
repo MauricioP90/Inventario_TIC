@@ -11,6 +11,10 @@ export interface ResponsibleProps {
     email: string;
     telefono: string;
     estado: EstadoResponsable;
+    rol: string;
+    locationIds?: string[];
+    totalActivos?: number;
+    totalSIMCards?: number;
 }
 
 export class Responsible {
@@ -32,7 +36,7 @@ export class Responsible {
         if (!this.props.email.includes('@')) throw new Error('El email es invalido');
         if (this.props.email.length > 70) throw new Error('El email debe tener menos de 70 caracteres');
         if (!this.props.telefono) throw new Error('El telefono es obligatorio');
-        if (this.props.telefono.length > 10) throw new Error('El telefono debe tener menos de 10 caracteres');
+        if (this.props.telefono.length > 20) throw new Error('El telefono debe tener menos de 20 caracteres'); // Ampliado por el refactor
         if (this.props.telefono.length < 7) throw new Error('El telefono debe tener mas de 7 caracteres');
         if (!this.props.estado) throw new Error('El estado es obligatorio');
     }
@@ -42,15 +46,10 @@ export class Responsible {
     get email() { return this.props.email; }
     get telefono() { return this.props.telefono; }
     get estado() { return this.props.estado; }
-
-    public create(props: ResponsibleProps) {
-        this.props = {
-            ...props,
-            id: props.id || randomUUID(),
-        };
-
-        this.validar();
-    }
+    get rol() { return this.props.rol; }
+    get locationIds() { return this.props.locationIds || []; }
+    get totalActivos() { return this.props.totalActivos || 0; }
+    get totalSIMCards() { return this.props.totalSIMCards || 0; }
 
     public update(props: Partial<ResponsibleProps>) {
         this.props = {
@@ -58,6 +57,7 @@ export class Responsible {
             ...props,
             id: this.props.id // El ID nunca cambia
         };
+        this.validar();
     }
 
     public toJSON() {

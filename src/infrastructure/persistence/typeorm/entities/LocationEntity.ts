@@ -1,4 +1,5 @@
-import { Entity, PrimaryColumn, Column } from 'typeorm';
+import { Entity, PrimaryColumn, Column, ManyToMany } from 'typeorm';
+import { ResponsibleEntity } from './ResponsibleEntity';
 
 @Entity('locations')
 export class LocationEntity {
@@ -11,12 +12,12 @@ export class LocationEntity {
     @Column()
     nombre!: string;
 
-    @Column()
-    responsibleId!: string;
-
     @Column({ nullable: true })
     coordenadas?: string;
 
     @Column()
     estado!: string;
+
+    @ManyToMany(() => ResponsibleEntity, (responsible) => responsible.locations)
+    responsibles!: ResponsibleEntity[];
 }

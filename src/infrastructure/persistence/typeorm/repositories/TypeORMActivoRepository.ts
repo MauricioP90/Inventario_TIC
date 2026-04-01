@@ -14,16 +14,16 @@ export class TypeORMActivoRepository implements IActivoRepository {
 
     async findByPlaca(placa: string): Promise<Activo | null> {
         // Esta es la parte clave para el negocio: buscar por placa
-        const entity = await this.repository.findOne({ where: { placa } });
+        const entity = await this.repository.findOne({ where: { placa }, relations: ['location', 'responsible'] });
         return entity ? ActivoMapper.toDomain(entity) : null;
     }
     async findAll(): Promise<Activo[]> {
-        const entities = await this.repository.find();
+        const entities = await this.repository.find({ relations: ['location', 'responsible'] });
         return entities.map(ActivoMapper.toDomain)
     }
 
     async findBySerial(serial: string): Promise<Activo | null> {
-        const entity = await this.repository.findOne({ where: { serial } });
+        const entity = await this.repository.findOne({ where: { serial }, relations: ['location', 'responsible'] });
         return entity ? ActivoMapper.toDomain(entity) : null;
     }
 

@@ -107,7 +107,9 @@ export class Activo {
         return {
             ...this.props,
             id: this.id, // Asegurar que el ID esté presente
-            simCards: this._simCards // Incluir SIMCards
+            simCards: this._simCards, // Incluir SIMCards
+            location: this.props.location ? this.props.location.toJSON() : undefined,
+            responsable: this.props.responsable ? this.props.responsable.toJSON() : undefined
         };
     }
 }

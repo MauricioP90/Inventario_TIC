@@ -1,5 +1,7 @@
 import { Activo, EstadoActivo } from '../../../domain/entities/Activo';
 import { ActivoEntity } from '../typeorm/entities/ActivoEntity';
+import { LocationMapper } from './LocationMapper';
+import { ResponsibleMapper } from './ResponsibleMapper';
 
 export class ActivoMapper {
     // Convierte de la base de datos al Dominio
@@ -15,7 +17,9 @@ export class ActivoMapper {
             fechaIngreso: entity.fechaIngreso,
             facturaUrl: entity.facturaUrl,
             locationId: entity.locationId,
-            responsibleId: entity.responsibleId
+            responsibleId: entity.responsibleId,
+            location: entity.location ? LocationMapper.toDomain(entity.location) : undefined,
+            responsable: entity.responsible ? ResponsibleMapper.toDomain(entity.responsible) : undefined
         });
     }
 

@@ -13,7 +13,9 @@ export const swaggerSchemas = {
             facturaUrl: { type: 'string' },
             fechaIngreso: { type: 'string', format: 'date-time' },
             locationId: { type: 'string', format: 'uuid' },
-            responsibleId: { type: 'string', format: 'uuid' }
+            responsibleId: { type: 'string', format: 'uuid' },
+            location: { $ref: '#/components/schemas/Location' },
+            responsable: { $ref: '#/components/schemas/Responsible' }
         }
     },
     Location: {
@@ -25,7 +27,11 @@ export const swaggerSchemas = {
             nombre: { type: 'string' },
             responsableId: { type: 'string', format: 'uuid', nullable: true },
             coordenadas: { type: 'string', nullable: true },
-            estado: { type: 'string', enum: ['ACTIVO', 'INACTIVO'] }
+            estado: { type: 'string', enum: ['ACTIVO', 'INACTIVO'] },
+            responsibleIds: {
+                type: 'array',
+                items: { type: 'string', format: 'uuid' }
+            }
         }
     },
     Responsible: {
@@ -37,7 +43,13 @@ export const swaggerSchemas = {
             cargo: { type: 'string' },
             departamento: { type: 'string' },
             email: { type: 'string' },
-            estado: { type: 'string', enum: ['ACTIVO', 'INACTIVO'] }
+            estado: { type: 'string', enum: ['ACTIVO', 'INACTIVO'] },
+            locationIds: {
+                type: 'array',
+                items: { type: 'string', format: 'uuid' }
+            },
+            totalActivos: { type: 'number' },
+            totalSIMCards: { type: 'number' }
         }
     },
     SIMCard: {

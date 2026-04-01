@@ -9,7 +9,7 @@ export class LocationMapper {
             nombre: entity.nombre,
             coordenadas: entity.coordenadas,
             estado: entity.estado as EstadoLocation,
-            responsibleId: entity.responsibleId
+            responsibleIds: entity.responsibles?.map(resp => resp.id)
         });
     }
 
@@ -20,7 +20,7 @@ export class LocationMapper {
         entity.nombre = domain.nombre;
         entity.coordenadas = domain.coordenadas || undefined;
         entity.estado = domain.estado;
-        entity.responsibleId = domain.responsibleId;
+        // La relación Many-to-Many se gestiona en el repositorio mediante los IDs
         return entity;
     }
-}   
+}

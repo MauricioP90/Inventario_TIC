@@ -1,4 +1,6 @@
-import { Entity, PrimaryColumn, Column } from 'typeorm';
+import { Entity, PrimaryColumn, Column, ManyToMany, JoinTable, OneToMany } from 'typeorm';
+import { LocationEntity } from './LocationEntity';
+import { ActivoEntity } from './ActivoEntity';
 
 @Entity('responsables')
 export class ResponsibleEntity {
@@ -16,4 +18,22 @@ export class ResponsibleEntity {
 
     @Column()
     estado!: string;
+
+    @Column({ default: 'EXTERNO' })
+    rol!: string;
+
+    @ManyToMany(() => LocationEntity, (location) => location.responsibles)
+    @JoinTable({
+        name: 'responsible_locations',
+        joinColumn: { name: 'responsible_id', referencedColumnName: 'id' },
+        inverseJoinColumn: { name: 'location_id', referencedColumnName: 'id' }
+    })
+    locations!: LocationEntity[];
+
+    @OneToMany(() => ActivoEntity, (activo) => activo.responsible)
+    activos!: ActivoEntity[];
+
+    // Virtual fields for loadRelationCountAndMap
+    activosCount?: number;
+    simCardsCount?: number;
 }

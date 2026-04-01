@@ -6,7 +6,8 @@ interface CreateResponsibleInput {
     email: string;
     telefono: string;
     estado: EstadoResponsable;
-    id?: string;
+    rol: string;
+    locationIds?: string[];
 }
 
 export class CreateResponsible {

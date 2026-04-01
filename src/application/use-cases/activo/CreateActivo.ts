@@ -38,6 +38,10 @@ export class CreateActivo {
         const responsible = await this.responsibleRepository.findById(input.responsibleId);
         if (!responsible) throw new Error('Responsable no encontrado');
 
+        if (!responsible.locationIds.includes(input.locationId)) {
+            throw new Error('Conflicto: El responsable seleccionado no tiene permisos asignados en la sede a la cual está vinculado este activo.');
+        }
+
         const existe = await this.activoRepository.findByPlaca(input.placa);
         const existeSerial = await this.activoRepository.findBySerial(input.serial);
 

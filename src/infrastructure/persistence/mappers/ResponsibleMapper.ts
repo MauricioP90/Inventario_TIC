@@ -8,7 +8,11 @@ export class ResponsibleMapper {
             nombre: entity.nombre,
             email: entity.email,
             telefono: entity.telefono,
-            estado: entity.estado as EstadoResponsable
+            estado: entity.estado as EstadoResponsable,
+            rol: entity.rol,
+            locationIds: entity.locations?.map(loc => loc.id),
+            totalActivos: entity.activosCount,
+            totalSIMCards: entity.simCardsCount
         });
     }
 
@@ -19,6 +23,7 @@ export class ResponsibleMapper {
         entity.email = domain.email;
         entity.telefono = domain.telefono;
         entity.estado = domain.estado;
+        entity.rol = domain.rol;
         return entity;
     }
 }   

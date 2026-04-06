@@ -1,6 +1,7 @@
-import { Entity, PrimaryColumn, Column, ManyToMany, JoinTable, OneToMany } from 'typeorm';
+import { Entity, PrimaryColumn, Column, ManyToMany, JoinTable, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { LocationEntity } from './LocationEntity';
 import { ActivoEntity } from './ActivoEntity';
+import { RoleEntity } from './RoleEntity';
 
 @Entity('responsables')
 export class ResponsibleEntity {
@@ -29,6 +30,11 @@ export class ResponsibleEntity {
         inverseJoinColumn: { name: 'location_id', referencedColumnName: 'id' }
     })
     locations!: LocationEntity[];
+
+    @ManyToOne(() => RoleEntity, (role) => role.responsibles)
+    @JoinColumn({ name: 'role_id' })
+    role?: RoleEntity;
+
 
     @OneToMany(() => ActivoEntity, (activo) => activo.responsible)
     activos!: ActivoEntity[];

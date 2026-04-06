@@ -5,12 +5,13 @@ import { IResponsibleRepository } from "../../../../domain/repositories/IRespons
 import { ResponsibleEntity } from "../entities/ResponsibleEntity";
 import { ResponsibleMapper } from "../../mappers/ResponsibleMapper";
 
+
 export class TypeORMResponsibleRepository implements IResponsibleRepository {
     constructor(private readonly repository: Repository<ResponsibleEntity>) { }
 
     async create(responsible: Responsible): Promise<Responsible> {
         const entity = ResponsibleMapper.toPersistence(responsible);
-        
+
         if (responsible.locationIds.length > 0) {
             entity.locations = await this.repository.manager.find(LocationEntity, {
                 where: { id: In(responsible.locationIds) }
@@ -41,8 +42,9 @@ export class TypeORMResponsibleRepository implements IResponsibleRepository {
             .leftJoinAndSelect('responsible.locations', 'locations')
             .leftJoinAndSelect('responsible.activos', 'activos')
             .leftJoinAndSelect('activos.simCards', 'simCards')
+            .leftJoinAndSelect('responsible.role', 'role')
             .getMany();
-            
+
         return entities.map(entity => {
             // Cálculo en memoria temporal para evitar subqueries complejas que fallan en TypeORM
             entity.activosCount = entity.activos?.length || 0;
@@ -56,6 +58,7 @@ export class TypeORMResponsibleRepository implements IResponsibleRepository {
             .leftJoinAndSelect('responsible.locations', 'locations')
             .leftJoinAndSelect('responsible.activos', 'activos')
             .leftJoinAndSelect('activos.simCards', 'simCards')
+            .leftJoinAndSelect('responsible.role', 'role')
             .where('responsible.id = :id', { id })
             .getOne();
 
@@ -68,7 +71,7 @@ export class TypeORMResponsibleRepository implements IResponsibleRepository {
     }
 
     async findByNombre(nombre: string): Promise<Responsible | null> {
-        const entity = await this.repository.findOne({ 
+        const entity = await this.repository.findOne({
             where: { nombre },
             relations: ['locations']
         });
@@ -81,7 +84,7 @@ export class TypeORMResponsibleRepository implements IResponsibleRepository {
             .innerJoin('responsible.locations', 'location')
             .where('location.id = :locationId', { locationId })
             .getMany();
-        
+
         return entities.map(entity => ResponsibleMapper.toDomain(entity));
     }
 }

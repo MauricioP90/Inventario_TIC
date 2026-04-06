@@ -1,5 +1,6 @@
 import { Responsible, EstadoResponsable } from "../../../domain/entities/Responsible";
 import { ResponsibleEntity } from "../typeorm/entities/ResponsibleEntity";
+import { RoleMapper } from "./RoleMapper";
 
 export class ResponsibleMapper {
     public static toDomain(entity: ResponsibleEntity): Responsible {
@@ -9,7 +10,7 @@ export class ResponsibleMapper {
             email: entity.email,
             telefono: entity.telefono,
             estado: entity.estado as EstadoResponsable,
-            rol: entity.rol,
+            role: entity.role ? RoleMapper.toDomain(entity.role) : undefined,
             locationIds: entity.locations?.map(loc => loc.id),
             totalActivos: entity.activosCount,
             totalSIMCards: entity.simCardsCount
@@ -23,7 +24,7 @@ export class ResponsibleMapper {
         entity.email = domain.email;
         entity.telefono = domain.telefono;
         entity.estado = domain.estado;
-        entity.rol = domain.rol;
+        entity.role = domain.role ? RoleMapper.toPersistence(domain.role) : undefined;
         return entity;
     }
 }   

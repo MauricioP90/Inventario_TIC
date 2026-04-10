@@ -35,6 +35,7 @@ export const options: swaggerJsdoc.Options = {
         ],
     },
     apis: [
+        './src/index.ts',
         './src/infrastructure/http/controllers/*.ts',
         './src/infrastructure/http/routes/*.ts',
         './src/infrastructure/http/swagger-schemas.ts'

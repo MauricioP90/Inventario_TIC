@@ -20,10 +20,7 @@ export class ResponsibleEntity {
     @Column()
     estado!: string;
 
-    @Column({ default: 'EXTERNO' })
-    rol!: string;
-
-    @ManyToMany(() => LocationEntity, (location) => location.responsibles)
+@ManyToMany(() => LocationEntity, (location) => location.responsibles)
     @JoinTable({
         name: 'responsible_locations',
         joinColumn: { name: 'responsible_id', referencedColumnName: 'id' },

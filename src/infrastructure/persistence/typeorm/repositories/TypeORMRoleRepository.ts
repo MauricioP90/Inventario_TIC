@@ -4,7 +4,7 @@ import { IRoleRepository } from "../../../../domain/repositories/IRoleRepository
 import { RoleEntity } from "../entities/RoleEntity";
 import { RoleMapper } from "../../mappers/RoleMapper";
 
-export class TypeOrRMRoleRepository implements IRoleRepository {
+export class TypeORMRoleRepository implements IRoleRepository {
     constructor(private readonly repository: Repository<RoleEntity>) { }
 
     async create(role: Role): Promise<Role> {

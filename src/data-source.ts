@@ -4,6 +4,8 @@ import { ActivoEntity } from "./infrastructure/persistence/typeorm/entities/Acti
 import { SIMCardEntity } from "./infrastructure/persistence/typeorm/entities/SIMCardEntity";
 import { ResponsibleEntity } from "./infrastructure/persistence/typeorm/entities/ResponsibleEntity";
 import { LocationEntity } from "./infrastructure/persistence/typeorm/entities/LocationEntity";
+import { RoleEntity } from "./infrastructure/persistence/typeorm/entities/RoleEntity";
+import { MovementEntity } from "./infrastructure/persistence/typeorm/entities/MovementEntity";
 
 export const AppDataSource = new DataSource({
     type: "postgres",
@@ -14,7 +16,7 @@ export const AppDataSource = new DataSource({
     database: "inventario",
     synchronize: false,
     logging: true,
-    entities: [ActivoEntity, SIMCardEntity, ResponsibleEntity, LocationEntity],
+    entities: [ActivoEntity, SIMCardEntity, ResponsibleEntity, LocationEntity, RoleEntity, MovementEntity],
     migrations: ["src/infrastructure/persistence/typeorm/migrations/*.ts"],
     subscribers: [],
 });

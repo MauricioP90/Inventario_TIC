@@ -95,6 +95,13 @@ export class Activo {
     }
 
 
+    public changeLocation(locationId: string) {
+        if (!locationId) throw new Error('La ubicación es obligatoria');
+        this.props.locationId = locationId;
+        // Opcional: limpiar la referencia del objeto location cargado para forzar recarga
+        this.props.location = undefined;
+    }
+
     public update(props: Partial<ActivoProps>) {
         this.props = {
             ...this.props,

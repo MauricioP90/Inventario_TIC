@@ -8,9 +8,17 @@ import { UpdateSIMCard } from "../../../application/use-cases/sim-card/UpdateSIM
 import { GetOneSIMCard } from "../../../application/use-cases/sim-card/GetOneSIMCard";
 import { CreateSIMCard } from "../../../application/use-cases/sim-card/CreateSIMCard";
 import { AssignSIMToActivo } from "../../../application/use-cases/sim-card/AssignSIMToActivo";
+import { GetSIMByNumero } from "../../../application/use-cases/sim-card/GetSIMByNumero";
+import { GetSIMByIccid } from "../../../application/use-cases/sim-card/GetSimByIccid";
+import { GetSIMCountByResponsible } from "../../../application/use-cases/sim-card/GetSIMCountByResponsible";
 import { DarDeBajaSIM } from "../../../application/use-cases/sim-card/DarDeBajaSIM";
 import { SIMCardController } from "../controllers/SIMCardController";
 import { TypeORMActivoRepository } from "../../persistence/typeorm/repositories/TypeORMActivoRepository";
+
+
+
+
+
 
 // Importa tus casos de uso y el controlador...
 const simCardRouter = Router();
@@ -31,11 +39,14 @@ const getAllUC = new GetAllSIMCards(simRepo); //ya lo cree
 const getOneUC = new GetOneSIMCard(simRepo);
 const updateUC = new UpdateSIMCard(simRepo);//ya lo cree
 const bajaUC = new DarDeBajaSIM(simRepo);//ya lo cree
+const getSIMByNumero = new GetSIMByNumero(simRepo);
+const getSIMByIccid = new GetSIMByIccid(simRepo);
+const getSIMCountByResponsible = new GetSIMCountByResponsible(simRepo);
 
 import { keycloak } from "../middleware/KeycloakConfig";
 
 // 3. Inicializamos el controlador
-const controller = new SIMCardController(createUC, getAllUC, assignUC, updateUC, bajaUC, getOneUC);
+const controller = new SIMCardController(createUC, getAllUC, assignUC, updateUC, bajaUC, getOneUC, getSIMByNumero, getSIMByIccid, getSIMCountByResponsible);
 
 // 4. Definimos las rutas
 simCardRouter.post("/", keycloak.protect(), (req, res) => controller.create(req, res));
@@ -44,5 +55,8 @@ simCardRouter.get("/:id", keycloak.protect(), (req, res) => controller.getOne(re
 simCardRouter.put("/:id", keycloak.protect(), (req, res) => controller.update(req, res));
 simCardRouter.post("/assign", keycloak.protect(), (req, res) => controller.assign(req, res));
 simCardRouter.patch("/:id/desactivate", keycloak.protect(), (req, res) => controller.desactivate(req, res));
+simCardRouter.get("/numero/:numero", keycloak.protect(), (req, res) => controller.getSIMByNumero(req, res));
+simCardRouter.get("/iccid/:iccid", keycloak.protect(), (req, res) => controller.getSIMByIccid(req, res));
+simCardRouter.get("/count/responsible/:responsibleId", keycloak.protect(), (req, res) => controller.getSIMCountByResponsible(req, res));
 
 export { simCardRouter };

@@ -7,4 +7,6 @@ export interface ISIMCardRepository {
     findAll(): Promise<SIMCard[]>;
     findByIccid(iccid: string): Promise<SIMCard | null>;
     countByResponsibleId(responsibleId: string): Promise<number>;
+    assignSimCard(simCard: SIMCard): Promise<void>;
+    darDeBajaSIM(simCard: SIMCard): Promise<void>;
 }

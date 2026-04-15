@@ -14,6 +14,7 @@ import { movementRouter } from "./infrastructure/http/routes/MovementRoutes";
 import { setupSwagger } from "./infrastructure/http/swagger";
 import { keycloak, memoryStore } from "./infrastructure/http/middleware/KeycloakConfig";
 
+
 const app = express();
 const PORT = 3000;
 

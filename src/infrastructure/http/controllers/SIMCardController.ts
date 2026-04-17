@@ -9,8 +9,6 @@ import { GetSIMByNumero } from "../../../application/use-cases/sim-card/GetSIMBy
 import { GetSIMByIccid } from "../../../application/use-cases/sim-card/GetSimByIccid";
 import { GetSIMCountByResponsible } from "../../../application/use-cases/sim-card/GetSIMCountByResponsible";
 
-
-
 export class SIMCardController {
     constructor(
         private readonly createSIMCard: CreateSIMCard,

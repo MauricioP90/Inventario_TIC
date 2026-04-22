@@ -7,7 +7,7 @@ import { IResponsibleRepository } from "../../../domain/repositories/IResponsibl
 interface createActivoInput {
     id: string;
     placa: string;
-    tipo: string;
+    tipoActivoId: string;
     marca: string;
     modelo: string;
     serial: string;

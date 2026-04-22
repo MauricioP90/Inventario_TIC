@@ -5,6 +5,7 @@ import { GetOneActivo } from "../../../application/use-cases/activo/GetOneActivo
 import { UpdateActivo } from "../../../application/use-cases/activo/UpdateActivo";
 import { DarDeBajaActivo } from "../../../application/use-cases/activo/DarDeBajaActivo";
 import { AssingSIMToActivo } from "../../../application/use-cases/activo/AssingSIMToActivo";
+import { GetActivoMetadata } from "../../../application/use-cases/activo/GetActivoMetadata";
 
 export class ActivoController {
     constructor(
@@ -13,7 +14,8 @@ export class ActivoController {
         private getOneActivo: GetOneActivo,
         private updateActivo: UpdateActivo,
         private darDeBajaActivo: DarDeBajaActivo,
-        private assignSIMToActivo: AssingSIMToActivo
+        private assignSIMToActivo: AssingSIMToActivo,
+        private getMetadataUseCase: GetActivoMetadata
     ) { }
 
     /**
@@ -198,4 +200,49 @@ export class ActivoController {
             res.status(400).json({ message: error.message });
         }
     }
+
+    /**
+     * @swagger
+     * /api/activos/metadata:
+     *   get:
+     *     summary: Obtener metadatos de los activos
+     *     tags: [Activos]
+     *     responses:
+     *       200:
+     *         description: Metadatos de los activos
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 statuses:
+     *                   type: array
+     *                   items:
+     *                     type: object
+     *                     properties:
+     *                       id:
+     *                         type: string
+     *                       label:
+     *                         type: string
+     *                       color:
+     *                         type: string
+     *                 types:
+     *                   type: array
+     *                   items:
+     *                     type: object
+     *                     properties:
+     *                       id:
+     *                         type: string
+     *                       label:
+     *                         type: string
+     */
+    async getActivoMetadata(req: Request, res: Response) {
+        try {
+            const metadata = await this.getMetadataUseCase.execute();
+            res.json(metadata);
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
 }

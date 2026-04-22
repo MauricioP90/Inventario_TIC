@@ -12,6 +12,8 @@ import { ResponsibleEntity } from "../../persistence/typeorm/entities/Responsibl
 import { TypeORMResponsibleRepository } from "../../persistence/typeorm/repositories/TypeORMResponsibleRepository";
 import { SIMCardEntity } from "../../persistence/typeorm/entities/SIMCardEntity";
 import { TypeORMSIMCardRepository } from "../../persistence/typeorm/repositories/TypeORMSIMCardRepository";
+import { TipoActivoEntity } from "../../persistence/typeorm/entities/TipoActivoEntity";
+import { TypeORMTipoActivoRepository } from "../../persistence/typeorm/repositories/TypeORMTipoActivoRepository";
 
 // Casos de Uso
 import { CreateActivo } from "../../../application/use-cases/activo/CreateActivo";
@@ -20,6 +22,7 @@ import { GetOneActivo } from "../../../application/use-cases/activo/GetOneActivo
 import { UpdateActivo } from "../../../application/use-cases/activo/UpdateActivo";
 import { DarDeBajaActivo } from "../../../application/use-cases/activo/DarDeBajaActivo";
 import { AssingSIMToActivo } from "../../../application/use-cases/activo/AssingSIMToActivo";
+import { GetActivoMetadata } from "../../../application/use-cases/activo/GetActivoMetadata";
 
 const activoRouter = Router();
 
@@ -28,6 +31,7 @@ const locationRepo = new TypeORMLocationRepository(AppDataSource.getRepository(L
 const responsibleRepo = new TypeORMResponsibleRepository(AppDataSource.getRepository(ResponsibleEntity));
 const simCardRepo = new TypeORMSIMCardRepository(AppDataSource.getRepository(SIMCardEntity));
 const activoRepo = new TypeORMActivoRepository(AppDataSource.getRepository(ActivoEntity));
+const tipoActivoRepo = new TypeORMTipoActivoRepository(AppDataSource.getRepository(TipoActivoEntity));
 
 // 2. Inicializamos Casos de Uso
 const createUC = new CreateActivo(activoRepo, locationRepo, responsibleRepo);
@@ -36,9 +40,10 @@ const getOneUC = new GetOneActivo(activoRepo);
 const updateUC = new UpdateActivo(activoRepo, locationRepo, responsibleRepo);
 const darDeBajaUC = new DarDeBajaActivo(activoRepo);
 const assignSIMUC = new AssingSIMToActivo(activoRepo, simCardRepo);
+const getMetadataUC = new GetActivoMetadata(tipoActivoRepo);
 
 // 3. Inicializamos Controlador
-const controller = new ActivoController(createUC, getAllUC, getOneUC, updateUC, darDeBajaUC, assignSIMUC);
+const controller = new ActivoController(createUC, getAllUC, getOneUC, updateUC, darDeBajaUC, assignSIMUC, getMetadataUC);
 
 // 4. Definimos Rutas
 activoRouter.post("/", keycloak.protect(), (req, res) => controller.create(req, res));
@@ -47,5 +52,6 @@ activoRouter.get("/:placa", keycloak.protect(), (req, res) => controller.getOne(
 activoRouter.put("/:placa", keycloak.protect(), (req, res) => controller.update(req, res));
 activoRouter.patch("/:placa/baja", keycloak.protect(), (req, res) => controller.darDeBaja(req, res));
 activoRouter.post("/:placa/sim", keycloak.protect(), (req, res) => controller.assignSIM(req, res));
+activoRouter.get("/metadata", keycloak.protect(), (req, res) => controller.getActivoMetadata(req, res));
 
 export { activoRouter };

@@ -2,6 +2,7 @@ import { Activo, EstadoActivo } from '../../../domain/entities/Activo';
 import { ActivoEntity } from '../typeorm/entities/ActivoEntity';
 import { LocationMapper } from './LocationMapper';
 import { ResponsibleMapper } from './ResponsibleMapper';
+import { TipoActivoMapper } from './TipoActivoMapper';
 
 export class ActivoMapper {
     // Convierte de la base de datos al Dominio
@@ -9,7 +10,7 @@ export class ActivoMapper {
         return new Activo({
             id: entity.id,
             placa: entity.placa,
-            tipo: entity.tipo,
+            tipoActivoId: entity.tipoActivoId as string,
             marca: entity.marca,
             modelo: entity.modelo,
             serial: entity.serial,
@@ -19,7 +20,8 @@ export class ActivoMapper {
             locationId: entity.locationId,
             responsibleId: entity.responsibleId,
             location: entity.location ? LocationMapper.toDomain(entity.location) : undefined,
-            responsable: entity.responsible ? ResponsibleMapper.toDomain(entity.responsible) : undefined
+            responsable: entity.responsible ? ResponsibleMapper.toDomain(entity.responsible) : undefined,
+            tipoActivo: entity.tipoActivo ? TipoActivoMapper.toDomain(entity.tipoActivo) : undefined
         });
     }
 
@@ -28,7 +30,7 @@ export class ActivoMapper {
         const entity = new ActivoEntity();
         entity.id = domain.id!;
         entity.placa = domain.placa;
-        entity.tipo = domain.tipo;
+        entity.tipoActivoId = domain.tipoActivoId;
         entity.marca = domain.marca;
         entity.modelo = domain.modelo;
         entity.serial = domain.serial;

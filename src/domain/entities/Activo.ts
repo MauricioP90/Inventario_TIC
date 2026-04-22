@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { SIMCard } from './SIMCard';
 import { Location, EstadoLocation } from './Location';
 import { Responsible } from './Responsible';
+import { TipoActivo } from './TipoActivo';
 
 export enum EstadoActivo {
     BODEGA = 'BODEGA',
@@ -13,7 +14,7 @@ export enum EstadoActivo {
 export interface ActivoProps {
     id?: string;
     placa: string;
-    tipo: string;
+    tipoActivoId: string;
     marca: string;
     modelo: string;
     serial: string;
@@ -21,6 +22,7 @@ export interface ActivoProps {
     locationId?: string;
     responsable?: Responsible;
     responsibleId?: string;
+    tipoActivo?: TipoActivo;
     estado: EstadoActivo;
     facturaUrl?: string;
     fechaIngreso: Date;
@@ -41,7 +43,7 @@ export class Activo {
     private validar() {
         if (!this.props.placa) throw new Error('La placa es obligatoria');
         if (!this.props.serial) throw new Error('El serial es obligatorio');
-        if (!this.props.tipo) throw new Error('El tipo es obligatorio');
+        if (!this.props.tipoActivoId) throw new Error('El tipo es obligatorio');
         if (!this.props.marca) throw new Error('La marca es obligatoria');
         if (!this.props.modelo) throw new Error('El modelo es obligatorio');
         if (!this.props.estado) throw new Error('El estado es obligatorio');
@@ -57,7 +59,7 @@ export class Activo {
     get estado() { return this.props.estado; }
     get marca() { return this.props.marca; }
     get modelo() { return this.props.modelo; }
-    get tipo() { return this.props.tipo; }
+    get tipoActivoId() { return this.props.tipoActivoId; }
     get facturaUrl() { return this.props.facturaUrl; }
     get fechaIngreso() { return this.props.fechaIngreso; }
     get location() { return this.props.location; }

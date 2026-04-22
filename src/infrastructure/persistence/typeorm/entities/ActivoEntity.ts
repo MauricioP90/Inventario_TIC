@@ -2,6 +2,7 @@ import { Entity, PrimaryColumn, Column, CreateDateColumn, ManyToOne, JoinColumn,
 import { LocationEntity } from './LocationEntity';
 import { ResponsibleEntity } from './ResponsibleEntity';
 import { SIMCardEntity } from './SIMCardEntity';
+import { TipoActivoEntity } from './TipoActivoEntity';
 
 @Entity('activos') // Nombre de la tabla en SQL
 export class ActivoEntity {
@@ -10,9 +11,6 @@ export class ActivoEntity {
 
     @Column({ unique: true })
     placa!: string;
-
-    @Column()
-    tipo!: string;
 
     @Column()
     marca!: string;
@@ -48,4 +46,11 @@ export class ActivoEntity {
 
     @OneToMany(() => SIMCardEntity, simCard => simCard.activo)
     simCards?: SIMCardEntity[];
+
+    @Column({ name: 'tipo_activo_id', nullable: true })
+    tipoActivoId?: string;
+
+    @ManyToOne(() => TipoActivoEntity, (tipoActivo) => tipoActivo.activos)
+    @JoinColumn({ name: 'tipo_activo_id' })
+    tipoActivo?: TipoActivoEntity;
 }

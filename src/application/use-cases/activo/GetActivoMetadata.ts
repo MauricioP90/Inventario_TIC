@@ -13,10 +13,10 @@ export class GetActivoMetadata {
 
         return {
             statuses: [
-                { id: EstadoActivo.BODEGA, label: 'En Bodega', color: 'bg-emerald-500' },
-                { id: EstadoActivo.OPERACION, label: 'En Operación', color: 'bg-blue-600' },
-                { id: EstadoActivo.MANTENIMIENTO, label: 'Mantenimiento', color: 'bg-amber-500' },
-                { id: EstadoActivo.BAJA, label: 'Baja / Inactivo', color: 'bg-red-600' }
+                { id: EstadoActivo.BODEGA, label: 'En Bodega' },
+                { id: EstadoActivo.OPERACION, label: 'En Operación' },
+                { id: EstadoActivo.MANTENIMIENTO, label: 'Mantenimiento' },
+                { id: EstadoActivo.BAJA, label: 'Baja / Inactivo' }
             ],
             // Transformamos los datos de la BD a un formato sencillo para el combobox del Frontend
             types: tiposActivos.map(t => ({

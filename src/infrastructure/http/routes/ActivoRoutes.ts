@@ -48,10 +48,10 @@ const controller = new ActivoController(createUC, getAllUC, getOneUC, updateUC, 
 // 4. Definimos Rutas
 activoRouter.post("/", keycloak.protect(), (req, res) => controller.create(req, res));
 activoRouter.get("/", keycloak.protect(), (req, res) => controller.getAll(req, res));
+activoRouter.get("/metadata", keycloak.protect(), (req, res) => controller.getActivoMetadata(req, res));
 activoRouter.get("/:placa", keycloak.protect(), (req, res) => controller.getOne(req, res));
 activoRouter.put("/:placa", keycloak.protect(), (req, res) => controller.update(req, res));
 activoRouter.patch("/:placa/baja", keycloak.protect(), (req, res) => controller.darDeBaja(req, res));
 activoRouter.post("/:placa/sim", keycloak.protect(), (req, res) => controller.assignSIM(req, res));
-activoRouter.get("/metadata", keycloak.protect(), (req, res) => controller.getActivoMetadata(req, res));
 
 export { activoRouter };

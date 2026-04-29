@@ -36,4 +36,9 @@ export class TypeORMActivoRepository implements IActivoRepository {
     async countByResponsibleId(responsibleId: string): Promise<number> {
         return this.repository.count({ where: { responsibleId } });
     }
+
+    async findById(id: string): Promise<Activo | null> {
+        const entity = await this.repository.findOne({ where: { id }, relations: ['location', 'responsible', 'responsible.role', 'tipoActivo'] });
+        return entity ? ActivoMapper.toDomain(entity) : null;
+    }
 }

@@ -15,6 +15,9 @@ export class LocationEntity {
     @Column({ nullable: true })
     coordenadas?: string;
 
+    @Column({ default: 'OFICINA' })
+    tipo!: string;
+
     @Column()
     estado!: string;
 

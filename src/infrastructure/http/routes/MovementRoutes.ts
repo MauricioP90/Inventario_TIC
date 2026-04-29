@@ -19,7 +19,7 @@ const activoRepo = new TypeORMActivoRepository(AppDataSource.getRepository(Activ
 
 // 2. Inicializamos Casos de Uso
 const registerUC = new RegisterMovement(movementRepo);
-const dispatchUC = new DispatchMovement(movementRepo);
+const dispatchUC = new DispatchMovement(movementRepo, activoRepo);
 const receiveUC = new ReceiveMovement(movementRepo, activoRepo);
 const getUC = new GetMovements(movementRepo);
 

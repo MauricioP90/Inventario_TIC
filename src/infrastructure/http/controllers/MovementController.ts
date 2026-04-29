@@ -4,13 +4,14 @@ import { DispatchMovement } from "../../../application/use-cases/movement/Dispat
 import { ReceiveMovement } from "../../../application/use-cases/movement/ReceiveMovement";
 import { GetMovements } from "../../../application/use-cases/movement/GetMovements";
 
+
 export class MovementController {
     constructor(
         private registerMovement: RegisterMovement,
         private dispatchMovement: DispatchMovement,
         private receiveMovement: ReceiveMovement,
         private getMovements: GetMovements
-    ) {}
+    ) { }
 
     /**
      * @swagger
@@ -62,7 +63,7 @@ export class MovementController {
      */
     async dispatch(req: Request, res: Response) {
         try {
-            const result = await this.dispatchMovement.execute(req.params.id as string);
+            const result = await this.dispatchMovement.execute(req.params.id as string, req.body.evidenceUrl as string);
             res.status(200).json(result);
         } catch (error: any) {
             res.status(500).json({ message: error.message });
@@ -86,7 +87,7 @@ export class MovementController {
      */
     async receive(req: Request, res: Response) {
         try {
-            const result = await this.receiveMovement.execute(req.params.id as string);
+            const result = await this.receiveMovement.execute(req.params.id as string, req.body.receiverId, req.body.receiverEvidenceUrl);
             res.status(200).json(result);
         } catch (error: any) {
             res.status(500).json({ message: error.message });

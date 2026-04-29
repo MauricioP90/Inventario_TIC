@@ -3,7 +3,7 @@ import { Movement } from "../../../../domain/entities/Movement";
 import { IMovementRepository } from "../../../../domain/repositories/IMovementRepository";
 import { MovementEntity } from "../entities/MovementEntity";
 import { ActivoEntity } from "../entities/ActivoEntity";
-import { MovementMapper } from "../../../mappers/MovementMapper";
+import { MovementMapper } from "../../mappers/MovementMapper";
 
 export class TypeORMMovementRepository implements IMovementRepository {
     constructor(private readonly repository: Repository<MovementEntity>) { }
@@ -37,7 +37,7 @@ export class TypeORMMovementRepository implements IMovementRepository {
     async findById(id: string): Promise<Movement | null> {
         const entity = await this.repository.findOne({
             where: { id },
-            relations: ['activos', 'originLocation', 'destinationLocation', 'responsible']
+            relations: ['activos', 'originLocation', 'destinationLocation', 'responsible', 'receiver']
         });
 
         return entity ? MovementMapper.toDomain(entity) : null;
@@ -51,6 +51,7 @@ export class TypeORMMovementRepository implements IMovementRepository {
             .leftJoinAndSelect('movement.originLocation', 'originLocation')
             .leftJoinAndSelect('movement.destinationLocation', 'destinationLocation')
             .leftJoinAndSelect('movement.responsible', 'responsible')
+            .leftJoinAndSelect('movement.receiver', 'receiver')
             .orderBy('movement.created_at', 'DESC')
             .getMany();
 
@@ -58,12 +59,12 @@ export class TypeORMMovementRepository implements IMovementRepository {
     }
 
     async findAllByLocationId(locationId: string): Promise<Movement[]> {
-         const entities = await this.repository.find({
+        const entities = await this.repository.find({
             where: [
                 { originLocationId: locationId },
                 { destinationLocationId: locationId }
             ],
-            relations: ['activos', 'originLocation', 'destinationLocation', 'responsible'],
+            relations: ['activos', 'originLocation', 'destinationLocation', 'responsible', 'receiver'],
             order: { createdAt: 'DESC' }
         });
 
@@ -72,7 +73,7 @@ export class TypeORMMovementRepository implements IMovementRepository {
 
     async findAll(): Promise<Movement[]> {
         const entities = await this.repository.find({
-            relations: ['activos', 'originLocation', 'destinationLocation', 'responsible'],
+            relations: ['activos', 'originLocation', 'destinationLocation', 'responsible', 'receiver'],
             order: { createdAt: 'DESC' }
         });
 

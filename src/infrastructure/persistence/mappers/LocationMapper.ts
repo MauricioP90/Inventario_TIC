@@ -1,4 +1,4 @@
-import { Location, EstadoLocation } from "../../../domain/entities/Location";
+import { Location, EstadoLocation, TipoLocation } from "../../../domain/entities/Location";
 import { LocationEntity } from "../typeorm/entities/LocationEntity";
 
 export class LocationMapper {
@@ -8,6 +8,7 @@ export class LocationMapper {
             code: entity.code,
             nombre: entity.nombre,
             coordenadas: entity.coordenadas,
+            tipo: entity.tipo as TipoLocation,
             estado: entity.estado as EstadoLocation,
             responsibleIds: entity.responsibles?.map(resp => resp.id)
         });
@@ -19,6 +20,7 @@ export class LocationMapper {
         entity.code = domain.code;
         entity.nombre = domain.nombre;
         entity.coordenadas = domain.coordenadas || undefined;
+        entity.tipo = domain.tipo;
         entity.estado = domain.estado;
         // La relación Many-to-Many se gestiona en el repositorio mediante los IDs
         return entity;

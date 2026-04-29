@@ -1,5 +1,5 @@
-import { Movement, MovementStatus } from "../../domain/entities/Movement";
-import { MovementEntity } from "../persistence/typeorm/entities/MovementEntity";
+import { Movement, MovementStatus } from "../../../domain/entities/Movement";
+import { MovementEntity } from "../typeorm/entities/MovementEntity";
 
 export class MovementMapper {
     static toDomain(entity: MovementEntity): Movement {
@@ -9,10 +9,12 @@ export class MovementMapper {
             originLocationId: entity.originLocationId,
             destinationLocationId: entity.destinationLocationId,
             responsibleId: entity.responsibleId,
+            receiverId: entity.receiverId,
             status: entity.status as MovementStatus,
             activoIds: entity.activos?.map(a => a.id) || [],
             notes: entity.notes,
             evidenceUrl: entity.evidenceUrl,
+            receivedEvidenceUrl: entity.receivedEvidenceUrl,
             createdAt: entity.createdAt,
             shippedAt: entity.shippedAt || undefined,
             receivedAt: entity.receivedAt || undefined
@@ -26,13 +28,15 @@ export class MovementMapper {
         entity.originLocationId = domain.originLocationId;
         entity.destinationLocationId = domain.destinationLocationId;
         entity.responsibleId = domain.responsibleId;
+        entity.receiverId = domain.receiverId;
         entity.status = domain.status;
         entity.notes = domain.notes;
         entity.evidenceUrl = domain.evidenceUrl;
+        entity.receivedEvidenceUrl = domain.receivedEvidenceUrl;
         entity.createdAt = domain.createdAt!;
         entity.shippedAt = domain.shippedAt;
         entity.receivedAt = domain.receivedAt;
-        
+
         // Nota: Los activos se manejan usualmente en el repositorio
         // debido a que necesitan ser cargados desde la DB
         return entity;

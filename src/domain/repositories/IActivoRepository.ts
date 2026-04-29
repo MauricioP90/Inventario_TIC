@@ -7,4 +7,5 @@ export interface IActivoRepository {
     update(activo: Activo): Promise<Activo>;
     findBySerial(serial: string): Promise<Activo | null>;
     countByResponsibleId(responsibleId: string): Promise<number>;
+    findById(id: string): Promise<Activo | null>;
 }

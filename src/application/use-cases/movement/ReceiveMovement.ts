@@ -6,9 +6,9 @@ export class ReceiveMovement {
     constructor(
         private readonly movementRepository: IMovementRepository,
         private readonly activoRepository: IActivoRepository
-    ) {}
+    ) { }
 
-    async execute(id: string): Promise<Movement> {
+    async execute(id: string, receiverId: string, receiverEvidenceUrl: string): Promise<Movement> {
         // 1. Buscar el movimiento
         const movement = await this.movementRepository.findById(id);
         if (!movement) {
@@ -16,7 +16,7 @@ export class ReceiveMovement {
         }
 
         // 2. Aplicar lógica de dominio para recibir
-        movement.receive();
+        movement.receive(receiverId, receiverEvidenceUrl);
 
         // 3. Actualizar la ubicación de todos los activos involucrados
         const assets = await this.activoRepository.findAll(); // En un entorno real usaríamos findByIds

@@ -6,6 +6,7 @@ import { UpdateActivo } from "../../../application/use-cases/activo/UpdateActivo
 import { DarDeBajaActivo } from "../../../application/use-cases/activo/DarDeBajaActivo";
 import { AssingSIMToActivo } from "../../../application/use-cases/activo/AssingSIMToActivo";
 import { GetActivoMetadata } from "../../../application/use-cases/activo/GetActivoMetadata";
+import { FindByIdActivo } from "../../../application/use-cases/activo/FindByActivo";
 
 export class ActivoController {
     constructor(
@@ -15,7 +16,8 @@ export class ActivoController {
         private updateActivo: UpdateActivo,
         private darDeBajaActivo: DarDeBajaActivo,
         private assignSIMToActivo: AssingSIMToActivo,
-        private getMetadataUseCase: GetActivoMetadata
+        private getMetadataUseCase: GetActivoMetadata,
+        private findByIdActivo: FindByIdActivo
     ) { }
 
     /**
@@ -245,4 +247,36 @@ export class ActivoController {
         }
     }
 
+    /**
+     * @swagger
+     * /api/activos/{id}:
+     *   get:
+     *     summary: Obtener un activo por su ID
+     *     tags: [Activos]
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *         description: ID único del activo
+     *     responses:
+     *       200:
+     *         description: Activo encontrado
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/Activo'
+     *       404:
+     *         description: Activo no encontrado
+     */
+    async findByActivo(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const activo = await this.findByIdActivo.execute({ id: id as string });
+            res.json(activo);
+        } catch (error: any) {
+            res.status(404).json({ message: error.message });
+        }
+    }
 }

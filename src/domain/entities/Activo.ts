@@ -8,7 +8,8 @@ export enum EstadoActivo {
     BODEGA = 'BODEGA',
     OPERACION = 'OPERACION',
     MANTENIMIENTO = 'MANTENIMIENTO',
-    BAJA = 'BAJA'
+    BAJA = 'BAJA',
+    EN_TRANSIT = 'EN_TRANSITO'
 }
 
 export interface ActivoProps {
@@ -120,5 +121,9 @@ export class Activo {
             location: this.props.location ? this.props.location.toJSON() : undefined,
             responsable: this.props.responsable ? this.props.responsable.toJSON() : undefined
         };
+    }
+
+    public setStatus(status: EstadoActivo) {
+        this.props.estado = status;
     }
 }

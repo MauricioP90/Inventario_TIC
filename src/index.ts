@@ -11,8 +11,10 @@ import { LocationRouter } from "./infrastructure/http/routes/LocationRoutes";
 import { responsibleRouter } from "./infrastructure/http/routes/ResponsibleRoutes";
 import { activoRouter } from "./infrastructure/http/routes/ActivoRoutes";
 import { movementRouter } from "./infrastructure/http/routes/MovementRoutes";
+import { fileRouter } from "./infrastructure/http/routes/FileRoutes";
 import { setupSwagger } from "./infrastructure/http/swagger";
 import { keycloak, memoryStore } from "./infrastructure/http/middleware/KeycloakConfig";
+import * as path from 'path';
 
 
 const app = express();
@@ -43,12 +45,16 @@ app.use(keycloak.middleware());
 // Registro de Swagger
 setupSwagger(app);
 
+// Servir archivos estáticos (facturas, soportes)
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
 // Registro de Rutas
 app.use("/api/sim-cards", simCardRouter);
 app.use("/api/locations", LocationRouter);
 app.use("/api/responsibles", responsibleRouter);
 app.use("/api/movements", movementRouter);
 app.use("/api/activos", activoRouter);
+app.use("/api/files", fileRouter);
 
 
 /**

@@ -40,7 +40,7 @@ const getOneUC = new GetOneActivo(activoRepo);
 const updateUC = new UpdateActivo(activoRepo, locationRepo, responsibleRepo);
 const darDeBajaUC = new DarDeBajaActivo(activoRepo);
 const assignSIMUC = new AssingSIMToActivo(activoRepo, simCardRepo);
-const getMetadataUC = new GetActivoMetadata(tipoActivoRepo);
+const getMetadataUC = new GetActivoMetadata(tipoActivoRepo, locationRepo);
 
 // 3. Inicializamos Controlador
 const controller = new ActivoController(createUC, getAllUC, getOneUC, updateUC, darDeBajaUC, assignSIMUC, getMetadataUC);

@@ -5,7 +5,7 @@ import { IResponsibleRepository } from "../../../domain/repositories/IResponsibl
 
 // definimos la interface de entrada
 interface createActivoInput {
-    id: string;
+    id?: string; // Ahora es opcional
     placa: string;
     tipoActivoId: string;
     marca: string;
@@ -13,7 +13,7 @@ interface createActivoInput {
     serial: string;
     estado: EstadoActivo;
     facturaUrl?: string;
-    fechaIngreso: Date;
+    fechaIngreso: Date | string; // Aceptamos string para parsear
     locationId: string;
     responsibleId: string;
 }
@@ -28,8 +28,16 @@ export class CreateActivo {
     ) { }
 
     async execute(input: createActivoInput): Promise<Activo> {
+        // Aseguramos que la fecha sea un objeto Date
+        const fechaParseada = typeof input.fechaIngreso === 'string' 
+            ? new Date(input.fechaIngreso) 
+            : input.fechaIngreso;
 
-        const activo = new Activo(input);
+        const activo = new Activo({
+            ...input,
+            id: input.id,
+            fechaIngreso: fechaParseada
+        });
 
         // Validar existencia de ubicación y responsable
         const location = await this.locationRepository.findById(input.locationId);
@@ -38,8 +46,12 @@ export class CreateActivo {
         const responsible = await this.responsibleRepository.findById(input.responsibleId);
         if (!responsible) throw new Error('Responsable no encontrado');
 
+        // Validación estricta: el responsable debe tener permisos en la sede seleccionada
         if (!responsible.locationIds.includes(input.locationId)) {
-            throw new Error('Conflicto: El responsable seleccionado no tiene permisos asignados en la sede a la cual está vinculado este activo.');
+            throw new Error(
+                `El responsable "${responsible.nombre}" no tiene permisos asignados en la sede seleccionada. ` +
+                `Por favor asigne al responsable a esa sede desde el módulo de Responsables, o elija otro responsable.`
+            );
         }
 
         const existe = await this.activoRepository.findByPlaca(input.placa);

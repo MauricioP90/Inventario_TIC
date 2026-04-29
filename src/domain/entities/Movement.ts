@@ -13,10 +13,12 @@ export interface MovementProps {
     originLocationId: string;
     destinationLocationId: string;
     responsibleId: string;
+    receiverId?: string;
     status: MovementStatus;
     activoIds: string[];
     notes?: string;
     evidenceUrl?: string;
+    receivedEvidenceUrl?: string;
     createdAt?: Date;
     shippedAt?: Date;
     receivedAt?: Date;
@@ -54,6 +56,8 @@ export class Movement {
     get originLocationId(): string { return this.props.originLocationId; }
     get destinationLocationId(): string { return this.props.destinationLocationId; }
     get responsibleId(): string { return this.props.responsibleId; }
+    get receiverId(): string | undefined { return this.props.receiverId; }
+    get receivedEvidenceUrl(): string | undefined { return this.props.receivedEvidenceUrl; }
     get status(): MovementStatus { return this.props.status; }
     get activoIds(): string[] { return this.props.activoIds; }
     get notes(): string | undefined { return this.props.notes; }
@@ -62,20 +66,25 @@ export class Movement {
     get shippedAt(): Date | undefined { return this.props.shippedAt; }
     get receivedAt(): Date | undefined { return this.props.receivedAt; }
 
-    public dispatch() {
+
+    public dispatch(responsibleId: string, evidenceUrl?: string) {
         if (this.props.status !== MovementStatus.PENDING) {
             throw new Error('Solo se pueden despachar movimientos pendientes');
         }
         this.props.status = MovementStatus.EN_TRANSIT;
         this.props.shippedAt = new Date();
+        this.props.evidenceUrl = evidenceUrl;
+        this.props.responsibleId = responsibleId;
     }
 
-    public receive() {
+    public receive(receiverId: string, receivedEvidenceUrl: string) {
         if (this.props.status !== MovementStatus.EN_TRANSIT) {
             throw new Error('Solo se pueden recibir movimientos que estén en tránsito');
         }
         this.props.status = MovementStatus.RECEIVED;
         this.props.receivedAt = new Date();
+        this.props.receiverId = receiverId;
+        this.props.receivedEvidenceUrl = receivedEvidenceUrl;
     }
 
     public cancel() {

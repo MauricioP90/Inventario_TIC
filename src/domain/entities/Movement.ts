@@ -7,9 +7,26 @@ export enum MovementStatus {
     CANCELLED = 'CANCELLED'
 }
 
+export enum MovementType {
+    // Activos
+    REGIONAL_TRANSFER = 'TRASLADO_REGIONAL',
+    OFFICE_ASSIGNMENT = 'ASIGNACION_OFICINA',
+    LOAN_OUT = 'SALIDA_PRESTAMO',
+    SUPPORT_RETURN = 'RETORNO_SOPORTE',
+    PROVIDER_WARRANTY = 'ENVIO_GARANTIA',
+    SUPPORT_REENTRY = 'REINGRESO_SOPORTE',
+    DISPOSAL = 'BAJA_ACTIVO',
+    // SIM Cards
+    SIM_ASSIGNMENT = 'SIM_ASIGNACION',
+    SIM_CHANGE = 'SIM_CAMBIO',
+    SIM_REMOVAL = 'SIM_RETIRO',
+    SIM_FULL_REMOVAL = 'SIM_RETIRO_TOTAL',
+    SIM_TRANSFER = 'SIM_TRASLADO'
+}
+
 export interface MovementProps {
     id?: string;
-    type: string;
+    type: MovementType | string; // Permitimos string temporalmente para retrocompatibilidad
     originLocationId: string;
     destinationLocationId: string;
     responsibleId: string;

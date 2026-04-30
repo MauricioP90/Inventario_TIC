@@ -23,6 +23,7 @@ import { UpdateActivo } from "../../../application/use-cases/activo/UpdateActivo
 import { DarDeBajaActivo } from "../../../application/use-cases/activo/DarDeBajaActivo";
 import { AssingSIMToActivo } from "../../../application/use-cases/activo/AssingSIMToActivo";
 import { GetActivoMetadata } from "../../../application/use-cases/activo/GetActivoMetadata";
+import { FindByIdActivo } from "../../../application/use-cases/activo/FindByActivo";
 
 const activoRouter = Router();
 
@@ -41,9 +42,10 @@ const updateUC = new UpdateActivo(activoRepo, locationRepo, responsibleRepo);
 const darDeBajaUC = new DarDeBajaActivo(activoRepo);
 const assignSIMUC = new AssingSIMToActivo(activoRepo, simCardRepo);
 const getMetadataUC = new GetActivoMetadata(tipoActivoRepo, locationRepo);
+const findByIdUC = new FindByIdActivo(activoRepo);
 
 // 3. Inicializamos Controlador
-const controller = new ActivoController(createUC, getAllUC, getOneUC, updateUC, darDeBajaUC, assignSIMUC, getMetadataUC);
+const controller = new ActivoController(createUC, getAllUC, getOneUC, updateUC, darDeBajaUC, assignSIMUC, getMetadataUC, findByIdUC);
 
 // 4. Definimos Rutas
 activoRouter.post("/", keycloak.protect(), (req, res) => controller.create(req, res));

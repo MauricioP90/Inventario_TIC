@@ -20,10 +20,10 @@ export class GetActivoMetadata {
 
         return {
             statuses: [
-                { id: EstadoActivo.BODEGA, label: 'En Bodega' },
-                { id: EstadoActivo.OPERACION, label: 'En Operación' },
+                { id: EstadoActivo.BODEGA, label: 'Bodega' },
+                { id: EstadoActivo.OPERACION, label: 'Operación' },
                 { id: EstadoActivo.MANTENIMIENTO, label: 'Mantenimiento' },
-                { id: EstadoActivo.BAJA, label: 'Baja / Inactivo' }
+                { id: EstadoActivo.BAJA, label: 'Inactivo' }
             ],
             types: tiposActivos.map(t => ({
                 id: t.id,

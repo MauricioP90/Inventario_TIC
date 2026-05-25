@@ -6,10 +6,15 @@ import { IResponsibleRepository } from "../../../domain/repositories/IResponsibl
 
 interface UpdateActivoInput {
     placa: string;
+    tipoActivoId?: string;
+    marca?: string;
+    modelo?: string;
+    serial?: string;
     estado?: EstadoActivo;
     facturaUrl?: string;
     locationId?: string;
     responsibleId?: string;
+    fechaIngreso?: Date | string;
 }
 
 export class UpdateActivo {
@@ -43,12 +48,16 @@ export class UpdateActivo {
             activo.asignarResponsable(responsible);
         }
 
-        if (input.estado || input.facturaUrl) {
-            activo.update({
-                estado: input.estado,
-                facturaUrl: input.facturaUrl
-            });
-        }
+        activo.update({
+            ...(input.tipoActivoId && { tipoActivoId: input.tipoActivoId }),
+            ...(input.marca && { marca: input.marca }),
+            ...(input.modelo && { modelo: input.modelo }),
+            ...(input.serial && { serial: input.serial }),
+            ...(input.estado && { estado: input.estado }),
+            ...(input.fechaIngreso && { fechaIngreso: new Date(input.fechaIngreso) }),
+            ...(input.facturaUrl !== undefined && { facturaUrl: input.facturaUrl })
+        });
+
         await this.activoRepository.save(activo);
         return activo;
     }

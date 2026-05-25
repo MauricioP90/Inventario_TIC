@@ -84,17 +84,20 @@ export class Activo {
 
     // Lógica de negocio: Asignar Responsable
     public asignarResponsable(responsable: Responsible) {
-
         if (!responsable) throw new Error('El responsable es obligatorio');
         this.props.responsable = responsable;
+        this.props.responsibleId = responsable.id;
     }
 
     // Lógica de negocio: Asignar Ubicación
     public asignarUbicacion(location: Location) {
         if (!location) throw new Error('La ubicación es obligatoria');
         if (location.estado !== EstadoLocation.ACTIVO) throw new Error('La ubicación debe estar activa');
-        if (this.props.location && this.props.location.id === location.id) throw new Error('El activo no puede estar en mas de una ubicacion');
+        if (this.props.location && this.props.location.id === location.id) {
+            return;
+        }
         this.props.location = location;
+        this.props.locationId = location.id;
     }
 
 

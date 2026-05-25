@@ -7,6 +7,7 @@ import { DarDeBajaActivo } from "../../../application/use-cases/activo/DarDeBaja
 import { AssingSIMToActivo } from "../../../application/use-cases/activo/AssingSIMToActivo";
 import { GetActivoMetadata } from "../../../application/use-cases/activo/GetActivoMetadata";
 import { FindByIdActivo } from "../../../application/use-cases/activo/FindByActivo";
+import { GetDashboardSummary } from "../../../application/use-cases/activo/GetDashboardSummary";
 
 export class ActivoController {
     constructor(
@@ -17,7 +18,8 @@ export class ActivoController {
         private darDeBajaActivo: DarDeBajaActivo,
         private assignSIMToActivo: AssingSIMToActivo,
         private getMetadataUseCase: GetActivoMetadata,
-        private findByIdActivo: FindByIdActivo
+        private findByIdActivo: FindByIdActivo,
+        private getDashboardSummaryUseCase: GetDashboardSummary
     ) { }
 
     /**
@@ -242,6 +244,48 @@ export class ActivoController {
         try {
             const metadata = await this.getMetadataUseCase.execute();
             res.json(metadata);
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    /**
+     * @swagger
+     * /api/activos/dashboard:
+     *   get:
+     *     summary: Obtener resumen del inventario para el Dashboard
+     *     tags: [Activos]
+     *     responses:
+     *       200:
+     *         description: Resumen con contadores por estado, sede, responsable y tipo de dispositivo
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 statusCounts:
+     *                   type: object
+     *                   additionalProperties:
+     *                     type: integer
+     *                 locationCounts:
+     *                   type: object
+     *                   additionalProperties:
+     *                     type: integer
+     *                 responsibleCounts:
+     *                   type: object
+     *                   additionalProperties:
+     *                     type: integer
+     *                 typeCounts:
+     *                   type: object
+     *                   additionalProperties:
+     *                     type: integer
+     *       500:
+     *         description: Error interno del servidor
+     */
+    async getDashboardSummary(req: Request, res: Response) {
+        try {
+            const summary = await this.getDashboardSummaryUseCase.execute();
+            res.json(summary);
         } catch (error: any) {
             res.status(500).json({ message: error.message });
         }

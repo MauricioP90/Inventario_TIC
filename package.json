@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Inventory system built with Hexagonal Architecture + DDD (backend) and Angular (frontend), using TypeORM and a relational DB",
   "main": "index.js",
+  "packageManager": "pnpm@11.3.0",
   "scripts": {
     "typeorm": "typeorm-ts-node-commonjs",
     "migration:generate": "npm run typeorm migration:generate -- -d src/data-source.ts",

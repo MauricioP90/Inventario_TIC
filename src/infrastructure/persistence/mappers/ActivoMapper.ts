@@ -3,11 +3,12 @@ import { ActivoEntity } from '../typeorm/entities/ActivoEntity';
 import { LocationMapper } from './LocationMapper';
 import { ResponsibleMapper } from './ResponsibleMapper';
 import { TipoActivoMapper } from './TipoActivoMapper';
+import { SIMCardMapper } from './SIMCardMapper';
 
 export class ActivoMapper {
     // Convierte de la base de datos al Dominio
     public static toDomain(entity: ActivoEntity): Activo {
-        return new Activo({
+        const domain = new Activo({
             id: entity.id,
             placa: entity.placa,
             tipoActivoId: entity.tipoActivoId as string,
@@ -23,6 +24,14 @@ export class ActivoMapper {
             responsable: entity.responsible ? ResponsibleMapper.toDomain(entity.responsible) : undefined,
             tipoActivo: entity.tipoActivo ? TipoActivoMapper.toDomain(entity.tipoActivo) : undefined
         });
+
+        if (entity.simCards) {
+            entity.simCards.forEach(sim => {
+                domain.asignarSIMCard(SIMCardMapper.toDomain(sim));
+            });
+        }
+
+        return domain;
     }
 
     // Convierte del Dominio a la base de datos

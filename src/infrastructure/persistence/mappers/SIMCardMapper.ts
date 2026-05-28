@@ -25,6 +25,8 @@ export class SIMCardMapper {
             entity.activo = {
                 id: domain.activoId
             } as any;
+        } else {
+            entity.activo = null as any;
         }
 
         return entity;

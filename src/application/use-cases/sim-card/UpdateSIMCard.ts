@@ -7,6 +7,7 @@ interface UpdateSIMCardInput {
     numero?: string;
     operador?: string;
     estado?: string;
+    activoId?: string | null;
 }
 
 export class UpdateSIMCard {
@@ -15,15 +16,14 @@ export class UpdateSIMCard {
     async execute(input: UpdateSIMCardInput): Promise<SIMCard> {
         const simCard = await this.simCardRepository.findById(input.id);
         if (!simCard) throw new Error('SIMCard no encontrada');
-        // Llamamos al nuevo método que acabas de crear en la entidad
 
         simCard.update({
             iccid: input.iccid,
             numero: input.numero,
             operador: input.operador,
-            estado: input.estado as EstadoSIM // Casteamos al enum del dominio
+            estado: input.estado as EstadoSIM,
+            activoId: input.activoId === null || input.activoId === '' ? undefined : input.activoId
         });
-
 
         await this.simCardRepository.save(simCard);
         return simCard;

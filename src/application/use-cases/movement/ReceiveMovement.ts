@@ -23,7 +23,7 @@ export class ReceiveMovement {
         const assetsInMovement = assets.filter(a => movement.activoIds.includes(a.id!));
 
         for (const activo of assetsInMovement) {
-            activo.changeLocation(movement.destinationLocationId);
+            activo.aplicarRecepcionDeMovimiento(movement.type, movement.destinationLocationId);
             await this.activoRepository.update(activo);
         }
 

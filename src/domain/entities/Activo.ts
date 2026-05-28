@@ -61,6 +61,7 @@ export class Activo {
     get marca() { return this.props.marca; }
     get modelo() { return this.props.modelo; }
     get tipoActivoId() { return this.props.tipoActivoId; }
+    get tipoActivo() { return this.props.tipoActivo; }
     get facturaUrl() { return this.props.facturaUrl; }
     get fechaIngreso() { return this.props.fechaIngreso; }
     get location() { return this.props.location; }
@@ -70,7 +71,39 @@ export class Activo {
 
     // Lógica de negocio: Cambiar estado
     public darDeBaja() {
+        if (!this.puedeDarDeBaja()) {
+            throw new Error('No se puede dar de baja el activo porque tiene SIM Cards asociadas activas');
+        }
         this.props.estado = EstadoActivo.BAJA;
+    }
+
+    public puedeDarDeBaja(): boolean {
+        return !this._simCards || this._simCards.length === 0;
+    }
+
+    public aplicarRecepcionDeMovimiento(tipoMovimiento: string, destinationLocationId: string) {
+        if (!destinationLocationId) throw new Error('La ubicación de destino es obligatoria');
+        
+        // Actualizar ubicación
+        this.changeLocation(destinationLocationId);
+
+        // Mapear tipo de movimiento a estado de activo
+        const tipo = tipoMovimiento.toUpperCase();
+        if (
+            tipo === 'ASIGNACION_OFICINA' || 
+            tipo === 'TRASLADO_REGIONAL' || 
+            tipo === 'SALIDA_PRESTAMO' ||
+            tipo === 'ASIGNACION' ||
+            tipo === 'TRASLADO'
+        ) {
+            this.setStatus(EstadoActivo.OPERACION);
+        } else if (tipo === 'RETORNO_SOPORTE' || tipo === 'REINGRESO_SOPORTE') {
+            this.setStatus(EstadoActivo.BODEGA);
+        } else if (tipo === 'ENVIO_GARANTIA') {
+            this.setStatus(EstadoActivo.MANTENIMIENTO);
+        } else if (tipo === 'BAJA_ACTIVO') {
+            this.setStatus(EstadoActivo.BAJA);
+        }
     }
 
     // Lógica de negocio: Asignar SIMCard

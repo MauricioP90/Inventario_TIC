@@ -101,8 +101,8 @@ export class SIMCardController {
      */
     async assign(req: Request, res: Response) {
         try {
-            // Recibimos simCardId de la URL y placaActivo del body
-            const { simCardId } = req.params;
+            // Recibimos simCardId de la URL o del body, y placaActivo del body
+            const simCardId = req.params.simCardId || req.body.simCardId;
             const { placaActivo } = req.body;
 
             await this.assignSIMToActivo.execute({

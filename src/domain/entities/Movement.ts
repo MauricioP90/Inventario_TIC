@@ -33,6 +33,7 @@ export interface MovementProps {
     receiverId?: string;
     status: MovementStatus;
     activoIds: string[];
+    simCardIds?: string[];
     notes?: string;
     evidenceUrl?: string;
     receivedEvidenceUrl?: string;
@@ -50,7 +51,8 @@ export class Movement {
             id: props.id || randomUUID(),
             status: props.status || MovementStatus.PENDING,
             createdAt: props.createdAt || new Date(),
-            activoIds: props.activoIds || []
+            activoIds: props.activoIds || [],
+            simCardIds: props.simCardIds || []
         };
         this.validar();
     }
@@ -63,8 +65,11 @@ export class Movement {
             throw new Error('La sede de origen y destino no pueden ser la misma');
         }
         if (!this.props.responsibleId) throw new Error('El responsable es obligatorio');
-        if (!this.props.activoIds || this.props.activoIds.length === 0) {
-            throw new Error('Debe haber al menos un activo en el movimiento');
+        
+        const hasActivos = this.props.activoIds && this.props.activoIds.length > 0;
+        const hasSIMs = this.props.simCardIds && this.props.simCardIds.length > 0;
+        if (!hasActivos && !hasSIMs) {
+            throw new Error('Debe haber al menos un activo o una tarjeta SIM en el movimiento');
         }
     }
 
@@ -77,6 +82,7 @@ export class Movement {
     get receivedEvidenceUrl(): string | undefined { return this.props.receivedEvidenceUrl; }
     get status(): MovementStatus { return this.props.status; }
     get activoIds(): string[] { return this.props.activoIds; }
+    get simCardIds(): string[] { return this.props.simCardIds || []; }
     get notes(): string | undefined { return this.props.notes; }
     get evidenceUrl(): string | undefined { return this.props.evidenceUrl; }
     get createdAt(): Date | undefined { return this.props.createdAt; }
@@ -84,14 +90,13 @@ export class Movement {
     get receivedAt(): Date | undefined { return this.props.receivedAt; }
 
 
-    public dispatch(responsibleId: string, evidenceUrl?: string) {
+    public dispatch(evidenceUrl?: string) {
         if (this.props.status !== MovementStatus.PENDING) {
             throw new Error('Solo se pueden despachar movimientos pendientes');
         }
         this.props.status = MovementStatus.EN_TRANSIT;
         this.props.shippedAt = new Date();
         this.props.evidenceUrl = evidenceUrl;
-        this.props.responsibleId = responsibleId;
     }
 
     public receive(receiverId: string, receivedEvidenceUrl: string) {

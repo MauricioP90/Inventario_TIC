@@ -3,6 +3,7 @@ import { RegisterMovement } from "../../../application/use-cases/movement/Regist
 import { DispatchMovement } from "../../../application/use-cases/movement/DispatchMovement";
 import { ReceiveMovement } from "../../../application/use-cases/movement/ReceiveMovement";
 import { GetMovements } from "../../../application/use-cases/movement/GetMovements";
+import { RejectMovement } from "../../../application/use-cases/movement/RejectMovement";
 
 
 export class MovementController {
@@ -10,7 +11,8 @@ export class MovementController {
         private registerMovement: RegisterMovement,
         private dispatchMovement: DispatchMovement,
         private receiveMovement: ReceiveMovement,
-        private getMovements: GetMovements
+        private getMovements: GetMovements,
+        private rejectMovement: RejectMovement
     ) { }
 
     /**
@@ -87,7 +89,7 @@ export class MovementController {
      */
     async receive(req: Request, res: Response) {
         try {
-            const result = await this.receiveMovement.execute(req.params.id as string, req.body.receiverId, req.body.receiverEvidenceUrl);
+            const result = await this.receiveMovement.execute(req.params.id as string, req.body.receiverId, req.body.receiverEvidenceUrl, req.body.destinationLocationId);
             res.status(200).json(result);
         } catch (error: any) {
             res.status(500).json({ message: error.message });
@@ -118,6 +120,18 @@ export class MovementController {
                 locationId: req.query.locationId as string | undefined
             };
             const result = await this.getMovements.execute(filters);
+            res.status(200).json(result);
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    async reject(req: Request, res: Response) {
+        try {
+            const result = await this.rejectMovement.execute(
+                req.params.id as string,
+                req.body.rejectionReason as string
+            );
             res.status(200).json(result);
         } catch (error: any) {
             res.status(500).json({ message: error.message });

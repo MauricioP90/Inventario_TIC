@@ -9,7 +9,8 @@ export enum EstadoActivo {
     OPERACION = 'OPERACION',
     MANTENIMIENTO = 'MANTENIMIENTO',
     BAJA = 'BAJA',
-    EN_TRANSIT = 'EN_TRANSITO'
+    EN_TRANSIT = 'EN_TRANSITO',
+    RECHAZADO = 'RECHAZADO'
 }
 
 export interface ActivoProps {

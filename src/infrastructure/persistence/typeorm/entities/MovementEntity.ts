@@ -9,6 +9,9 @@ export class MovementEntity {
     @PrimaryColumn('uuid')
     id!: string;
 
+    @Column({ name: 'parent_movement_id', nullable: true })
+    parentMovementId?: string;
+
     @Column({ name: 'responsible_id' })
     responsibleId!: string;
 

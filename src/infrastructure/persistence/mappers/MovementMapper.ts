@@ -1,10 +1,14 @@
 import { Movement, MovementStatus } from "../../../domain/entities/Movement";
 import { MovementEntity } from "../typeorm/entities/MovementEntity";
+import { LocationMapper } from "./LocationMapper";
+import { ResponsibleMapper } from "./ResponsibleMapper";
+import { ActivoMapper } from "./ActivoMapper";
 
 export class MovementMapper {
     static toDomain(entity: MovementEntity): Movement {
         return new Movement({
             id: entity.id,
+            parentMovementId: entity.parentMovementId,
             type: entity.type,
             originLocationId: entity.originLocationId,
             destinationLocationId: entity.destinationLocationId,
@@ -17,13 +21,19 @@ export class MovementMapper {
             receivedEvidenceUrl: entity.receivedEvidenceUrl,
             createdAt: entity.createdAt,
             shippedAt: entity.shippedAt || undefined,
-            receivedAt: entity.receivedAt || undefined
+            receivedAt: entity.receivedAt || undefined,
+            originLocation: entity.originLocation ? LocationMapper.toDomain(entity.originLocation) : undefined,
+            destinationLocation: entity.destinationLocation ? LocationMapper.toDomain(entity.destinationLocation) : undefined,
+            responsible: entity.responsible ? ResponsibleMapper.toDomain(entity.responsible) : undefined,
+            receiver: entity.receiver ? ResponsibleMapper.toDomain(entity.receiver) : undefined,
+            activos: entity.activos ? entity.activos.map(a => ActivoMapper.toDomain(a)) : []
         });
     }
 
     static toPersistence(domain: Movement): MovementEntity {
         const entity = new MovementEntity();
         entity.id = domain.id!;
+        entity.parentMovementId = domain.parentMovementId;
         entity.type = domain.type;
         entity.originLocationId = domain.originLocationId;
         entity.destinationLocationId = domain.destinationLocationId;

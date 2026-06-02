@@ -26,6 +26,7 @@ export enum MovementType {
 
 export interface MovementProps {
     id?: string;
+    parentMovementId?: string;
     type: MovementType | string; // Permitimos string temporalmente para retrocompatibilidad
     originLocationId: string;
     destinationLocationId: string;
@@ -40,6 +41,11 @@ export interface MovementProps {
     createdAt?: Date;
     shippedAt?: Date;
     receivedAt?: Date;
+    originLocation?: any;
+    destinationLocation?: any;
+    responsible?: any;
+    receiver?: any;
+    activos?: any[];
 }
 
 export class Movement {
@@ -65,7 +71,7 @@ export class Movement {
             throw new Error('La sede de origen y destino no pueden ser la misma');
         }
         if (!this.props.responsibleId) throw new Error('El responsable es obligatorio');
-        
+
         const hasActivos = this.props.activoIds && this.props.activoIds.length > 0;
         const hasSIMs = this.props.simCardIds && this.props.simCardIds.length > 0;
         if (!hasActivos && !hasSIMs) {
@@ -74,6 +80,7 @@ export class Movement {
     }
 
     get id(): string | undefined { return this.props.id; }
+    get parentMovementId(): string | undefined { return this.props.parentMovementId; }
     get type(): string { return this.props.type; }
     get originLocationId(): string { return this.props.originLocationId; }
     get destinationLocationId(): string { return this.props.destinationLocationId; }
@@ -114,6 +121,13 @@ export class Movement {
             throw new Error('No se puede cancelar un movimiento ya recibido');
         }
         this.props.status = MovementStatus.CANCELLED;
+    }
+
+    public changeDestinationLocation(locationId: string) {
+        if (locationId === this.props.originLocationId) {
+            throw new Error('La sede de destino no puede ser igual a la de origen');
+        }
+        this.props.destinationLocationId = locationId;
     }
 
     public toJSON() {

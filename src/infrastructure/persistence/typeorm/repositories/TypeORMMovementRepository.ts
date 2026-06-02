@@ -37,7 +37,7 @@ export class TypeORMMovementRepository implements IMovementRepository {
     async findById(id: string): Promise<Movement | null> {
         const entity = await this.repository.findOne({
             where: { id },
-            relations: ['activos', 'originLocation', 'destinationLocation', 'responsible', 'receiver']
+            relations: ['activos', 'activos.simCards', 'originLocation', 'destinationLocation', 'responsible', 'responsible.role', 'receiver', 'receiver.role']
         });
 
         return entity ? MovementMapper.toDomain(entity) : null;
@@ -48,10 +48,13 @@ export class TypeORMMovementRepository implements IMovementRepository {
             .innerJoin('movement.activos', 'activo')
             .where('activo.id = :activoId', { activoId })
             .leftJoinAndSelect('movement.activos', 'activos')
+            .leftJoinAndSelect('activos.simCards', 'simCards')
             .leftJoinAndSelect('movement.originLocation', 'originLocation')
             .leftJoinAndSelect('movement.destinationLocation', 'destinationLocation')
             .leftJoinAndSelect('movement.responsible', 'responsible')
+            .leftJoinAndSelect('responsible.role', 'responsibleRole')
             .leftJoinAndSelect('movement.receiver', 'receiver')
+            .leftJoinAndSelect('receiver.role', 'receiverRole')
             .orderBy('movement.created_at', 'DESC')
             .getMany();
 
@@ -64,7 +67,7 @@ export class TypeORMMovementRepository implements IMovementRepository {
                 { originLocationId: locationId },
                 { destinationLocationId: locationId }
             ],
-            relations: ['activos', 'originLocation', 'destinationLocation', 'responsible', 'receiver'],
+            relations: ['activos', 'activos.simCards', 'originLocation', 'destinationLocation', 'responsible', 'responsible.role', 'receiver', 'receiver.role'],
             order: { createdAt: 'DESC' }
         });
 
@@ -73,7 +76,7 @@ export class TypeORMMovementRepository implements IMovementRepository {
 
     async findAll(): Promise<Movement[]> {
         const entities = await this.repository.find({
-            relations: ['activos', 'originLocation', 'destinationLocation', 'responsible', 'receiver'],
+            relations: ['activos', 'activos.simCards', 'originLocation', 'destinationLocation', 'responsible', 'responsible.role', 'receiver', 'receiver.role'],
             order: { createdAt: 'DESC' }
         });
 

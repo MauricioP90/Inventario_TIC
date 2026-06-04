@@ -14,6 +14,8 @@ import { SIMCardEntity } from "../../persistence/typeorm/entities/SIMCardEntity"
 import { TypeORMSIMCardRepository } from "../../persistence/typeorm/repositories/TypeORMSIMCardRepository";
 import { TipoActivoEntity } from "../../persistence/typeorm/entities/TipoActivoEntity";
 import { TypeORMTipoActivoRepository } from "../../persistence/typeorm/repositories/TypeORMTipoActivoRepository";
+import { MovementEntity } from "../../persistence/typeorm/entities/MovementEntity";
+import { TypeORMMovementRepository } from "../../persistence/typeorm/repositories/TypeORMMovementRepository";
 
 // Casos de Uso
 import { CreateActivo } from "../../../application/use-cases/activo/CreateActivo";
@@ -34,12 +36,13 @@ const responsibleRepo = new TypeORMResponsibleRepository(AppDataSource.getReposi
 const simCardRepo = new TypeORMSIMCardRepository(AppDataSource.getRepository(SIMCardEntity));
 const activoRepo = new TypeORMActivoRepository(AppDataSource.getRepository(ActivoEntity));
 const tipoActivoRepo = new TypeORMTipoActivoRepository(AppDataSource.getRepository(TipoActivoEntity));
+const movementRepo = new TypeORMMovementRepository(AppDataSource.getRepository(MovementEntity));
 
 // 2. Inicializamos Casos de Uso
 const createUC = new CreateActivo(activoRepo, locationRepo, responsibleRepo);
 const getAllUC = new GetAllActivo(activoRepo);
 const getOneUC = new GetOneActivo(activoRepo);
-const updateUC = new UpdateActivo(activoRepo, locationRepo, responsibleRepo);
+const updateUC = new UpdateActivo(activoRepo, locationRepo, responsibleRepo, movementRepo);
 const darDeBajaUC = new DarDeBajaActivo(activoRepo);
 const assignSIMUC = new AssingSIMToActivo(activoRepo, simCardRepo);
 const getMetadataUC = new GetActivoMetadata(tipoActivoRepo, locationRepo);

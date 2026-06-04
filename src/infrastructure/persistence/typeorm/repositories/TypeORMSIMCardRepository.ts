@@ -12,19 +12,19 @@ export class TypeORMSIMCardRepository implements ISIMCardRepository {
         await this.repository.save(entity);
     }
     async findById(id: string): Promise<SIMCard | null> {
-        const entity = await this.repository.findOne({ where: { id }, relations: ['activo'] });
+        const entity = await this.repository.findOne({ where: { id }, relations: ['activo', 'location', 'activo.location'] });
         return entity ? SIMCardMapper.toDomain(entity) : null;
     }
     async findByNumero(numero: string): Promise<SIMCard | null> {
-        const entity = await this.repository.findOne({ where: { numero }, relations: ['activo'] });
+        const entity = await this.repository.findOne({ where: { numero }, relations: ['activo', 'location', 'activo.location'] });
         return entity ? SIMCardMapper.toDomain(entity) : null;
     }
     async findAll(): Promise<SIMCard[]> {
-        const entities = await this.repository.find({ relations: ['activo'] });
+        const entities = await this.repository.find({ relations: ['activo', 'location', 'activo.location'] });
         return entities.map(entity => SIMCardMapper.toDomain(entity));
     }
     async findByIccid(iccid: string): Promise<SIMCard | null> {
-        const entity = await this.repository.findOne({ where: { iccid }, relations: ['activo'] });
+        const entity = await this.repository.findOne({ where: { iccid }, relations: ['activo', 'location', 'activo.location'] });
         return entity ? SIMCardMapper.toDomain(entity) : null;
     }
     async countByResponsibleId(responsibleId: string): Promise<number> {

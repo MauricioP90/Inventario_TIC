@@ -7,4 +7,5 @@ export interface IMovementRepository {
     findAllByActivoId(activoId: string): Promise<Movement[]>;
     findAllByLocationId(locationId: string): Promise<Movement[]>;
     findAll(): Promise<Movement[]>;
+    findByMagicLinkToken(token: string): Promise<Movement | null>;
 }

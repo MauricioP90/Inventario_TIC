@@ -11,6 +11,7 @@ export interface RegisterMovementDto {
     destinationLocationId: string;
     responsibleId: string;
     activoIds: string[];
+    simCardIds?: string[];
     notes?: string;
     recipients?: string[];
 }
@@ -44,9 +45,13 @@ export class RegisterMovement {
                 }
             }
         }
+        const isLocalSIM = ['SIM_ASIGNACION', 'SIM_CAMBIO', 'SIM_RETIRO', 'SIM_RETIRO_TOTAL'].includes(dto.type);
+        const destinationLocationId = isLocalSIM ? dto.originLocationId : dto.destinationLocationId;
+
         // 1. Crear la instancia de dominio (esto ya valida los campos básicos)
         const movement = new Movement({
             ...dto,
+            destinationLocationId,
             status: MovementStatus.PENDING
         });
         // 2. Persistir en la base de datos

@@ -7,6 +7,7 @@ interface CreateSIMCardInput {
     numero: string;
     operador: string;
     estado: EstadoSIM;
+    locationId?: string;
 }
 
 export class CreateSIMCard {

@@ -41,11 +41,14 @@ export interface MovementProps {
     createdAt?: Date;
     shippedAt?: Date;
     receivedAt?: Date;
+    magicLinkToken?: string;
+    physicalReceiverName?: string;
     originLocation?: any;
     destinationLocation?: any;
     responsible?: any;
     receiver?: any;
     activos?: any[];
+    simCards?: any[];
 }
 
 export class Movement {
@@ -67,7 +70,14 @@ export class Movement {
         if (!this.props.type) throw new Error('El tipo de movimiento es obligatorio');
         if (!this.props.originLocationId) throw new Error('La sede de origen es obligatoria');
         if (!this.props.destinationLocationId) throw new Error('La sede de destino es obligatoria');
-        if (this.props.originLocationId === this.props.destinationLocationId) {
+        const isLocalSIMMovement = [
+            'SIM_ASIGNACION',
+            'SIM_CAMBIO',
+            'SIM_RETIRO',
+            'SIM_RETIRO_TOTAL'
+        ].includes(this.props.type);
+
+        if (!isLocalSIMMovement && this.props.originLocationId === this.props.destinationLocationId) {
             throw new Error('La sede de origen y destino no pueden ser la misma');
         }
         if (!this.props.responsibleId) throw new Error('El responsable es obligatorio');
@@ -90,11 +100,14 @@ export class Movement {
     get status(): MovementStatus { return this.props.status; }
     get activoIds(): string[] { return this.props.activoIds; }
     get simCardIds(): string[] { return this.props.simCardIds || []; }
+    get simCards(): any[] { return this.props.simCards || []; }
     get notes(): string | undefined { return this.props.notes; }
     get evidenceUrl(): string | undefined { return this.props.evidenceUrl; }
     get createdAt(): Date | undefined { return this.props.createdAt; }
     get shippedAt(): Date | undefined { return this.props.shippedAt; }
     get receivedAt(): Date | undefined { return this.props.receivedAt; }
+    get magicLinkToken(): string | undefined { return this.props.magicLinkToken; }
+    get physicalReceiverName(): string | undefined { return this.props.physicalReceiverName; }
 
 
     public dispatch(evidenceUrl?: string) {
@@ -104,16 +117,24 @@ export class Movement {
         this.props.status = MovementStatus.EN_TRANSIT;
         this.props.shippedAt = new Date();
         this.props.evidenceUrl = evidenceUrl;
+        
+        // Generar magic link token
+        const { randomUUID } = require('node:crypto');
+        this.props.magicLinkToken = randomUUID();
     }
 
-    public receive(receiverId: string, receivedEvidenceUrl: string) {
+    public receive(receiverId: string | undefined, receivedEvidenceUrl: string, physicalReceiverName?: string) {
         if (this.props.status !== MovementStatus.EN_TRANSIT) {
             throw new Error('Solo se pueden recibir movimientos que estén en tránsito');
         }
         this.props.status = MovementStatus.RECEIVED;
         this.props.receivedAt = new Date();
-        this.props.receiverId = receiverId;
+        if (receiverId) this.props.receiverId = receiverId; // Solo se asigna si viene un ID válido
         this.props.receivedEvidenceUrl = receivedEvidenceUrl;
+        this.props.physicalReceiverName = physicalReceiverName;
+        
+        // El token mágico se consume
+        this.props.magicLinkToken = undefined;
     }
 
     public cancel() {

@@ -6,13 +6,20 @@ import { GetMovements } from "../../../application/use-cases/movement/GetMovemen
 import { RejectMovement } from "../../../application/use-cases/movement/RejectMovement";
 
 
+import { ReceiveByMagicLink } from "../../../application/use-cases/movement/ReceiveByMagicLink";
+import { GetMovementByMagicLink } from "../../../application/use-cases/movement/GetMovementByMagicLink";
+import { RejectByMagicLink } from "../../../application/use-cases/movement/RejectByMagicLink";
+
 export class MovementController {
     constructor(
         private registerMovement: RegisterMovement,
         private dispatchMovement: DispatchMovement,
         private receiveMovement: ReceiveMovement,
         private getMovements: GetMovements,
-        private rejectMovement: RejectMovement
+        private rejectMovement: RejectMovement,
+        private receiveByMagicLink: ReceiveByMagicLink,
+        private getMovementByMagicLink: GetMovementByMagicLink,
+        private rejectByMagicLink: RejectByMagicLink
     ) { }
 
     /**
@@ -135,6 +142,39 @@ export class MovementController {
             res.status(200).json(result);
         } catch (error: any) {
             res.status(500).json({ message: error.message });
+        }
+    }
+
+    async getPublicMovement(req: Request, res: Response) {
+        try {
+            const result = await this.getMovementByMagicLink.execute(req.params.token as string);
+            res.status(200).json(result);
+        } catch (error: any) {
+            res.status(404).json({ message: error.message });
+        }
+    }
+
+    async publicReceive(req: Request, res: Response) {
+        try {
+            const result = await this.receiveByMagicLink.execute(
+                req.params.token as string,
+                req.body.physicalReceiverName as string
+            );
+            res.status(200).json(result);
+        } catch (error: any) {
+            res.status(400).json({ message: error.message });
+        }
+    }
+
+    async publicReject(req: Request, res: Response) {
+        try {
+            const result = await this.rejectByMagicLink.execute(
+                req.params.token as string,
+                req.body.rejectionReason as string
+            );
+            res.status(200).json(result);
+        } catch (error: any) {
+            res.status(400).json({ message: error.message });
         }
     }
 }

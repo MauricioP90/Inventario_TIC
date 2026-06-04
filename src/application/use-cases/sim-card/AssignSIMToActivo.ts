@@ -15,6 +15,12 @@ export class AssignSIMToActivo {
         const activo = await this.activoRepository.findByPlaca(input.placaActivo);
 
         if (!simCard || !activo) throw new Error('SIMCard o Activo no encontrado');
+        
+        // Regla de Negocio: Deben estar en la misma ubicación
+        if (simCard.locationId && activo.locationId && simCard.locationId !== activo.locationId) {
+            throw new Error('No se puede asignar la SIM Card: La SIM Card y el Dispositivo deben estar registrados en la misma sede física.');
+        }
+
         // Usamos el ID interno para la relación en la base de datos
         simCard.asignarAActivo(activo.id!);
 

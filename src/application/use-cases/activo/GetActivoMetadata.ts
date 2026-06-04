@@ -20,7 +20,7 @@ export class GetActivoMetadata {
 
         return {
             statuses: [
-                { id: EstadoActivo.BODEGA, label: 'Bodega' },
+                { id: EstadoActivo.DISPONIBLE, label: 'Disponible' },
                 { id: EstadoActivo.OPERACION, label: 'Operación' },
                 { id: EstadoActivo.MANTENIMIENTO, label: 'Mantenimiento' },
                 { id: EstadoActivo.BAJA, label: 'Inactivo' }

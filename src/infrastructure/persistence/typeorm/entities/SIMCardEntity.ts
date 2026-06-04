@@ -1,5 +1,6 @@
 import { Entity, PrimaryColumn, Column, ManyToOne, JoinColumn } from "typeorm";
 import { ActivoEntity } from "./ActivoEntity";
+import { LocationEntity } from "./LocationEntity";
 
 @Entity('sim_cards')
 export class SIMCardEntity {
@@ -21,4 +22,8 @@ export class SIMCardEntity {
     @ManyToOne(() => ActivoEntity, { nullable: true })
     @JoinColumn({ name: 'activo_id' })
     activo?: ActivoEntity;
+
+    @ManyToOne(() => LocationEntity, { nullable: true })
+    @JoinColumn({ name: 'location_id' })
+    location?: LocationEntity;
 }

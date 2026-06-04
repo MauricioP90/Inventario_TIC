@@ -5,7 +5,7 @@ import { Responsible } from './Responsible';
 import { TipoActivo } from './TipoActivo';
 
 export enum EstadoActivo {
-    BODEGA = 'BODEGA',
+    DISPONIBLE = 'DISPONIBLE',
     OPERACION = 'OPERACION',
     MANTENIMIENTO = 'MANTENIMIENTO',
     BAJA = 'BAJA',
@@ -99,7 +99,7 @@ export class Activo {
         ) {
             this.setStatus(EstadoActivo.OPERACION);
         } else if (tipo === 'RETORNO_SOPORTE' || tipo === 'REINGRESO_SOPORTE') {
-            this.setStatus(EstadoActivo.BODEGA);
+            this.setStatus(EstadoActivo.DISPONIBLE);
         } else if (tipo === 'ENVIO_GARANTIA') {
             this.setStatus(EstadoActivo.MANTENIMIENTO);
         } else if (tipo === 'BAJA_ACTIVO') {

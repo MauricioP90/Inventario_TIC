@@ -18,7 +18,7 @@ export class AssingSIMToActivo {
 
         if (!activo || !sim) throw new Error('Activo o SIM no encontrado');
         if (sim.estado !== EstadoSIM.BODEGA) throw new Error('La SIM no está disponible');
-        if (activo.estado !== EstadoActivo.BODEGA) throw new Error('El activo no está disponible');
+        if (activo.estado !== EstadoActivo.DISPONIBLE) throw new Error('El activo no está disponible');
         if (sim.activoId) throw new Error('La SIM ya está asignada a otro activo');
 
         sim.asignarAActivo(activo.id!);

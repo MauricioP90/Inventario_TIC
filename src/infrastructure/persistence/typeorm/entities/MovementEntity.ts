@@ -2,6 +2,7 @@ import { Entity, PrimaryColumn, Column, CreateDateColumn, ManyToOne, JoinColumn,
 import { LocationEntity } from './LocationEntity';
 import { ResponsibleEntity } from './ResponsibleEntity';
 import { ActivoEntity } from './ActivoEntity';
+import { SIMCardEntity } from './SIMCardEntity';
 import { MovementStatus } from '../../../../domain/entities/Movement';
 
 @Entity('movements')
@@ -17,6 +18,12 @@ export class MovementEntity {
 
     @Column({ name: 'receiver_id', nullable: true })
     receiverId?: string;
+
+    @Column({ name: 'magic_link_token', nullable: true })
+    magicLinkToken?: string;
+
+    @Column({ name: 'physical_receiver_name', nullable: true })
+    physicalReceiverName?: string;
 
     @Column()
     type!: string; // Ejemplo: 'TRASLADO', 'ASIGNACION', 'MANTENIMIENTO'
@@ -74,4 +81,12 @@ export class MovementEntity {
         inverseJoinColumn: { name: 'activo_id', referencedColumnName: 'id' }
     })
     activos!: ActivoEntity[];
+
+    @ManyToMany(() => SIMCardEntity)
+    @JoinTable({
+        name: 'movement_sim_cards',
+        joinColumn: { name: 'movement_id', referencedColumnName: 'id' },
+        inverseJoinColumn: { name: 'sim_card_id', referencedColumnName: 'id' }
+    })
+    simCards!: SIMCardEntity[];
 }

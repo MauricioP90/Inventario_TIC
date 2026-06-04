@@ -9,7 +9,21 @@ export class SIMCardMapper {
             numero: entity.numero,
             operador: entity.operador,
             estado: entity.estado as EstadoSIM,
-            activoId: entity.activo?.id
+            activoId: entity.activo?.id,
+            locationId: entity.location?.id || entity.activo?.location?.id,
+            activo: entity.activo ? {
+                id: entity.activo.id,
+                placa: entity.activo.placa,
+                serial: entity.activo.serial,
+                marca: entity.activo.marca
+            } : null,
+            location: entity.location ? {
+                id: entity.location.id,
+                nombre: entity.location.nombre
+            } : (entity.activo?.location ? {
+                id: entity.activo.location.id,
+                nombre: entity.activo.location.nombre
+            } : null)
         });
     }
 
@@ -27,6 +41,14 @@ export class SIMCardMapper {
             } as any;
         } else {
             entity.activo = null as any;
+        }
+
+        if (domain.locationId) {
+            entity.location = {
+                id: domain.locationId
+            } as any;
+        } else {
+            entity.location = null as any;
         }
 
         return entity;

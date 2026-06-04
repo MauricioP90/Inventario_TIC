@@ -13,6 +13,9 @@ export interface SIMCardProps {
     operador: string;
     estado: EstadoSIM;
     activoId?: string; // Relación con un Activo (opcional)
+    locationId?: string; // Relación con una Location (opcional)
+    activo?: { id: string; placa: string; serial?: string; marca?: string } | null;
+    location?: { id: string; nombre: string } | null;
 }
 
 export class SIMCard {
@@ -31,13 +34,19 @@ export class SIMCard {
     get estado() { return this.props.estado; }
     get operador() { return this.props.operador; }
     get activoId() { return this.props.activoId; }
+    get locationId() { return this.props.locationId; }
 
     public asignarAActivo(activoId: string) {
         this.props.activoId = activoId;
         this.props.estado = EstadoSIM.ASIGNADA;
+        // Al estar asignada, hereda lógicamente la ubicación del activo, pero podemos limpiar locationId para no duplicar
+        this.props.locationId = undefined;
     }
 
     public darDeBajaSIM() {
+        if (this.props.activoId) {
+            throw new Error('No se puede dar de baja una SIM Card que está insertada en un dispositivo. Retírela primero.');
+        }
         this.props.estado = EstadoSIM.BAJA;
     }
 

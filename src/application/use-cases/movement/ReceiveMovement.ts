@@ -1,11 +1,13 @@
 import { Movement } from "../../../domain/entities/Movement";
 import { IMovementRepository } from "../../../domain/repositories/IMovementRepository";
 import { IActivoRepository } from "../../../domain/repositories/IActivoRepository";
+import { ISIMCardRepository } from "../../../domain/repositories/ISIMCardRepository";
 
 export class ReceiveMovement {
     constructor(
         private readonly movementRepository: IMovementRepository,
-        private readonly activoRepository: IActivoRepository
+        private readonly activoRepository: IActivoRepository,
+        private readonly simCardRepository: ISIMCardRepository
     ) { }
 
     async execute(id: string, receiverId: string, receiverEvidenceUrl: string, destinationLocationId?: string): Promise<Movement> {
@@ -27,7 +29,16 @@ export class ReceiveMovement {
             activo.aplicarRecepcionDeMovimiento(movement.type, movement.destinationLocationId);
             await this.activoRepository.update(activo);
         }
-        // 5. Persistir cambios del movimiento
+        // 5. Actualizar la ubicación de todas las SIM Cards involucradas
+        if (movement.simCardIds && movement.simCardIds.length > 0) {
+            const sims = await this.simCardRepository.findAll();
+            const simsInMovement = sims.filter(s => movement.simCardIds.includes(s.id!));
+            for (const sim of simsInMovement) {
+                sim.update({ locationId: movement.destinationLocationId });
+                await this.simCardRepository.save(sim);
+            }
+        }
+        // 6. Persistir cambios del movimiento
         return await this.movementRepository.update(movement);
     }
 }

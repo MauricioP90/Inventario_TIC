@@ -3,6 +3,7 @@ import { Movement } from "../../../../domain/entities/Movement";
 import { IMovementRepository } from "../../../../domain/repositories/IMovementRepository";
 import { MovementEntity } from "../entities/MovementEntity";
 import { ActivoEntity } from "../entities/ActivoEntity";
+import { SIMCardEntity } from "../entities/SIMCardEntity";
 import { MovementMapper } from "../../mappers/MovementMapper";
 
 export class TypeORMMovementRepository implements IMovementRepository {
@@ -14,6 +15,12 @@ export class TypeORMMovementRepository implements IMovementRepository {
         if (movement.activoIds.length > 0) {
             entity.activos = await this.repository.manager.find(ActivoEntity, {
                 where: { id: In(movement.activoIds) }
+            });
+        }
+
+        if (movement.simCardIds.length > 0) {
+            entity.simCards = await this.repository.manager.find(SIMCardEntity, {
+                where: { id: In(movement.simCardIds) }
             });
         }
 
@@ -30,14 +37,30 @@ export class TypeORMMovementRepository implements IMovementRepository {
             });
         }
 
+        if (movement.simCardIds.length > 0) {
+            entity.simCards = await this.repository.manager.find(SIMCardEntity, {
+                where: { id: In(movement.simCardIds) }
+            });
+        }
+
         const updatedEntity = await this.repository.save(entity);
+
+        // TypeORM omite los NULL en save() cuando la entidad no fue cargada desde DB.
+        // Usamos una query directa para forzar magic_link_token = NULL cuando el token fue consumido.
+        if (movement.magicLinkToken === undefined || movement.magicLinkToken === null) {
+            await this.repository.query(
+                'UPDATE movements SET magic_link_token = NULL WHERE id = $1',
+                [movement.id]
+            );
+        }
+
         return MovementMapper.toDomain(updatedEntity);
     }
 
     async findById(id: string): Promise<Movement | null> {
         const entity = await this.repository.findOne({
             where: { id },
-            relations: ['activos', 'activos.simCards', 'originLocation', 'destinationLocation', 'responsible', 'responsible.role', 'receiver', 'receiver.role']
+            relations: ['activos', 'activos.simCards', 'simCards', 'originLocation', 'destinationLocation', 'responsible', 'responsible.role', 'receiver', 'receiver.role']
         });
 
         return entity ? MovementMapper.toDomain(entity) : null;
@@ -67,7 +90,7 @@ export class TypeORMMovementRepository implements IMovementRepository {
                 { originLocationId: locationId },
                 { destinationLocationId: locationId }
             ],
-            relations: ['activos', 'activos.simCards', 'originLocation', 'destinationLocation', 'responsible', 'responsible.role', 'receiver', 'receiver.role'],
+            relations: ['activos', 'activos.simCards', 'simCards', 'originLocation', 'destinationLocation', 'responsible', 'responsible.role', 'receiver', 'receiver.role'],
             order: { createdAt: 'DESC' }
         });
 
@@ -76,10 +99,19 @@ export class TypeORMMovementRepository implements IMovementRepository {
 
     async findAll(): Promise<Movement[]> {
         const entities = await this.repository.find({
-            relations: ['activos', 'activos.simCards', 'originLocation', 'destinationLocation', 'responsible', 'responsible.role', 'receiver', 'receiver.role'],
+            relations: ['activos', 'activos.simCards', 'simCards', 'originLocation', 'destinationLocation', 'responsible', 'responsible.role', 'receiver', 'receiver.role'],
             order: { createdAt: 'DESC' }
         });
 
         return entities.map(entity => MovementMapper.toDomain(entity));
+    }
+
+    async findByMagicLinkToken(token: string): Promise<Movement | null> {
+        const entity = await this.repository.findOne({
+            where: { magicLinkToken: token },
+            relations: ['activos', 'activos.simCards', 'simCards', 'originLocation', 'destinationLocation', 'responsible', 'responsible.role', 'receiver', 'receiver.role']
+        });
+
+        return entity ? MovementMapper.toDomain(entity) : null;
     }
 }

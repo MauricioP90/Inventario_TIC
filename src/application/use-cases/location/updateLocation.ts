@@ -3,6 +3,7 @@ import { Location } from "../../../domain/entities/Location";
 import { EstadoLocation } from "../../../domain/entities/Location";
 import { EstadoResponsable } from "../../../domain/entities/Responsible";
 import { IResponsibleRepository } from "../../../domain/repositories/IResponsibleRepository";
+import { Coordinates } from "../../../domain/value-objects/Coordinates";
 
 export interface UpdateLocationInput {
     code: string;
@@ -24,6 +25,10 @@ export class UpdateLocation {
 
         if (!location) {
             throw new Error('La ubicacion con codigo ' + input.code + ' no existe');
+        }
+
+        if (input.coordenadas !== undefined && input.coordenadas.trim() !== '' && input.coordenadas.trim() !== '0') {
+            Coordinates.fromString(input.coordenadas);
         }
 
         // 2. Validar que la ubicación no esté INACTIVA (Regla de negocio)

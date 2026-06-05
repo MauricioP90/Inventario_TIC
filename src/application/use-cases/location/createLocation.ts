@@ -2,6 +2,7 @@ import { ILocationRepository } from "../../../domain/repositories/ILocationRepos
 import { Location, EstadoLocation } from "../../../domain/entities/Location";
 import { IResponsibleRepository } from "../../../domain/repositories/IResponsibleRepository";
 import { EstadoResponsable } from "../../../domain/entities/Responsible";
+import { Coordinates } from "../../../domain/value-objects/Coordinates";
 
 export interface CreateLocationInput {
     id?: string;
@@ -16,6 +17,10 @@ export class CreateLocation {
     constructor(private readonly locationRepository: ILocationRepository, private readonly responsibleRepository: IResponsibleRepository) { }
 
     async execute(input: CreateLocationInput): Promise<Location> {
+        if (input.coordenadas && input.coordenadas.trim() !== '' && input.coordenadas.trim() !== '0') {
+            Coordinates.fromString(input.coordenadas);
+        }
+
         const location = new Location({
             id: input.id,
             code: input.code,

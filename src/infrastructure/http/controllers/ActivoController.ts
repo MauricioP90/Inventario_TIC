@@ -4,7 +4,6 @@ import { GetAllActivo } from "../../../application/use-cases/activo/GetAllActivo
 import { GetOneActivo } from "../../../application/use-cases/activo/GetOneActivo";
 import { UpdateActivo } from "../../../application/use-cases/activo/UpdateActivo";
 import { DarDeBajaActivo } from "../../../application/use-cases/activo/DarDeBajaActivo";
-import { AssingSIMToActivo } from "../../../application/use-cases/activo/AssingSIMToActivo";
 import { GetActivoMetadata } from "../../../application/use-cases/activo/GetActivoMetadata";
 import { FindByIdActivo } from "../../../application/use-cases/activo/FindByActivo";
 import { GetDashboardSummary } from "../../../application/use-cases/activo/GetDashboardSummary";
@@ -16,7 +15,6 @@ export class ActivoController {
         private getOneActivo: GetOneActivo,
         private updateActivo: UpdateActivo,
         private darDeBajaActivo: DarDeBajaActivo,
-        private assignSIMToActivo: AssingSIMToActivo,
         private getMetadataUseCase: GetActivoMetadata,
         private findByIdActivo: FindByIdActivo,
         private getDashboardSummaryUseCase: GetDashboardSummary
@@ -164,42 +162,6 @@ export class ActivoController {
             const { placa } = req.params;
             const activo = await this.darDeBajaActivo.execute({ placa: placa as string });
             res.json(activo);
-        } catch (error: any) {
-            res.status(400).json({ message: error.message });
-        }
-    }
-
-    /**
-     * @swagger
-     * /api/activos/{placa}/sim:
-     *   post:
-     *     summary: Asignar una SIM Card a un activo
-     *     tags: [Activos]
-     *     parameters:
-     *       - in: path
-     *         name: placa
-     *         required: true
-     *         schema:
-     *           type: string
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             type: object
-     *             properties:
-     *               iccid:
-     *                 type: string
-     *     responses:
-     *       200:
-     *         description: SIM asignada exitosamente
-     */
-    async assignSIM(req: Request, res: Response) {
-        try {
-            const { placa } = req.params; // placa del activo
-            const { iccid } = req.body;
-            const result = await this.assignSIMToActivo.execute({ placa: placa as string, ICCID: iccid });
-            res.json(result);
         } catch (error: any) {
             res.status(400).json({ message: error.message });
         }

@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import { Coordinates } from '../value-objects/Coordinates';
 
 export enum TipoLocation {
     BODEGA = 'BODEGA',
@@ -38,6 +39,9 @@ export class Location {
         if (!this.props.estado) throw new Error('El estado es obligatorio');
         if (this.props.estado !== EstadoLocation.ACTIVO && this.props.estado !== EstadoLocation.INACTIVO) throw new Error('El estado debe ser ACTIVO o INACTIVO');
         if (!this.props.code) throw new Error('El codigo es obligatorio');
+        if (this.props.coordenadas) {
+            Coordinates.fromString(this.props.coordenadas);
+        }
     }
 
     get id() { return this.props.id; }

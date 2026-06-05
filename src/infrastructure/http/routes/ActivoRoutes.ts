@@ -23,7 +23,6 @@ import { GetAllActivo } from "../../../application/use-cases/activo/GetAllActivo
 import { GetOneActivo } from "../../../application/use-cases/activo/GetOneActivo";
 import { UpdateActivo } from "../../../application/use-cases/activo/UpdateActivo";
 import { DarDeBajaActivo } from "../../../application/use-cases/activo/DarDeBajaActivo";
-import { AssingSIMToActivo } from "../../../application/use-cases/activo/AssingSIMToActivo";
 import { GetActivoMetadata } from "../../../application/use-cases/activo/GetActivoMetadata";
 import { FindByIdActivo } from "../../../application/use-cases/activo/FindByActivo";
 import { GetDashboardSummary } from "../../../application/use-cases/activo/GetDashboardSummary";
@@ -44,13 +43,11 @@ const getAllUC = new GetAllActivo(activoRepo);
 const getOneUC = new GetOneActivo(activoRepo);
 const updateUC = new UpdateActivo(activoRepo, locationRepo, responsibleRepo, movementRepo);
 const darDeBajaUC = new DarDeBajaActivo(activoRepo);
-const assignSIMUC = new AssingSIMToActivo(activoRepo, simCardRepo);
 const getMetadataUC = new GetActivoMetadata(tipoActivoRepo, locationRepo);
 const findByIdUC = new FindByIdActivo(activoRepo);
 const getDashboardSummaryUC = new GetDashboardSummary(activoRepo);
 
-// 3. Inicializamos Controlador
-const controller = new ActivoController(createUC, getAllUC, getOneUC, updateUC, darDeBajaUC, assignSIMUC, getMetadataUC, findByIdUC, getDashboardSummaryUC);
+const controller = new ActivoController(createUC, getAllUC, getOneUC, updateUC, darDeBajaUC, getMetadataUC, findByIdUC, getDashboardSummaryUC);
 
 // 4. Definimos Rutas
 activoRouter.post("/", keycloak.protect(), (req, res) => controller.create(req, res));
@@ -60,6 +57,5 @@ activoRouter.get("/dashboard", keycloak.protect(), (req, res) => controller.getD
 activoRouter.get("/:placa", keycloak.protect(), (req, res) => controller.getOne(req, res));
 activoRouter.put("/:placa", keycloak.protect(), (req, res) => controller.update(req, res));
 activoRouter.patch("/:placa/baja", keycloak.protect(), (req, res) => controller.darDeBaja(req, res));
-activoRouter.post("/:placa/sim", keycloak.protect(), (req, res) => controller.assignSIM(req, res));
 
 export { activoRouter };

@@ -27,8 +27,9 @@ export class AssignSIMToActivo {
         if (simCard.estado !== EstadoSIM.BODEGA) {
             throw new Error('La SIM no está disponible (debe estar en BODEGA)');
         }
-        if (activo.estado !== EstadoActivo.DISPONIBLE) {
-            throw new Error('El activo no está disponible');
+        const allowedActivoStates = [EstadoActivo.DISPONIBLE, EstadoActivo.OPERACION, EstadoActivo.MANTENIMIENTO];
+        if (!allowedActivoStates.includes(activo.estado)) {
+            throw new Error(`El activo no está disponible para asignación (estado actual: ${activo.estado})`);
         }
         if (simCard.activoId) {
             throw new Error('La SIM ya está asignada a otro activo');

@@ -4,7 +4,8 @@ import { Coordinates } from '../value-objects/Coordinates';
 export enum TipoLocation {
     BODEGA = 'BODEGA',
     OFICINA = 'OFICINA',
-    REGIONAL = 'REGIONAL'
+    REGIONAL = 'REGIONAL',
+    PROVEEDOR = 'PROVEEDOR'
 }
 
 export interface LocationProps {
@@ -15,6 +16,7 @@ export interface LocationProps {
     tipo?: TipoLocation;
     estado: EstadoLocation;
     responsibleIds?: string[];
+    observaciones?: string | null;
 }
 
 export enum EstadoLocation {
@@ -48,6 +50,7 @@ export class Location {
     get tipo() { return this.props.tipo || TipoLocation.OFICINA; }
     get estado() { return this.props.estado; }
     get responsibleIds() { return this.props.responsibleIds || []; }
+    get observaciones() { return this.props.observaciones; }
 
     public static create(props: LocationProps) {
         return new Location(props);

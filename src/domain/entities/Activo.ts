@@ -98,7 +98,7 @@ export class Activo {
             tipo === 'TRASLADO'
         ) {
             this.setStatus(EstadoActivo.OPERACION);
-        } else if (tipo === 'RETORNO_SOPORTE' || tipo === 'REINGRESO_SOPORTE') {
+        } else if (tipo === 'RETORNO_SOPORTE' || tipo === 'REINGRESO_SOPORTE' || tipo === 'RETORNO_PROVEEDOR') {
             this.setStatus(EstadoActivo.DISPONIBLE);
         } else if (tipo === 'ENVIO_GARANTIA') {
             this.setStatus(EstadoActivo.MANTENIMIENTO);

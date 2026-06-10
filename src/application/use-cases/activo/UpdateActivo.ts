@@ -54,11 +54,18 @@ export class UpdateActivo {
             activo.asignarUbicacion(location);
         }
 
+        const targetEstado = input.estado !== undefined ? input.estado : activo.estado;
+        const targetLocationId = input.locationId !== undefined ? input.locationId : activo.locationId;
+        if (targetEstado === EstadoActivo.MANTENIMIENTO && targetLocationId) {
+            const location = await this.locationRepository.findById(targetLocationId);
+            if (location && location.tipo !== 'BODEGA' && location.tipo !== 'PROVEEDOR') {
+                throw new Error('Un activo solo puede estar en estado MANTENIMIENTO si se encuentra en una Bodega o Proveedor.');
+            }
+        }
+
         if (input.responsibleId) {
             const responsible = await this.responsibleRepository.findById(input.responsibleId);
             if (!responsible) throw new Error('Responsable no encontrado');
-
-            const targetLocationId = input.locationId || activo.locationId;
 
             if (targetLocationId && !responsible.locationIds.includes(targetLocationId)) {
                 throw new Error('Conflicto: El responsable seleccionado no tiene permisos asignados en la sede a la cual está vinculado este activo.');

@@ -7,8 +7,11 @@ export interface DashboardSummary {
   asignadoCount: number;
   mantenimientoCount: number;
   bajaCount: number;
+  enTransitoCount: number;
+  rechazadoCount: number;
   typeStacked: Record<string, { disponible: number; asignado: number }>;
   typeBaja: Record<string, number>;
+  typeMantenimiento: Record<string, number>;
 }
 
 export class GetDashboardSummary {
@@ -22,9 +25,12 @@ export class GetDashboardSummary {
     let asignadoCount = 0;
     let mantenimientoCount = 0;
     let bajaCount = 0;
+    let enTransitoCount = 0;
+    let rechazadoCount = 0;
 
     const typeStacked: Record<string, { disponible: number; asignado: number }> = {};
     const typeBaja: Record<string, number> = {};
+    const typeMantenimiento: Record<string, number> = {};
 
     for (const activo of activos) {
       const typeLabel = activo.tipoActivo?.nombre || 'Sin tipo';
@@ -39,11 +45,14 @@ export class GetDashboardSummary {
         typeStacked[typeLabel].asignado++;
       } else if (activo.estado === EstadoActivo.MANTENIMIENTO) {
         mantenimientoCount++;
-        if (!typeStacked[typeLabel]) typeStacked[typeLabel] = { disponible: 0, asignado: 0 };
-        typeStacked[typeLabel].asignado++;
+        typeMantenimiento[typeLabel] = (typeMantenimiento[typeLabel] ?? 0) + 1;
       } else if (activo.estado === EstadoActivo.BAJA) {
         bajaCount++;
         typeBaja[typeLabel] = (typeBaja[typeLabel] ?? 0) + 1;
+      } else if (activo.estado === EstadoActivo.EN_TRANSIT) {
+        enTransitoCount++;
+      } else if (activo.estado === EstadoActivo.RECHAZADO) {
+        rechazadoCount++;
       }
     }
 
@@ -53,8 +62,11 @@ export class GetDashboardSummary {
       asignadoCount,
       mantenimientoCount,
       bajaCount,
+      enTransitoCount,
+      rechazadoCount,
       typeStacked,
-      typeBaja
+      typeBaja,
+      typeMantenimiento
     };
   }
 }

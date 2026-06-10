@@ -1,5 +1,5 @@
 import { ILocationRepository } from "../../../domain/repositories/ILocationRepository";
-import { Location, EstadoLocation } from "../../../domain/entities/Location";
+import { Location, EstadoLocation, TipoLocation } from "../../../domain/entities/Location";
 import { IResponsibleRepository } from "../../../domain/repositories/IResponsibleRepository";
 import { EstadoResponsable } from "../../../domain/entities/Responsible";
 import { Coordinates } from "../../../domain/value-objects/Coordinates";
@@ -9,8 +9,10 @@ export interface CreateLocationInput {
     code: string;
     nombre: string;
     coordenadas?: string;
+    tipo?: TipoLocation;
     estado: EstadoLocation;
     responsibleIds: string[];
+    observaciones?: string;
 }
 
 export class CreateLocation {
@@ -26,8 +28,10 @@ export class CreateLocation {
             code: input.code,
             nombre: input.nombre,
             coordenadas: input.coordenadas,
+            tipo: input.tipo,
             estado: input.estado,
-            responsibleIds: input.responsibleIds
+            responsibleIds: input.responsibleIds,
+            observaciones: input.observaciones
         });
 
         const existe = await this.locationRepository.findByCode(location.code);

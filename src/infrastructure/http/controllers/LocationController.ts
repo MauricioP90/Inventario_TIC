@@ -3,13 +3,15 @@ import { CreateLocation } from "../../../application/use-cases/location/createLo
 import { GetAllLocations } from "../../../application/use-cases/location/GetAllLocations";
 import { UpdateLocation } from "../../../application/use-cases/location/updateLocation";
 import { GetOneLocation } from "../../../application/use-cases/location/GetOneLocation";
+import { ReverseGeocode } from "../../../application/use-cases/location/ReverseGeocode";
 
 export class LocationController {
     constructor(
         private readonly createLocation: CreateLocation,
         private readonly getAllLocations: GetAllLocations,
         private readonly updateLocation: UpdateLocation,
-        private readonly getOneLocation: GetOneLocation
+        private readonly getOneLocation: GetOneLocation,
+        private readonly reverseGeocodeUseCase: ReverseGeocode
     ) { }
 
     /**
@@ -130,6 +132,26 @@ export class LocationController {
             res.json(location);
         } catch (error: any) {
             res.status(400).json({ message: error.message });
+        }
+    }
+
+    async reverseGeocode(req: Request, res: Response) {
+        try {
+            const { lat, lon } = req.query;
+            if (!lat || !lon) {
+                res.status(400).json({ message: "La latitud (lat) y longitud (lon) son requeridas" });
+                return;
+            }
+            const latitude = parseFloat(lat as string);
+            const longitude = parseFloat(lon as string);
+            if (isNaN(latitude) || isNaN(longitude)) {
+                res.status(400).json({ message: "La latitud y longitud deben ser números válidos" });
+                return;
+            }
+            const address = await this.reverseGeocodeUseCase.execute(latitude, longitude);
+            res.json({ address });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
         }
     }
 }

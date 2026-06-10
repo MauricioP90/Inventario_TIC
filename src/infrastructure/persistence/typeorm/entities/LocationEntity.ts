@@ -21,6 +21,9 @@ export class LocationEntity {
     @Column()
     estado!: string;
 
+    @Column({ nullable: true, type: 'text' })
+    observaciones?: string;
+
     @ManyToMany(() => ResponsibleEntity, (responsible) => responsible.locations)
     responsibles!: ResponsibleEntity[];
 }

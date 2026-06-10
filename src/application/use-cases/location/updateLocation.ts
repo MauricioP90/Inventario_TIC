@@ -1,6 +1,5 @@
 import { ILocationRepository } from "../../../domain/repositories/ILocationRepository";
-import { Location } from "../../../domain/entities/Location";
-import { EstadoLocation } from "../../../domain/entities/Location";
+import { Location, EstadoLocation, TipoLocation } from "../../../domain/entities/Location";
 import { EstadoResponsable } from "../../../domain/entities/Responsible";
 import { IResponsibleRepository } from "../../../domain/repositories/IResponsibleRepository";
 import { Coordinates } from "../../../domain/value-objects/Coordinates";
@@ -9,8 +8,10 @@ export interface UpdateLocationInput {
     code: string;
     nombre?: string;
     coordenadas?: string;
+    tipo?: TipoLocation;
     estado?: EstadoLocation;
     responsibleIds?: string[];
+    observaciones?: string;
 }
 
 export class UpdateLocation {
@@ -55,8 +56,10 @@ export class UpdateLocation {
         location.update({
             nombre: input.nombre,
             coordenadas: input.coordenadas,
+            tipo: input.tipo,
             estado: input.estado,
-            responsibleIds: input.responsibleIds
+            responsibleIds: input.responsibleIds,
+            observaciones: input.observaciones
         });
 
         // 4. Persistir los cambios

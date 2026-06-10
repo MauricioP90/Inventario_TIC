@@ -43,6 +43,13 @@ export class CreateActivo {
         const location = await this.locationRepository.findById(input.locationId);
         if (!location) throw new Error('Ubicación no encontrada');
 
+        // Validación de mantenimiento: solo se permite estado MANTENIMIENTO en Bodega o Proveedor
+        if (input.estado === EstadoActivo.MANTENIMIENTO) {
+            if (location.tipo !== 'BODEGA' && location.tipo !== 'PROVEEDOR') {
+                throw new Error('Un activo nuevo solo puede registrarse en estado MANTENIMIENTO si se encuentra en una Bodega o Proveedor.');
+            }
+        }
+
         const responsible = await this.responsibleRepository.findById(input.responsibleId);
         if (!responsible) throw new Error('Responsable no encontrado');
 

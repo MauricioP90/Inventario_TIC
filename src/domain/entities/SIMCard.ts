@@ -1,4 +1,6 @@
 import { randomUUID } from 'node:crypto';
+import { Activo } from './Activo';
+import { Location } from './Location';
 
 export enum EstadoSIM {
     BODEGA = 'BODEGA',
@@ -14,8 +16,8 @@ export interface SIMCardProps {
     estado: EstadoSIM;
     activoId?: string; // Relación con un Activo (opcional)
     locationId?: string; // Relación con una Location (opcional)
-    activo?: { id: string; placa: string; serial?: string; marca?: string } | null;
-    location?: { id: string; nombre: string } | null;
+    activo?: Activo | null;
+    location?: Location | null;
 }
 
 export class SIMCard {
@@ -35,6 +37,8 @@ export class SIMCard {
     get operador() { return this.props.operador; }
     get activoId() { return this.props.activoId; }
     get locationId() { return this.props.locationId; }
+    get activo() { return this.props.activo; }
+    get location() { return this.props.location; }
 
     public asignarAActivo(activoId: string) {
         this.props.activoId = activoId;
@@ -61,7 +65,17 @@ export class SIMCard {
     public toJSON() {
         return {
             ...this.props,
-            id: this.id
+            id: this.id,
+            activo: this.props.activo ? {
+                id: this.props.activo.id,
+                placa: this.props.activo.placa,
+                serial: this.props.activo.serial,
+                marca: this.props.activo.marca
+            } : null,
+            location: this.props.location ? {
+                id: this.props.location.id,
+                nombre: this.props.location.nombre
+            } : null
         };
     }
 }

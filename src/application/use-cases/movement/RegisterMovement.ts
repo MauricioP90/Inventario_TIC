@@ -28,11 +28,43 @@ export class RegisterMovement {
 
     async execute(dto: RegisterMovementDto): Promise<Movement> {
 
+        // Obtener ubicaciones de origen y destino
+        const originLocation = await this.locationRepository.findById(dto.originLocationId);
+        const destinationLocation = await this.locationRepository.findById(dto.destinationLocationId);
+
+        if (!originLocation || !destinationLocation) {
+            throw new Error('Ubicación de origen o destino no encontrada.');
+        }
+
+        const isOriginBodega = originLocation.tipo === 'BODEGA';
+        const isDestBodega = destinationLocation.tipo === 'BODEGA';
+        const isOriginProvider = originLocation.tipo === 'PROVEEDOR';
+        const isDestProvider = destinationLocation.tipo === 'PROVEEDOR';
+
+        if (isOriginProvider && isDestProvider) {
+            throw new Error('No se permiten traslados directos entre Proveedores.');
+        }
+
         // Validación de seguridad: no se pueden realizar traslados sobre equipos dados de baja (Inactivos)
         for (const activoId of dto.activoIds) {
             const activo = await this.activoRepository.findById(activoId);
-            if (activo && activo.estado === 'BAJA') {
-                throw new Error(`El equipo con placa "${activo.placa}" se encuentra dado de BAJA (Inactivo). No está permitido realizar movimientos sobre él.`);
+            if (activo) {
+                if (activo.estado === 'BAJA') {
+                    throw new Error(`El equipo con placa "${activo.placa}" se encuentra dado de BAJA (Inactivo). No está permitido realizar movimientos sobre él.`);
+                }
+                // Validación de mantenimiento: equipos en mantenimiento no pueden moverse a menos que sea a Bodega o Proveedor
+                if (activo.estado === 'MANTENIMIENTO') {
+                    const isAllowedMaintenanceMovement = 
+                        ['RETORNO_SOPORTE', 'REINGRESO_SOPORTE', 'RETORNO_PROVEEDOR'].includes(dto.type.toUpperCase()) ||
+                        (dto.type.toUpperCase() === 'ENVIO_GARANTIA' && 
+                         (isOriginBodega || isOriginProvider) && 
+                         (isDestBodega || isDestProvider)) ||
+                        (dto.type.toUpperCase() === 'TRASLADO_REGIONAL' && isOriginBodega && isDestBodega);
+
+                    if (!isAllowedMaintenanceMovement) {
+                        throw new Error(`El equipo con placa "${activo.placa}" está en MANTENIMIENTO. Solo se permiten traslados entre Bodegas, envíos a Proveedor o retornos.`);
+                    }
+                }
             }
         }
 
@@ -45,14 +77,36 @@ export class RegisterMovement {
                 }
             }
         }
+
+        // Validación de destino para envío a garantía (mantenimiento)
+        if (dto.type && dto.type.toUpperCase() === 'ENVIO_GARANTIA') {
+            if (originLocation.tipo !== 'BODEGA' || destinationLocation.tipo !== 'PROVEEDOR') {
+                throw new Error('El envío a garantía solo se puede realizar desde una Bodega hacia un Proveedor.');
+            }
+        }
+
+        // Validación de destino para retorno de proveedor
+        if (dto.type && dto.type.toUpperCase() === 'RETORNO_PROVEEDOR') {
+            if (originLocation.tipo !== 'PROVEEDOR' || destinationLocation.tipo !== 'BODEGA') {
+                throw new Error('El retorno de proveedor solo se puede realizar desde un Proveedor hacia una Bodega.');
+            }
+        }
+        
         const isLocalSIM = ['SIM_ASIGNACION', 'SIM_CAMBIO', 'SIM_RETIRO', 'SIM_RETIRO_TOTAL'].includes(dto.type);
+        
+        if (!isLocalSIM && dto.originLocationId === dto.destinationLocationId) {
+            throw new Error('La ubicación de origen y destino no pueden ser la misma.');
+        }
+
         const destinationLocationId = isLocalSIM ? dto.originLocationId : dto.destinationLocationId;
 
         // 1. Crear la instancia de dominio (esto ya valida los campos básicos)
         const movement = new Movement({
             ...dto,
             destinationLocationId,
-            status: MovementStatus.PENDING
+            status: isLocalSIM ? MovementStatus.RECEIVED : MovementStatus.PENDING,
+            shippedAt: isLocalSIM ? new Date() : undefined,
+            receivedAt: isLocalSIM ? new Date() : undefined
         });
         // 2. Persistir en la base de datos
         const savedMovement = await this.movementRepository.create(movement);

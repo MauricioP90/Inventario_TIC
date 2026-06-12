@@ -7,6 +7,7 @@ export class CreateTipoActivo {
 
     async execute(props: TipoActivoProps) {
         const tipoActivo = new TipoActivo(props);
-        return await this.tipoActivoRepository.save(tipoActivo);
+        await this.tipoActivoRepository.save(tipoActivo);
+        return tipoActivo;
     }
 }

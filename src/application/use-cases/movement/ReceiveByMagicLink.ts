@@ -2,12 +2,15 @@ import { Movement } from "../../../domain/entities/Movement";
 import { IMovementRepository } from "../../../domain/repositories/IMovementRepository";
 import { IActivoRepository } from "../../../domain/repositories/IActivoRepository";
 import { ISIMCardRepository } from "../../../domain/repositories/ISIMCardRepository";
+import { IMaintenanceReportRepository } from "../../../domain/repositories/IMaintenanceReportRepository";
+import { MaintenanceReport, ModalidadMantenimiento, TipoMantenimiento, EstadoFicha } from "../../../domain/entities/MaintenanceReport";
 
 export class ReceiveByMagicLink {
     constructor(
         private readonly movementRepository: IMovementRepository,
         private readonly activoRepository: IActivoRepository,
-        private readonly simCardRepository: ISIMCardRepository
+        private readonly simCardRepository: ISIMCardRepository,
+        private readonly maintenanceReportRepository: IMaintenanceReportRepository
     ) { }
 
     async execute(token: string, physicalReceiverName: string): Promise<Movement> {
@@ -41,6 +44,19 @@ export class ReceiveByMagicLink {
             if (activo) {
                 activo.aplicarRecepcionDeMovimiento(movement.type, movement.destinationLocationId);
                 await this.activoRepository.update(activo);
+
+                // Si el movimiento recibido es de tipo RETORNO_POR_RECHAZO, creamos automáticamente una Ficha de Mantenimiento
+                if (movement.type === 'RETORNO_POR_RECHAZO') {
+                    const report = new MaintenanceReport({
+                        activoId: activo.id!,
+                        modalidad: ModalidadMantenimiento.INTERNO,
+                        tipoMantenimiento: TipoMantenimiento.CORRECTIVO,
+                        estado: EstadoFicha.PENDIENTE_DIAGNOSTICO,
+                        movimientoOrigenId: movement.id!,
+                        diagnostico: 'Creado automáticamente por reporte de NOVEDAD/RECHAZO en el traslado. Requiere realizar diagnóstico técnico completo para definir acciones.'
+                    });
+                    await this.maintenanceReportRepository.save(report);
+                }
             }
         }
 

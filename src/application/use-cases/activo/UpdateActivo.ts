@@ -5,6 +5,8 @@ import { ILocationRepository } from "../../../domain/repositories/ILocationRepos
 import { IResponsibleRepository } from "../../../domain/repositories/IResponsibleRepository";
 import { IMovementRepository } from "../../../domain/repositories/IMovementRepository";
 import { MovementStatus } from "../../../domain/entities/Movement";
+import { IMaintenanceReportRepository } from "../../../domain/repositories/IMaintenanceReportRepository";
+import { MaintenanceReport, ModalidadMantenimiento, TipoMantenimiento } from "../../../domain/entities/MaintenanceReport";
 
 interface UpdateActivoInput {
     placa: string;
@@ -17,6 +19,11 @@ interface UpdateActivoInput {
     locationId?: string;
     responsibleId?: string;
     fechaIngreso?: Date | string;
+    precioCompra?: number;
+    maintenanceModalidad?: ModalidadMantenimiento;
+    maintenanceTipo?: TipoMantenimiento;
+    maintenanceCostoEstimado?: number;
+    maintenanceTecnicoResponsable?: string;
 }
 
 export class UpdateActivo {
@@ -24,7 +31,8 @@ export class UpdateActivo {
         private readonly activoRepository: IActivoRepository,
         private readonly locationRepository: ILocationRepository,
         private readonly responsibleRepository: IResponsibleRepository,
-        private readonly movementRepository: IMovementRepository
+        private readonly movementRepository: IMovementRepository,
+        private readonly maintenanceRepository: IMaintenanceReportRepository
     ) { }
 
     async execute(input: UpdateActivoInput): Promise<Activo> {
@@ -54,6 +62,7 @@ export class UpdateActivo {
             activo.asignarUbicacion(location);
         }
 
+        const oldEstado = activo.estado;
         const targetEstado = input.estado !== undefined ? input.estado : activo.estado;
         const targetLocationId = input.locationId !== undefined ? input.locationId : activo.locationId;
         if (targetEstado === EstadoActivo.MANTENIMIENTO && targetLocationId) {
@@ -85,6 +94,23 @@ export class UpdateActivo {
         });
 
         await this.activoRepository.save(activo);
+
+        // Si el estado es MANTENIMIENTO, nos aseguramos de que exista una ficha de trabajo activa
+        if (targetEstado === EstadoActivo.MANTENIMIENTO) {
+            const activeReports = await this.maintenanceRepository.findAllActive();
+            const hasActiveReport = activeReports.some(r => r.activoId === activo.id);
+            if (!hasActiveReport) {
+                const report = new MaintenanceReport({
+                    activoId: activo.id!,
+                    modalidad: input.maintenanceModalidad || ModalidadMantenimiento.INTERNO,
+                    tipoMantenimiento: input.maintenanceTipo || TipoMantenimiento.CORRECTIVO,
+                    costoEstimado: input.maintenanceCostoEstimado,
+                    tecnicoResponsable: input.maintenanceTecnicoResponsable,
+                } as any);
+                await this.maintenanceRepository.save(report);
+            }
+        }
+
         return activo;
     }
 }

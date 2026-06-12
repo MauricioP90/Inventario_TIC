@@ -22,7 +22,8 @@ export class ActivoMapper {
             responsibleId: entity.responsibleId,
             location: entity.location ? LocationMapper.toDomain(entity.location) : undefined,
             responsable: entity.responsible ? ResponsibleMapper.toDomain(entity.responsible) : undefined,
-            tipoActivo: entity.tipoActivo ? TipoActivoMapper.toDomain(entity.tipoActivo) : undefined
+            tipoActivo: entity.tipoActivo ? TipoActivoMapper.toDomain(entity.tipoActivo) : undefined,
+            precioCompra: entity.precioCompra ? Number(entity.precioCompra) : undefined
         });
 
         if (entity.simCards) {
@@ -48,6 +49,7 @@ export class ActivoMapper {
         entity.facturaUrl = domain.facturaUrl;
         entity.locationId = domain.locationId;
         entity.responsibleId = domain.responsibleId;
+        entity.precioCompra = domain.precioCompra;
         return entity;
     }
 }

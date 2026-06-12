@@ -16,6 +16,7 @@ interface createActivoInput {
     fechaIngreso: Date | string; // Aceptamos string para parsear
     locationId: string;
     responsibleId: string;
+    precioCompra?: number;
 }
 
 
@@ -33,22 +34,25 @@ export class CreateActivo {
             ? new Date(input.fechaIngreso) 
             : input.fechaIngreso;
 
+        let precioCompra: number | undefined = undefined;
+        if (input.precioCompra !== undefined && input.precioCompra !== null && String(input.precioCompra).trim() !== '') {
+            const parsed = Number(input.precioCompra);
+            if (!isNaN(parsed)) {
+                precioCompra = parsed;
+            }
+        }
+
         const activo = new Activo({
             ...input,
+            estado: EstadoActivo.DISPONIBLE,
             id: input.id,
-            fechaIngreso: fechaParseada
+            fechaIngreso: fechaParseada,
+            precioCompra
         });
 
         // Validar existencia de ubicación y responsable
         const location = await this.locationRepository.findById(input.locationId);
         if (!location) throw new Error('Ubicación no encontrada');
-
-        // Validación de mantenimiento: solo se permite estado MANTENIMIENTO en Bodega o Proveedor
-        if (input.estado === EstadoActivo.MANTENIMIENTO) {
-            if (location.tipo !== 'BODEGA' && location.tipo !== 'PROVEEDOR') {
-                throw new Error('Un activo nuevo solo puede registrarse en estado MANTENIMIENTO si se encuentra en una Bodega o Proveedor.');
-            }
-        }
 
         const responsible = await this.responsibleRepository.findById(input.responsibleId);
         if (!responsible) throw new Error('Responsable no encontrado');

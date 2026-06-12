@@ -28,6 +28,7 @@ export interface ActivoProps {
     estado: EstadoActivo;
     facturaUrl?: string;
     fechaIngreso: Date;
+    precioCompra?: number;
 }
 
 export class Activo {
@@ -69,6 +70,7 @@ export class Activo {
     get locationId() { return this.props.locationId; }
     get responsable() { return this.props.responsable; }
     get responsibleId() { return this.props.responsibleId; }
+    get precioCompra() { return this.props.precioCompra; }
 
     // Lógica de negocio: Cambiar estado
     public darDeBaja() {
@@ -100,7 +102,7 @@ export class Activo {
             this.setStatus(EstadoActivo.OPERACION);
         } else if (tipo === 'RETORNO_SOPORTE' || tipo === 'REINGRESO_SOPORTE' || tipo === 'RETORNO_PROVEEDOR') {
             this.setStatus(EstadoActivo.DISPONIBLE);
-        } else if (tipo === 'ENVIO_GARANTIA') {
+        } else if (tipo === 'ENVIO_GARANTIA' || tipo === 'RETORNO_POR_RECHAZO') {
             this.setStatus(EstadoActivo.MANTENIMIENTO);
         } else if (tipo === 'BAJA_ACTIVO') {
             this.setStatus(EstadoActivo.BAJA);

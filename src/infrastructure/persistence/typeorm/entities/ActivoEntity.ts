@@ -53,4 +53,7 @@ export class ActivoEntity {
     @ManyToOne(() => TipoActivoEntity, (tipoActivo) => tipoActivo.activos)
     @JoinColumn({ name: 'tipo_activo_id' })
     tipoActivo?: TipoActivoEntity;
+
+    @Column({ name: 'precio_compra', type: 'decimal', precision: 12, scale: 2, nullable: true })
+    precioCompra?: number;
 }

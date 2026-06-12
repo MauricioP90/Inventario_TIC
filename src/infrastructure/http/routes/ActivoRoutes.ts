@@ -16,6 +16,8 @@ import { TipoActivoEntity } from "../../persistence/typeorm/entities/TipoActivoE
 import { TypeORMTipoActivoRepository } from "../../persistence/typeorm/repositories/TypeORMTipoActivoRepository";
 import { MovementEntity } from "../../persistence/typeorm/entities/MovementEntity";
 import { TypeORMMovementRepository } from "../../persistence/typeorm/repositories/TypeORMMovementRepository";
+import { MaintenanceReportEntity } from "../../persistence/typeorm/entities/MaintenanceReportEntity";
+import { TypeORMMaintenanceReportRepository } from "../../persistence/typeorm/repositories/TypeORMMaintenanceReportRepository";
 
 // Casos de Uso
 import { CreateActivo } from "../../../application/use-cases/activo/CreateActivo";
@@ -26,6 +28,7 @@ import { DarDeBajaActivo } from "../../../application/use-cases/activo/DarDeBaja
 import { GetActivoMetadata } from "../../../application/use-cases/activo/GetActivoMetadata";
 import { FindByIdActivo } from "../../../application/use-cases/activo/FindByActivo";
 import { GetDashboardSummary } from "../../../application/use-cases/activo/GetDashboardSummary";
+import { CreateTipoActivo } from "../../../application/use-cases/tipoActivo/CreateTipoActivo";
 
 const activoRouter = Router();
 
@@ -36,21 +39,34 @@ const simCardRepo = new TypeORMSIMCardRepository(AppDataSource.getRepository(SIM
 const activoRepo = new TypeORMActivoRepository(AppDataSource.getRepository(ActivoEntity));
 const tipoActivoRepo = new TypeORMTipoActivoRepository(AppDataSource.getRepository(TipoActivoEntity));
 const movementRepo = new TypeORMMovementRepository(AppDataSource.getRepository(MovementEntity));
+const maintenanceRepo = new TypeORMMaintenanceReportRepository(AppDataSource.getRepository(MaintenanceReportEntity));
 
 // 2. Inicializamos Casos de Uso
 const createUC = new CreateActivo(activoRepo, locationRepo, responsibleRepo);
 const getAllUC = new GetAllActivo(activoRepo);
 const getOneUC = new GetOneActivo(activoRepo);
-const updateUC = new UpdateActivo(activoRepo, locationRepo, responsibleRepo, movementRepo);
+const updateUC = new UpdateActivo(activoRepo, locationRepo, responsibleRepo, movementRepo, maintenanceRepo);
 const darDeBajaUC = new DarDeBajaActivo(activoRepo);
 const getMetadataUC = new GetActivoMetadata(tipoActivoRepo, locationRepo);
 const findByIdUC = new FindByIdActivo(activoRepo);
 const getDashboardSummaryUC = new GetDashboardSummary(activoRepo);
+const createTipoActivoUC = new CreateTipoActivo(tipoActivoRepo);
 
-const controller = new ActivoController(createUC, getAllUC, getOneUC, updateUC, darDeBajaUC, getMetadataUC, findByIdUC, getDashboardSummaryUC);
+const controller = new ActivoController(
+    createUC, 
+    getAllUC, 
+    getOneUC, 
+    updateUC, 
+    darDeBajaUC, 
+    getMetadataUC, 
+    findByIdUC, 
+    getDashboardSummaryUC,
+    createTipoActivoUC
+);
 
 // 4. Definimos Rutas
 activoRouter.post("/", keycloak.protect(), (req, res) => controller.create(req, res));
+activoRouter.post("/types", keycloak.protect(), (req, res) => controller.createTipoActivo(req, res));
 activoRouter.get("/", keycloak.protect(), (req, res) => controller.getAll(req, res));
 activoRouter.get("/metadata", keycloak.protect(), (req, res) => controller.getActivoMetadata(req, res));
 activoRouter.get("/dashboard", keycloak.protect(), (req, res) => controller.getDashboardSummary(req, res));

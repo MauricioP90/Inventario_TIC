@@ -9,12 +9,15 @@ export interface TipoActivoProps {
     estado: EstadoTipoActivo;
 }
 
+import { randomUUID } from 'node:crypto';
+
 export class TipoActivo {
     private props: TipoActivoProps;
 
     constructor(props: TipoActivoProps) {
         this.props = {
             ...props,
+            id: props.id || randomUUID(),
             estado: props.estado || EstadoTipoActivo.ACTIVO,
         };
         this.validar();

@@ -4,6 +4,7 @@ import { MovementEntity } from "../../persistence/typeorm/entities/MovementEntit
 import { ActivoEntity } from "../../persistence/typeorm/entities/ActivoEntity";
 import { LocationEntity } from "../../persistence/typeorm/entities/LocationEntity";
 import { ResponsibleEntity } from "../../persistence/typeorm/entities/ResponsibleEntity";
+import { MaintenanceReportEntity } from "../../persistence/typeorm/entities/MaintenanceReportEntity";
 import { RegisterMovement } from "../../../application/use-cases/movement/RegisterMovement";
 import { DispatchMovement } from "../../../application/use-cases/movement/DispatchMovement";
 import { ReceiveMovement } from "../../../application/use-cases/movement/ReceiveMovement";
@@ -17,6 +18,7 @@ import { TypeORMActivoRepository } from "../../persistence/typeorm/repositories/
 import { TypeORMLocationRepository } from "../../persistence/typeorm/repositories/TypeORMLocationRepository";
 import { TypeORMResponsibleRepository } from "../../persistence/typeorm/repositories/TypeORMResponsibleRepository";
 import { TypeORMSIMCardRepository } from "../../persistence/typeorm/repositories/TypeORMSIMCardRepository";
+import { TypeORMMaintenanceReportRepository } from "../../persistence/typeorm/repositories/TypeORMMaintenanceReportRepository";
 import { SIMCardEntity } from "../../persistence/typeorm/entities/SIMCardEntity";
 import { ConsoleEmailService } from "../../services/ConsoleEmailService";
 import { MovementController } from "../controllers/MovementController";
@@ -30,16 +32,17 @@ const activoRepo = new TypeORMActivoRepository(AppDataSource.getRepository(Activ
 const locationRepo = new TypeORMLocationRepository(AppDataSource.getRepository(LocationEntity));
 const responsibleRepo = new TypeORMResponsibleRepository(AppDataSource.getRepository(ResponsibleEntity));
 const simCardRepo = new TypeORMSIMCardRepository(AppDataSource.getRepository(SIMCardEntity));
+const maintenanceReportRepo = new TypeORMMaintenanceReportRepository(AppDataSource.getRepository(MaintenanceReportEntity));
 //Inicializa el servicio de correo nativo
 const emailService = new ConsoleEmailService();
 
 // 2. Inicializamos Casos de Uso
 const registerUC = new RegisterMovement(movementRepo, activoRepo, locationRepo, responsibleRepo, emailService);
 const dispatchUC = new DispatchMovement(movementRepo, activoRepo);
-const receiveUC = new ReceiveMovement(movementRepo, activoRepo, simCardRepo);
+const receiveUC = new ReceiveMovement(movementRepo, activoRepo, simCardRepo, maintenanceReportRepo);
 const getUC = new GetMovements(movementRepo);
 const rejectUC = new RejectMovement(movementRepo, activoRepo);
-const receiveByMagicLinkUC = new ReceiveByMagicLink(movementRepo, activoRepo, simCardRepo);
+const receiveByMagicLinkUC = new ReceiveByMagicLink(movementRepo, activoRepo, simCardRepo, maintenanceReportRepo);
 const getMovementByMagicLinkUC = new GetMovementByMagicLink(movementRepo);
 const rejectByMagicLinkUC = new RejectByMagicLink(movementRepo, activoRepo);
 

@@ -12,6 +12,7 @@ import { responsibleRouter } from "./infrastructure/http/routes/ResponsibleRoute
 import { activoRouter } from "./infrastructure/http/routes/ActivoRoutes";
 import { movementRouter } from "./infrastructure/http/routes/MovementRoutes";
 import { fileRouter } from "./infrastructure/http/routes/FileRoutes";
+import { maintenanceRouter } from "./infrastructure/http/routes/MaintenanceRoutes";
 import { setupSwagger } from "./infrastructure/http/swagger";
 import { keycloak, memoryStore } from "./infrastructure/http/middleware/KeycloakConfig";
 import * as path from 'path';
@@ -55,6 +56,7 @@ app.use("/api/responsibles", responsibleRouter);
 app.use("/api/movements", movementRouter);
 app.use("/api/activos", activoRouter);
 app.use("/api/files", fileRouter);
+app.use("/api/maintenance", maintenanceRouter);
 
 
 /**

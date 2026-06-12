@@ -7,6 +7,7 @@ import { DarDeBajaActivo } from "../../../application/use-cases/activo/DarDeBaja
 import { GetActivoMetadata } from "../../../application/use-cases/activo/GetActivoMetadata";
 import { FindByIdActivo } from "../../../application/use-cases/activo/FindByActivo";
 import { GetDashboardSummary } from "../../../application/use-cases/activo/GetDashboardSummary";
+import { CreateTipoActivo } from "../../../application/use-cases/tipoActivo/CreateTipoActivo";
 
 export class ActivoController {
     constructor(
@@ -17,7 +18,8 @@ export class ActivoController {
         private darDeBajaActivo: DarDeBajaActivo,
         private getMetadataUseCase: GetActivoMetadata,
         private findByIdActivo: FindByIdActivo,
-        private getDashboardSummaryUseCase: GetDashboardSummary
+        private getDashboardSummaryUseCase: GetDashboardSummary,
+        private createTipoActivoUC: CreateTipoActivo
     ) { }
 
     /**
@@ -283,6 +285,16 @@ export class ActivoController {
             res.json(activo);
         } catch (error: any) {
             res.status(404).json({ message: error.message });
+        }
+    }
+
+    async createTipoActivo(req: Request, res: Response) {
+        try {
+            const { nombre, estado } = req.body;
+            const newType = await this.createTipoActivoUC.execute({ nombre, estado });
+            res.status(201).json(newType.toJSON());
+        } catch (error: any) {
+            res.status(400).json({ message: error.message });
         }
     }
 }

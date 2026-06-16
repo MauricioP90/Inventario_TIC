@@ -24,7 +24,11 @@ export const swaggerSchemas = {
             locationId: { type: 'string', format: 'uuid' },
             responsibleId: { type: 'string', format: 'uuid' },
             location: { $ref: '#/components/schemas/Location' },
-            responsable: { $ref: '#/components/schemas/Responsible' }
+            responsable: { $ref: '#/components/schemas/Responsible' },
+            maintenanceModalidad: { type: 'string', enum: ['INTERNO', 'EXTERNO', 'INTERNO_ESCALADO'] },
+            maintenanceTipo: { type: 'string', enum: ['PREVENTIVO', 'CORRECTIVO'] },
+            maintenanceCostoEstimado: { type: 'number' },
+            maintenanceTecnicoResponsable: { type: 'string' }
         }
     },
     Location: {
@@ -78,7 +82,28 @@ export const swaggerSchemas = {
         required: ['type', 'originLocationId', 'destinationLocationId', 'responsibleId', 'status', 'activoIds', 'createdAt'],
         properties: {
             id: { type: 'string', format: 'uuid' },
-            type: { type: 'string', example: 'TRASLADO' },
+            type: { 
+                type: 'string', 
+                enum: [
+                    'TRASLADO_REGIONAL',
+                    'ASIGNACION_OFICINA',
+                    'SALIDA_PRESTAMO',
+                    'RETORNO_SOPORTE',
+                    'ENVIO_GARANTIA',
+                    'REINGRESO_SOPORTE',
+                    'RETORNO_PROVEEDOR',
+                    'BAJA_ACTIVO',
+                    'RETORNO_POR_RECHAZO',
+                    'INGRESO_MANTENIMIENTO',
+                    'SALIDA_MANTENIMIENTO',
+                    'SIM_ASIGNACION',
+                    'SIM_CAMBIO',
+                    'SIM_RETIRO',
+                    'SIM_RETIRO_TOTAL',
+                    'SIM_TRASLADO'
+                ],
+                example: 'TRASLADO_REGIONAL' 
+            },
             originLocationId: { type: 'string', format: 'uuid' },
             destinationLocationId: { type: 'string', format: 'uuid' },
             responsibleId: { type: 'string', format: 'uuid' },
@@ -99,6 +124,39 @@ export const swaggerSchemas = {
                 type: 'array',
                 items: { $ref: '#/components/schemas/Activo' }
             }
+        }
+    },
+    MaintenanceReport: {
+        type: 'object',
+        required: ['activoId', 'modalidad', 'tipoMantenimiento', 'estado'],
+        properties: {
+            id: { type: 'string', format: 'uuid' },
+            activoId: { type: 'string', format: 'uuid' },
+            modalidad: { type: 'string', enum: ['INTERNO', 'EXTERNO', 'INTERNO_ESCALADO'] },
+            tipoMantenimiento: { type: 'string', enum: ['PREVENTIVO', 'CORRECTIVO'] },
+            estado: { type: 'string', enum: ['PENDIENTE_DIAGNOSTICO', 'EN_PROCESO', 'REQUIERE_AUTORIZACION', 'ENVIADO_PROVEEDOR', 'CERRADO'] },
+            diagnostico: { type: 'string', nullable: true },
+            accionesRealizadas: { type: 'string', nullable: true },
+            repuestosUsados: { type: 'string', nullable: true },
+            costoEstimado: { type: 'number', nullable: true },
+            costoFinal: { type: 'number', nullable: true },
+            cubiertoPorGarantia: { type: 'boolean' },
+            tecnicoResponsable: { type: 'string', nullable: true },
+            escalaAProveedor: { type: 'boolean' },
+            motivoEscalacion: { type: 'string', nullable: true },
+            fechaEscalacion: { type: 'string', format: 'date-time', nullable: true },
+            proveedorServicio: { type: 'string', nullable: true },
+            referenciaOrdenServicio: { type: 'string', nullable: true },
+            soporteProveedorUrl: { type: 'string', nullable: true },
+            soporteAutorizacionUrl: { type: 'string', nullable: true },
+            resultadoFinal: { type: 'string', enum: ['REPARADO', 'IRREPARABLE', 'SIN_FALLAS'], nullable: true },
+            fechaApertura: { type: 'string', format: 'date-time' },
+            fechaInicioInterno: { type: 'string', format: 'date-time', nullable: true },
+            fechaDiagnostico: { type: 'string', format: 'date-time', nullable: true },
+            fechaEnvioProveedor: { type: 'string', format: 'date-time', nullable: true },
+            fechaRetornoProveedor: { type: 'string', format: 'date-time', nullable: true },
+            fechaCierre: { type: 'string', format: 'date-time', nullable: true },
+            movimientoOrigenId: { type: 'string', format: 'uuid', nullable: true }
         }
     }
 };

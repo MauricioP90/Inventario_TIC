@@ -17,6 +17,8 @@ export enum MovementType {
     SUPPORT_REENTRY = 'REINGRESO_SOPORTE',
     PROVIDER_RETURN = 'RETORNO_PROVEEDOR',
     DISPOSAL = 'BAJA_ACTIVO',
+    INGRESO_MANTENIMIENTO = 'INGRESO_MANTENIMIENTO',
+    SALIDA_MANTENIMIENTO = 'SALIDA_MANTENIMIENTO',
     // SIM Cards
     SIM_ASSIGNMENT = 'SIM_ASIGNACION',
     SIM_CHANGE = 'SIM_CAMBIO',
@@ -75,7 +77,9 @@ export class Movement {
             'SIM_ASIGNACION',
             'SIM_CAMBIO',
             'SIM_RETIRO',
-            'SIM_RETIRO_TOTAL'
+            'SIM_RETIRO_TOTAL',
+            'INGRESO_MANTENIMIENTO',
+            'SALIDA_MANTENIMIENTO'
         ].includes(this.props.type);
 
         if (!isLocalSIMMovement && this.props.originLocationId === this.props.destinationLocationId) {

@@ -21,7 +21,8 @@ export enum EstadoFicha {
 
 export enum ResultadoFinal {
     REPARADO = 'REPARADO',
-    IRREPARABLE = 'IRREPARABLE'
+    IRREPARABLE = 'IRREPARABLE',
+    SIN_FALLAS = 'SIN_FALLAS'
 }
 
 export interface MaintenanceReportProps {
@@ -165,13 +166,19 @@ export class MaintenanceReport {
     }
 
     public cerrar(resultado: ResultadoFinal, accionesRealizadas: string, costoFinal?: number, repuestos?: string) {
-        if (this.props.estado !== EstadoFicha.EN_PROCESO) {
-            throw new Error('La ficha debe estar en proceso para ser cerrada');
+        if (this.props.estado !== EstadoFicha.EN_PROCESO && this.props.estado !== EstadoFicha.PENDIENTE_DIAGNOSTICO) {
+            throw new Error('La ficha debe estar en proceso o pendiente de diagnóstico para ser cerrada');
         }
         if (!accionesRealizadas) throw new Error('Las acciones realizadas son obligatorias para cerrar la ficha');
+        
+        if (this.props.estado === EstadoFicha.PENDIENTE_DIAGNOSTICO) {
+            this.props.fechaDiagnostico = new Date();
+            this.props.diagnostico = this.props.diagnostico || accionesRealizadas;
+        }
+        
         this.props.resultadoFinal = resultado;
         this.props.accionesRealizadas = accionesRealizadas;
-        this.props.costoFinal = costoFinal;
+        this.props.costoFinal = costoFinal || 0;
         this.props.repuestosUsados = repuestos;
         this.props.fechaCierre = new Date();
         this.props.estado = EstadoFicha.CERRADO;

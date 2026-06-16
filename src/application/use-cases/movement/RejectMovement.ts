@@ -44,7 +44,8 @@ export class RejectMovement {
             status: MovementStatus.EN_TRANSIT, // Arranca su viaje de vuelta inmediatamente
             activoIds: movement.activoIds,
             simCardIds: movement.simCardIds,
-            notes: `Retorno automático por rechazo del traslado #${movement.id!.slice(-6).toUpperCase()}`
+            notes: `Retorno automático por rechazo del traslado #${movement.id!.slice(-6).toUpperCase()}. Motivo: ${rejectionReason}`,
+            shippedAt: new Date()
         });
 
         // 4. Actualizar los activos involucrados a estado RECHAZADO (novedad)

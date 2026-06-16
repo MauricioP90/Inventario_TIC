@@ -42,7 +42,8 @@ export class RejectByMagicLink {
             status: MovementStatus.EN_TRANSIT, // Inicia viaje de vuelta inmediatamente
             activoIds: movement.activoIds,
             simCardIds: movement.simCardIds,
-            notes: `Retorno automático por rechazo (Magic Link) del traslado #${movement.id!.slice(-6).toUpperCase()}. Motivo: ${rejectionReason}`
+            notes: `Retorno automático por rechazo (Magic Link) del traslado #${movement.id!.slice(-6).toUpperCase()}. Motivo: ${rejectionReason}`,
+            shippedAt: new Date()
         });
 
         // 4. Poner los activos en estado RECHAZADO (sin mover ubicación aún, viajan de vuelta)

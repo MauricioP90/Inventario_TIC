@@ -4,7 +4,7 @@ import { Responsible } from "../../../domain/entities/Responsible";
 import { ILocationRepository } from "../../../domain/repositories/ILocationRepository";
 import { IResponsibleRepository } from "../../../domain/repositories/IResponsibleRepository";
 import { IMovementRepository } from "../../../domain/repositories/IMovementRepository";
-import { MovementStatus } from "../../../domain/entities/Movement";
+import { Movement, MovementStatus } from "../../../domain/entities/Movement";
 import { IMaintenanceReportRepository } from "../../../domain/repositories/IMaintenanceReportRepository";
 import { MaintenanceReport, ModalidadMantenimiento, TipoMantenimiento } from "../../../domain/entities/MaintenanceReport";
 
@@ -65,6 +65,16 @@ export class UpdateActivo {
         const oldEstado = activo.estado;
         const targetEstado = input.estado !== undefined ? input.estado : activo.estado;
         const targetLocationId = input.locationId !== undefined ? input.locationId : activo.locationId;
+
+        // Regla de Bloqueo: Si estaba en MANTENIMIENTO y quiere salir de él, verificar si tiene una ficha activa
+        if (oldEstado === EstadoActivo.MANTENIMIENTO && targetEstado !== EstadoActivo.MANTENIMIENTO) {
+            const activeReports = await this.maintenanceRepository.findAllActive();
+            const hasActiveReport = activeReports.some(r => r.activoId === activo.id);
+            if (hasActiveReport) {
+                throw new Error('No se puede cambiar el estado del activo porque tiene una ficha de mantenimiento activa. Debe finalizar o cerrar la ficha en el módulo de mantenimiento.');
+            }
+        }
+
         if (targetEstado === EstadoActivo.MANTENIMIENTO && targetLocationId) {
             const location = await this.locationRepository.findById(targetLocationId);
             if (location && location.tipo !== 'BODEGA' && location.tipo !== 'PROVEEDOR') {
@@ -89,7 +99,6 @@ export class UpdateActivo {
             ...(input.modelo && { modelo: input.modelo }),
             ...(input.serial && { serial: input.serial }),
             ...(input.estado && { estado: input.estado }),
-            ...(input.fechaIngreso && { fechaIngreso: new Date(input.fechaIngreso) }),
             ...(input.facturaUrl !== undefined && { facturaUrl: input.facturaUrl })
         });
 
@@ -107,8 +116,52 @@ export class UpdateActivo {
                     costoEstimado: input.maintenanceCostoEstimado,
                     tecnicoResponsable: input.maintenanceTecnicoResponsable,
                 } as any);
-                await this.maintenanceRepository.save(report);
+                const savedReport = await this.maintenanceRepository.save(report);
+
+                // Registrar movimiento de ingreso a mantenimiento
+                const movement = new Movement({
+                    type: 'INGRESO_MANTENIMIENTO',
+                    originLocationId: targetLocationId || activo.locationId!,
+                    destinationLocationId: targetLocationId || activo.locationId!,
+                    responsibleId: input.responsibleId || activo.responsibleId!,
+                    activoIds: [activo.id!],
+                    status: MovementStatus.RECEIVED,
+                    shippedAt: new Date(),
+                    receivedAt: new Date(),
+                    notes: `Ingreso a mantenimiento por cambio manual de estado en edición de activo. Ficha autogenerada: #${savedReport.id!.substring(0, 8)}.`
+                });
+                await this.movementRepository.create(movement);
+            } else if (oldEstado !== EstadoActivo.MANTENIMIENTO) {
+                // Si ya tenía ficha activa pero el activo no estaba en estado MANTENIMIENTO por alguna razón, igual logueamos ingreso
+                const movement = new Movement({
+                    type: 'INGRESO_MANTENIMIENTO',
+                    originLocationId: targetLocationId || activo.locationId!,
+                    destinationLocationId: targetLocationId || activo.locationId!,
+                    responsibleId: input.responsibleId || activo.responsibleId!,
+                    activoIds: [activo.id!],
+                    status: MovementStatus.RECEIVED,
+                    shippedAt: new Date(),
+                    receivedAt: new Date(),
+                    notes: `Ingreso a mantenimiento por cambio manual de estado en edición de activo (ya contaba con una ficha activa).`
+                });
+                await this.movementRepository.create(movement);
             }
+        }
+
+        // Si sale de MANTENIMIENTO manualmente
+        if (oldEstado === EstadoActivo.MANTENIMIENTO && targetEstado !== EstadoActivo.MANTENIMIENTO) {
+            const movement = new Movement({
+                type: 'SALIDA_MANTENIMIENTO',
+                originLocationId: targetLocationId || activo.locationId!,
+                destinationLocationId: targetLocationId || activo.locationId!,
+                responsibleId: input.responsibleId || activo.responsibleId!,
+                activoIds: [activo.id!],
+                status: MovementStatus.RECEIVED,
+                shippedAt: new Date(),
+                receivedAt: new Date(),
+                notes: `Salida de mantenimiento por cambio manual de estado en edición de activo a: ${targetEstado}.`
+            });
+            await this.movementRepository.create(movement);
         }
 
         return activo;

@@ -2,8 +2,10 @@ import { Router } from "express";
 import { AppDataSource } from "../../../data-source";
 import { MaintenanceReportEntity } from "../../persistence/typeorm/entities/MaintenanceReportEntity";
 import { ActivoEntity } from "../../persistence/typeorm/entities/ActivoEntity";
+import { MovementEntity } from "../../persistence/typeorm/entities/MovementEntity";
 import { TypeORMMaintenanceReportRepository } from "../../persistence/typeorm/repositories/TypeORMMaintenanceReportRepository";
 import { TypeORMActivoRepository } from "../../persistence/typeorm/repositories/TypeORMActivoRepository";
+import { TypeORMMovementRepository } from "../../persistence/typeorm/repositories/TypeORMMovementRepository";
 import { CreateMaintenanceReport } from "../../../application/use-cases/maintenance/CreateMaintenanceReport";
 import { UpdateMaintenanceReport } from "../../../application/use-cases/maintenance/UpdateMaintenanceReport";
 import { GetActiveMaintenance } from "../../../application/use-cases/maintenance/GetActiveMaintenance";
@@ -16,10 +18,11 @@ const maintenanceRouter = Router();
 // Repositorios
 const maintenanceRepo = new TypeORMMaintenanceReportRepository(AppDataSource.getRepository(MaintenanceReportEntity));
 const activoRepo = new TypeORMActivoRepository(AppDataSource.getRepository(ActivoEntity));
+const movementRepo = new TypeORMMovementRepository(AppDataSource.getRepository(MovementEntity));
 
 // Casos de uso
-const createUC = new CreateMaintenanceReport(maintenanceRepo, activoRepo);
-const updateUC = new UpdateMaintenanceReport(maintenanceRepo, activoRepo);
+const createUC = new CreateMaintenanceReport(maintenanceRepo, activoRepo, movementRepo);
+const updateUC = new UpdateMaintenanceReport(maintenanceRepo, activoRepo, movementRepo);
 const getActiveUC = new GetActiveMaintenance(maintenanceRepo);
 const getHistoryUC = new GetMaintenanceHistory(maintenanceRepo);
 

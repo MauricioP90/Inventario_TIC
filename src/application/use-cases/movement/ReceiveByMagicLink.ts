@@ -18,7 +18,7 @@ export class ReceiveByMagicLink {
         const movement = await this.movementRepository.findByMagicLinkToken(token);
 
         if (!movement) {
-            throw new Error('Enlace mágico inválido o expirado.');
+            throw new Error('Enlace de autenticación única inválido o expirado.');
         }
 
         if (movement.status !== 'EN_TRANSIT') {

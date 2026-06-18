@@ -178,7 +178,7 @@ export class MaintenanceReport {
         
         this.props.resultadoFinal = resultado;
         this.props.accionesRealizadas = accionesRealizadas;
-        this.props.costoFinal = costoFinal || 0;
+        this.props.costoFinal = (costoFinal !== undefined && costoFinal !== null) ? costoFinal : 0;
         this.props.repuestosUsados = repuestos;
         this.props.fechaCierre = new Date();
         this.props.estado = EstadoFicha.CERRADO;

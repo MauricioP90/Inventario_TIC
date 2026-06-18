@@ -43,11 +43,17 @@ export class UpdateMaintenanceReport {
         switch (input.accion) {
             case 'iniciar':
                 if (!input.diagnostico) throw new Error('El diagnóstico es obligatorio para iniciar el proceso');
+                if (report.modalidad === 'INTERNO' && (!input.tecnicoResponsable || !input.tecnicoResponsable.trim())) {
+                    throw new Error('El Técnico Responsable es obligatorio para iniciar mantenimiento interno');
+                }
                 report.iniciarProceso(input.diagnostico, input.tecnicoResponsable);
                 break;
 
             case 'escalar':
                 if (!input.motivoEscalacion) throw new Error('El motivo de escalación es obligatorio');
+                if (!input.proveedorServicio || !input.proveedorServicio.trim()) {
+                    throw new Error('El Proveedor de Servicio es obligatorio para escalar a proveedor');
+                }
                 report.escalarAProveedor(input.motivoEscalacion, input.proveedorServicio);
                 break;
 

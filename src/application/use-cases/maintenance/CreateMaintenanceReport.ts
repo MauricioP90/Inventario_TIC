@@ -12,6 +12,7 @@ interface CreateMaintenanceReportInput {
     movimientoOrigenId?: string;
     costoEstimado?: number;
     tecnicoResponsable?: string;
+    proveedorServicio?: string;
 }
 
 export class CreateMaintenanceReport {
@@ -24,6 +25,14 @@ export class CreateMaintenanceReport {
     async execute(input: CreateMaintenanceReportInput): Promise<MaintenanceReport> {
         const activo = await this.activoRepo.findById(input.activoId);
         if (!activo) throw new Error('Activo no encontrado');
+
+        // VALIDACIÓN DE CAMPOS OBLIGATORIOS
+        if (input.modalidad === ModalidadMantenimiento.INTERNO && (!input.tecnicoResponsable || !input.tecnicoResponsable.trim())) {
+            throw new Error('El Técnico Responsable es obligatorio para mantenimientos internos');
+        }
+        if (input.modalidad === ModalidadMantenimiento.EXTERNO && (!input.proveedorServicio || !input.proveedorServicio.trim())) {
+            throw new Error('El Proveedor de Servicio es obligatorio para mantenimientos externos');
+        }
         
         if (activo.estado !== 'MANTENIMIENTO') {
             activo.setStatus(EstadoActivo.MANTENIMIENTO);
@@ -37,6 +46,7 @@ export class CreateMaintenanceReport {
             movimientoOrigenId: input.movimientoOrigenId,
             costoEstimado: input.costoEstimado,
             tecnicoResponsable: input.tecnicoResponsable,
+            proveedorServicio: input.proveedorServicio,
         } as any);
 
         const savedReport = await this.maintenanceRepo.save(report);

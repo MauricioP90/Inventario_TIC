@@ -1,5 +1,6 @@
-import { Entity, PrimaryColumn, Column, ManyToMany } from 'typeorm';
+import { Entity, PrimaryColumn, Column, ManyToMany, JoinTable } from 'typeorm';
 import { ResponsibleEntity } from './ResponsibleEntity';
+import { AreaEntity } from './AreaEntity';
 
 @Entity('locations')
 export class LocationEntity {
@@ -26,4 +27,12 @@ export class LocationEntity {
 
     @ManyToMany(() => ResponsibleEntity, (responsible) => responsible.locations)
     responsibles!: ResponsibleEntity[];
+
+    @ManyToMany(() => AreaEntity, (area) => area.locations)
+    @JoinTable({
+        name: 'location_areas',
+        joinColumn: { name: 'location_id', referencedColumnName: 'id' },
+        inverseJoinColumn: { name: 'area_id', referencedColumnName: 'id' }
+    })
+    areas!: AreaEntity[];
 }

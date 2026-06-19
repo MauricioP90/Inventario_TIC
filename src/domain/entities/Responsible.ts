@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Role } from './Role';
+import { Area } from './Area';
 
 export enum EstadoResponsable {
     ACTIVO = 'ACTIVO',
@@ -13,6 +14,7 @@ export interface ResponsibleProps {
     telefono: string;
     estado: EstadoResponsable;
     role?: Role;
+    area?: Area;
     locationIds?: string[];
     totalActivos?: number;
     totalSIMCards?: number;
@@ -26,6 +28,7 @@ export class Responsible {
             ...props,
             id: props.id || randomUUID(),
             role: props.role || undefined,
+            area: props.area || undefined,
         };
 
         this.validar();
@@ -50,6 +53,7 @@ export class Responsible {
     get telefono() { return this.props.telefono; }
     get estado() { return this.props.estado; }
     get role() { return this.props.role; }
+    get area() { return this.props.area; }
     get locationIds() { return this.props.locationIds || []; }
     get totalActivos() { return this.props.totalActivos || 0; }
     get totalSIMCards() { return this.props.totalSIMCards || 0; }

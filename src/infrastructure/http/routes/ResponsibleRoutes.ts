@@ -5,6 +5,7 @@ import { ActivoEntity } from "../../persistence/typeorm/entities/ActivoEntity";
 import { LocationEntity } from "../../persistence/typeorm/entities/LocationEntity";
 import { SIMCardEntity } from "../../persistence/typeorm/entities/SIMCardEntity";
 import { RoleEntity } from "../../persistence/typeorm/entities/RoleEntity";
+import { AreaEntity } from "../../persistence/typeorm/entities/AreaEntity";
 import { CreateResponsible } from "../../../application/use-cases/responsible/CreateResponsible";
 import { GetAllResponsible } from "../../../application/use-cases/responsible/GetAllResponsible";
 import { GetOneResponsible } from "../../../application/use-cases/responsible/GetOneResponsible";
@@ -21,6 +22,7 @@ import { TypeORMActivoRepository } from "../../persistence/typeorm/repositories/
 import { TypeORMLocationRepository } from "../../persistence/typeorm/repositories/TypeORMLocationRepository";
 import { TypeORMSIMCardRepository } from "../../persistence/typeorm/repositories/TypeORMSIMCardRepository";
 import { TypeORMRoleRepository } from "../../persistence/typeorm/repositories/TypeORMRoleRepository";
+import { TypeORMAreaRepository } from "../../persistence/typeorm/repositories/TypeORMAreaRepository";
 
 const responsibleRouter = Router();
 
@@ -30,12 +32,13 @@ const activoRepo = new TypeORMActivoRepository(AppDataSource.getRepository(Activ
 const locationRepo = new TypeORMLocationRepository(AppDataSource.getRepository(LocationEntity));
 const simCardRepo = new TypeORMSIMCardRepository(AppDataSource.getRepository(SIMCardEntity));
 const roleRepo = new TypeORMRoleRepository(AppDataSource.getRepository(RoleEntity));
+const areaRepo = new TypeORMAreaRepository(AppDataSource.getRepository(AreaEntity));
 
 // 2. Inicializamos Casos de Uso
-const createUC = new CreateResponsible(repo, roleRepo);
+const createUC = new CreateResponsible(repo, roleRepo, areaRepo);
 const getAllUC = new GetAllResponsible(repo);
 const getOneUC = new GetOneResponsible(repo);
-const updateUC = new UpdateResponsible(repo, roleRepo);
+const updateUC = new UpdateResponsible(repo, roleRepo, areaRepo);
 const inactiveUC = new InactiveResponsible(repo, activoRepo, locationRepo);
 const getResponsibleStatsUC = new GetResponsibleStats(activoRepo, simCardRepo);
 const getAllRolesUC = new GetAllRoles(roleRepo);

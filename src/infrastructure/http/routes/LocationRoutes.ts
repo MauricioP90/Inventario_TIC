@@ -12,6 +12,8 @@ import { LocationEntity } from "../../persistence/typeorm/entities/LocationEntit
 import { TypeORMLocationRepository } from "../../persistence/typeorm/repositories/TypeORMLocationRepository";
 import { ResponsibleEntity } from "../../persistence/typeorm/entities/ResponsibleEntity";
 import { TypeORMResponsibleRepository } from "../../persistence/typeorm/repositories/TypeORMResponsibleRepository";
+import { AreaEntity } from "../../persistence/typeorm/entities/AreaEntity";
+import { TypeORMAreaRepository } from "../../persistence/typeorm/repositories/TypeORMAreaRepository";
 
 
 const LocationRouter = Router();
@@ -24,16 +26,20 @@ const locationRepo = new TypeORMLocationRepository(typeormRepo);
 const typeormResponsibleRepo = AppDataSource.getRepository(ResponsibleEntity);
 const responsibleRepo = new TypeORMResponsibleRepository(typeormResponsibleRepo);
 
-//3. Inicializamos los casos de uso
+//3. Necesitamos el repositorio de áreas
+const typeormAreaRepo = AppDataSource.getRepository(AreaEntity);
+const areaRepo = new TypeORMAreaRepository(typeormAreaRepo);
 
-const createLocationUC = new CreateLocation(locationRepo, responsibleRepo);
+//4. Inicializamos los casos de uso
+
+const createLocationUC = new CreateLocation(locationRepo, responsibleRepo, areaRepo);
 const getAllLocationsUC = new GetAllLocations(locationRepo);
-const updateLocationUC = new UpdateLocation(locationRepo, responsibleRepo);
+const updateLocationUC = new UpdateLocation(locationRepo, responsibleRepo, areaRepo);
 const getOneLocationUC = new GetOneLocation(locationRepo);
 const geocodingService = new NominatimGeocodingService();
 const reverseGeocodeUC = new ReverseGeocode(geocodingService);
 
-//4. Inicializamos el controlador
+//5. Inicializamos el controlador
 const locationController = new LocationController(
     createLocationUC,
     getAllLocationsUC,

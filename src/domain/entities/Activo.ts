@@ -102,7 +102,7 @@ export class Activo {
             this.setStatus(EstadoActivo.OPERACION);
         } else if (tipo === 'RETORNO_SOPORTE' || tipo === 'REINGRESO_SOPORTE' || tipo === 'RETORNO_PROVEEDOR' || tipo === 'SALIDA_MANTENIMIENTO') {
             this.setStatus(EstadoActivo.DISPONIBLE);
-        } else if (tipo === 'ENVIO_GARANTIA' || tipo === 'RETORNO_POR_RECHAZO' || tipo === 'INGRESO_MANTENIMIENTO') {
+        } else if (tipo === 'ENVIO_PROVEEDOR' || tipo === 'RETORNO_POR_RECHAZO' || tipo === 'INGRESO_MANTENIMIENTO') {
             this.setStatus(EstadoActivo.MANTENIMIENTO);
         } else if (tipo === 'BAJA_ACTIVO') {
             this.setStatus(EstadoActivo.BAJA);

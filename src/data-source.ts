@@ -8,6 +8,7 @@ import { RoleEntity } from "./infrastructure/persistence/typeorm/entities/RoleEn
 import { MovementEntity } from "./infrastructure/persistence/typeorm/entities/MovementEntity";
 import { TipoActivoEntity } from "./infrastructure/persistence/typeorm/entities/TipoActivoEntity";
 import { MaintenanceReportEntity } from "./infrastructure/persistence/typeorm/entities/MaintenanceReportEntity";
+import { AreaEntity } from "./infrastructure/persistence/typeorm/entities/AreaEntity";
 
 
 export const AppDataSource = new DataSource({
@@ -19,7 +20,7 @@ export const AppDataSource = new DataSource({
     database: "inventario",
     synchronize: false,
     logging: true,
-    entities: [ActivoEntity, SIMCardEntity, ResponsibleEntity, LocationEntity, RoleEntity, MovementEntity, TipoActivoEntity, MaintenanceReportEntity],
+    entities: [ActivoEntity, SIMCardEntity, ResponsibleEntity, LocationEntity, RoleEntity, MovementEntity, TipoActivoEntity, MaintenanceReportEntity, AreaEntity],
     migrations: ["src/infrastructure/persistence/typeorm/migrations/*.ts"],
     subscribers: [],
 });

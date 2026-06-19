@@ -8,6 +8,16 @@ export const swaggerSchemas = {
             estado: { type: 'string', enum: ['ACTIVO', 'INACTIVO'] }
         }
     },
+    Area: {
+        type: 'object',
+        required: ['code', 'nombre', 'estado'],
+        properties: {
+            id: { type: 'string', format: 'uuid' },
+            code: { type: 'string' },
+            nombre: { type: 'string' },
+            estado: { type: 'string', enum: ['ACTIVO', 'INACTIVO'] }
+        }
+    },
     Activo: {
         type: 'object',
         required: ['placa', 'tipo', 'marca', 'modelo', 'serial', 'estado', 'fechaIngreso', 'locationId', 'responsibleId'],
@@ -44,6 +54,10 @@ export const swaggerSchemas = {
             responsibleIds: {
                 type: 'array',
                 items: { type: 'string', format: 'uuid' }
+            },
+            areas: {
+                type: 'array',
+                items: { $ref: '#/components/schemas/Area' }
             }
         }
     },
@@ -57,6 +71,7 @@ export const swaggerSchemas = {
             telefono: { type: 'string' },
             estado: { type: 'string', enum: ['ACTIVO', 'INACTIVO'] },
             role: { $ref: '#/components/schemas/Role' },
+            area: { $ref: '#/components/schemas/Area' },
             locationIds: {
                 type: 'array',
                 items: { type: 'string', format: 'uuid' }
@@ -89,8 +104,7 @@ export const swaggerSchemas = {
                     'ASIGNACION_OFICINA',
                     'SALIDA_PRESTAMO',
                     'RETORNO_SOPORTE',
-                    'ENVIO_GARANTIA',
-                    'REINGRESO_SOPORTE',
+                    'ENVIO_PROVEEDOR',
                     'RETORNO_PROVEEDOR',
                     'BAJA_ACTIVO',
                     'RETORNO_POR_RECHAZO',

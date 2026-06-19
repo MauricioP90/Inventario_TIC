@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { Coordinates } from '../value-objects/Coordinates';
+import { Area } from './Area';
 
 export enum TipoLocation {
     BODEGA = 'BODEGA',
@@ -16,6 +17,7 @@ export interface LocationProps {
     tipo?: TipoLocation;
     estado: EstadoLocation;
     responsibleIds?: string[];
+    areas?: Area[];
     observaciones?: string | null;
 }
 
@@ -31,6 +33,7 @@ export class Location {
         this.props = {
             ...props,
             id: props.id || randomUUID(),
+            areas: props.areas || [],
         };
         this.validar();
     }
@@ -50,6 +53,7 @@ export class Location {
     get tipo() { return this.props.tipo || TipoLocation.OFICINA; }
     get estado() { return this.props.estado; }
     get responsibleIds() { return this.props.responsibleIds || []; }
+    get areas() { return this.props.areas || []; }
     get observaciones() { return this.props.observaciones; }
 
     public static create(props: LocationProps) {

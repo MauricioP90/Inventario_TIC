@@ -2,7 +2,9 @@ import { ILocationRepository } from "../../../domain/repositories/ILocationRepos
 import { Location, EstadoLocation, TipoLocation } from "../../../domain/entities/Location";
 import { EstadoResponsable } from "../../../domain/entities/Responsible";
 import { IResponsibleRepository } from "../../../domain/repositories/IResponsibleRepository";
+import { IAreaRepository } from "../../../domain/repositories/IAreaRepository";
 import { Coordinates } from "../../../domain/value-objects/Coordinates";
+import { Area } from "../../../domain/entities/Area";
 
 export interface UpdateLocationInput {
     code: string;
@@ -11,13 +13,15 @@ export interface UpdateLocationInput {
     tipo?: TipoLocation;
     estado?: EstadoLocation;
     responsibleIds?: string[];
+    areaIds?: string[];
     observaciones?: string;
 }
 
 export class UpdateLocation {
     constructor(
         private readonly locationRepository: ILocationRepository,
-        private readonly responsibleRepository: IResponsibleRepository
+        private readonly responsibleRepository: IResponsibleRepository,
+        private readonly areaRepository: IAreaRepository
     ) { }
 
     async execute(input: UpdateLocationInput): Promise<Location> {
@@ -52,17 +56,31 @@ export class UpdateLocation {
             }
         }
 
-        // 3. Actualizar la entidad con los nuevos datos
+        // 4. Si se están cambiando las áreas, validar que existan
+        let areas: Area[] | undefined = undefined;
+        if (input.areaIds) {
+            areas = [];
+            for (const areaId of input.areaIds) {
+                const area = await this.areaRepository.findById(areaId);
+                if (!area) {
+                    throw new Error('El area con id ' + areaId + ' no existe');
+                }
+                areas.push(area);
+            }
+        }
+
+        // 5. Actualizar la entidad con los nuevos datos
         location.update({
             nombre: input.nombre,
             coordenadas: input.coordenadas,
             tipo: input.tipo,
             estado: input.estado,
             responsibleIds: input.responsibleIds,
+            areas: areas,
             observaciones: input.observaciones
         });
 
-        // 4. Persistir los cambios
+        // 6. Persistir los cambios
         await this.locationRepository.update(location);
 
         return location;

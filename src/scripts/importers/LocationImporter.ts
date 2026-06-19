@@ -7,6 +7,8 @@ import { TypeORMLocationRepository } from "../../infrastructure/persistence/type
 import { TypeORMResponsibleRepository } from "../../infrastructure/persistence/typeorm/repositories/TypeORMResponsibleRepository";
 import { LocationEntity } from "../../infrastructure/persistence/typeorm/entities/LocationEntity";
 import { ResponsibleEntity } from "../../infrastructure/persistence/typeorm/entities/ResponsibleEntity";
+import { AreaEntity } from "../../infrastructure/persistence/typeorm/entities/AreaEntity";
+import { TypeORMAreaRepository } from "../../infrastructure/persistence/typeorm/repositories/TypeORMAreaRepository";
 
 const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 async function runImporter() {
@@ -27,9 +29,10 @@ async function runImporter() {
         // Repositorios
         const locationRepo = new TypeORMLocationRepository(AppDataSource.getRepository(LocationEntity));
         const responsibleRepo = new TypeORMResponsibleRepository(AppDataSource.getRepository(ResponsibleEntity));
+        const areaRepo = new TypeORMAreaRepository(AppDataSource.getRepository(AreaEntity));
 
         // Caso de Uso
-        const createLocationUseCase = new CreateLocation(locationRepo, responsibleRepo);
+        const createLocationUseCase = new CreateLocation(locationRepo, responsibleRepo, areaRepo);
 
         // Ruta al JSON
         const filePath = path.join(__dirname, 'data', 'sources', 'locations.json');

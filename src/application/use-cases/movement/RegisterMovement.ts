@@ -56,7 +56,7 @@ export class RegisterMovement {
                 if (activo.estado === 'MANTENIMIENTO') {
                     const isAllowedMaintenanceMovement = 
                         ['RETORNO_SOPORTE', 'REINGRESO_SOPORTE', 'RETORNO_PROVEEDOR'].includes(dto.type.toUpperCase()) ||
-                        (dto.type.toUpperCase() === 'ENVIO_GARANTIA' && 
+                        (dto.type.toUpperCase() === 'ENVIO_PROVEEDOR' && 
                          (isOriginBodega || isOriginProvider) && 
                          (isDestBodega || isDestProvider)) ||
                         (dto.type.toUpperCase() === 'TRASLADO_REGIONAL' && isOriginBodega && isDestBodega);
@@ -78,10 +78,10 @@ export class RegisterMovement {
             }
         }
 
-        // Validación de destino para envío a garantía (mantenimiento)
-        if (dto.type && dto.type.toUpperCase() === 'ENVIO_GARANTIA') {
+        // Validación de destino para envío a proveedor (mantenimiento)
+        if (dto.type && dto.type.toUpperCase() === 'ENVIO_PROVEEDOR') {
             if (originLocation.tipo !== 'BODEGA' || destinationLocation.tipo !== 'PROVEEDOR') {
-                throw new Error('El envío a garantía solo se puede realizar desde una Bodega hacia un Proveedor.');
+                throw new Error('El envío a proveedor solo se puede realizar desde una Bodega hacia un Proveedor.');
             }
         }
 

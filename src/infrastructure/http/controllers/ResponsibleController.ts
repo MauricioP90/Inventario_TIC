@@ -182,6 +182,10 @@ export class ResponsibleController {
      *                 type: string
      *                 format: uuid
      *                 description: ID del Rol seleccionado
+     *               area:
+     *                 type: string
+     *                 format: uuid
+     *                 description: ID del Área seleccionada
      *               locationIds:
      *                 type: array
      *                 items:

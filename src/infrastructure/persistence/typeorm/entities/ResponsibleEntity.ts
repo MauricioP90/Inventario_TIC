@@ -2,6 +2,7 @@ import { Entity, PrimaryColumn, Column, ManyToMany, JoinTable, OneToMany, ManyTo
 import { LocationEntity } from './LocationEntity';
 import { ActivoEntity } from './ActivoEntity';
 import { RoleEntity } from './RoleEntity';
+import { AreaEntity } from './AreaEntity';
 
 @Entity('responsables')
 export class ResponsibleEntity {
@@ -31,6 +32,10 @@ export class ResponsibleEntity {
     @ManyToOne(() => RoleEntity, (role) => role.responsibles)
     @JoinColumn({ name: 'role_id' })
     role?: RoleEntity;
+
+    @ManyToOne(() => AreaEntity, (area) => area.responsibles)
+    @JoinColumn({ name: 'area_id' })
+    area?: AreaEntity;
 
 
     @OneToMany(() => ActivoEntity, (activo) => activo.responsible)

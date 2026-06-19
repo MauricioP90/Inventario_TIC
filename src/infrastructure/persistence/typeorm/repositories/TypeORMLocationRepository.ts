@@ -1,5 +1,6 @@
 import { In, Repository } from "typeorm";
 import { ResponsibleEntity } from "../entities/ResponsibleEntity";
+import { AreaEntity } from "../entities/AreaEntity";
 import { Location } from "../../../../domain/entities/Location";
 import { ILocationRepository } from "../../../../domain/repositories/ILocationRepository";
 import { LocationEntity } from "../entities/LocationEntity";
@@ -17,12 +18,20 @@ export class TypeORMLocationRepository implements ILocationRepository {
             });
         }
 
+        if (location.areas.length > 0) {
+            entity.areas = await this.repository.manager.find(AreaEntity, {
+                where: { id: In(location.areas.map(a => a.id!)) }
+            });
+        } else {
+            entity.areas = [];
+        }
+
         await this.repository.save(entity);
     }
 
     async findAll(): Promise<Location[]> {
         const entities = await this.repository.find({
-            relations: ['responsibles']
+            relations: ['responsibles', 'areas']
         });
         return entities.map(entity => LocationMapper.toDomain(entity));
     }
@@ -38,13 +47,21 @@ export class TypeORMLocationRepository implements ILocationRepository {
             entity.responsibles = [];
         }
 
+        if (location.areas.length > 0) {
+            entity.areas = await this.repository.manager.find(AreaEntity, {
+                where: { id: In(location.areas.map(a => a.id!)) }
+            });
+        } else {
+            entity.areas = [];
+        }
+
         await this.repository.save(entity);
     }
 
     async findByCode(code: string): Promise<Location | null> {
         const entity = await this.repository.findOne({ 
             where: { code },
-            relations: ['responsibles']
+            relations: ['responsibles', 'areas']
         });
         return entity ? LocationMapper.toDomain(entity) : null;
     }
@@ -52,7 +69,7 @@ export class TypeORMLocationRepository implements ILocationRepository {
     async findById(id: string): Promise<Location | null> {
         const entity = await this.repository.findOne({ 
             where: { id },
-            relations: ['responsibles']
+            relations: ['responsibles', 'areas']
         });
         return entity ? LocationMapper.toDomain(entity) : null;
     }

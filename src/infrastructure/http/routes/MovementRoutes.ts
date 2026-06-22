@@ -39,10 +39,10 @@ const emailService = new ConsoleEmailService();
 // 2. Inicializamos Casos de Uso
 const registerUC = new RegisterMovement(movementRepo, activoRepo, locationRepo, responsibleRepo, emailService);
 const dispatchUC = new DispatchMovement(movementRepo, activoRepo);
-const receiveUC = new ReceiveMovement(movementRepo, activoRepo, simCardRepo, maintenanceReportRepo);
+const receiveUC = new ReceiveMovement(movementRepo, activoRepo, simCardRepo, maintenanceReportRepo, responsibleRepo, locationRepo);
 const getUC = new GetMovements(movementRepo);
 const rejectUC = new RejectMovement(movementRepo, activoRepo);
-const receiveByMagicLinkUC = new ReceiveByMagicLink(movementRepo, activoRepo, simCardRepo, maintenanceReportRepo);
+const receiveByMagicLinkUC = new ReceiveByMagicLink(movementRepo, activoRepo, simCardRepo, maintenanceReportRepo, responsibleRepo, locationRepo);
 const getMovementByMagicLinkUC = new GetMovementByMagicLink(movementRepo);
 const rejectByMagicLinkUC = new RejectByMagicLink(movementRepo, activoRepo);
 

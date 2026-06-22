@@ -3,6 +3,7 @@ import { LocationEntity } from './LocationEntity';
 import { ResponsibleEntity } from './ResponsibleEntity';
 import { SIMCardEntity } from './SIMCardEntity';
 import { TipoActivoEntity } from './TipoActivoEntity';
+import { AreaEntity } from './AreaEntity';
 
 @Entity('activos') // Nombre de la tabla en SQL
 export class ActivoEntity {
@@ -43,6 +44,13 @@ export class ActivoEntity {
     @ManyToOne(() => ResponsibleEntity)
     @JoinColumn({ name: 'responsible_id' })
     responsible?: ResponsibleEntity;
+
+    @Column({ name: 'area_id', default: '8b8b9c8c-1e2a-43cf-8a27-024848bb0000' })
+    areaId!: string;
+
+    @ManyToOne(() => AreaEntity)
+    @JoinColumn({ name: 'area_id' })
+    area?: AreaEntity;
 
     @OneToMany(() => SIMCardEntity, simCard => simCard.activo)
     simCards?: SIMCardEntity[];

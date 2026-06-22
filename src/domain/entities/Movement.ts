@@ -82,7 +82,8 @@ export class Movement {
             'SALIDA_MANTENIMIENTO'
         ].includes(this.props.type);
 
-        if (!isLocalSIMMovement && this.props.originLocationId === this.props.destinationLocationId) {
+        // Permitimos movimientos dentro de la misma sede para traslados entre diferentes áreas/responsables.
+        if (false && !isLocalSIMMovement && this.props.originLocationId === this.props.destinationLocationId) {
             throw new Error('La sede de origen y destino no pueden ser la misma');
         }
         if (!this.props.responsibleId) throw new Error('El responsable es obligatorio');

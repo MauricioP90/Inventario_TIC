@@ -1,6 +1,7 @@
 import { SIMCard, EstadoSIM } from '../../../domain/entities/SIMCard';
 import { Activo, EstadoActivo } from '../../../domain/entities/Activo';
 import { LocationMapper } from './LocationMapper';
+import { ResponsibleMapper } from './ResponsibleMapper';
 import { SIMCardEntity } from '../typeorm/entities/SIMCardEntity';
 
 export class SIMCardMapper {
@@ -13,6 +14,7 @@ export class SIMCardMapper {
             estado: entity.estado as EstadoSIM,
             activoId: entity.activo?.id,
             locationId: entity.location?.id || entity.activo?.location?.id,
+            responsibleId: entity.activo?.responsible?.id || entity.activo?.responsibleId,
             activo: entity.activo ? new Activo({
                 id: entity.activo.id,
                 placa: entity.activo.placa,
@@ -25,9 +27,12 @@ export class SIMCardMapper {
                 facturaUrl: entity.activo.facturaUrl,
                 locationId: entity.activo.locationId,
                 responsibleId: entity.activo.responsibleId,
-                location: entity.activo.location ? LocationMapper.toDomain(entity.activo.location) : undefined
+                areaId: entity.activo.areaId,
+                location: entity.activo.location ? LocationMapper.toDomain(entity.activo.location) : undefined,
+                responsable: entity.activo.responsible ? ResponsibleMapper.toDomain(entity.activo.responsible) : undefined
             }) : null,
-            location: entity.location ? LocationMapper.toDomain(entity.location) : (entity.activo?.location ? LocationMapper.toDomain(entity.activo.location) : null)
+            location: entity.location ? LocationMapper.toDomain(entity.location) : (entity.activo?.location ? LocationMapper.toDomain(entity.activo.location) : null),
+            responsible: entity.activo?.responsible ? ResponsibleMapper.toDomain(entity.activo.responsible) : null
         });
     }
 

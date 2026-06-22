@@ -18,6 +18,7 @@ interface UpdateActivoInput {
     facturaUrl?: string;
     locationId?: string;
     responsibleId?: string;
+    areaId?: string;
     fechaIngreso?: Date | string;
     precioCompra?: number;
     maintenanceModalidad?: ModalidadMantenimiento;
@@ -50,9 +51,55 @@ export class UpdateActivo {
             const hasLocationChange = input.locationId && input.locationId !== activo.locationId;
             const hasResponsibleChange = input.responsibleId && input.responsibleId !== activo.responsibleId;
             const hasEstadoChange = input.estado && input.estado !== activo.estado;
+            const hasAreaChange = input.areaId && input.areaId !== activo.areaId;
 
-            if (hasLocationChange || hasResponsibleChange || hasEstadoChange) {
-                throw new Error('No se puede modificar el estado, ubicación o responsable del activo porque tiene traslados activos en curso.');
+            if (hasLocationChange || hasResponsibleChange || hasEstadoChange || hasAreaChange) {
+                throw new Error('No se puede modificar el estado, ubicación, responsable o área del activo porque tiene traslados activos en curso.');
+            }
+        }
+
+        let targetLocationId = input.locationId !== undefined ? input.locationId : activo.locationId;
+
+        // Validar áreas de la sede
+        if (targetLocationId) {
+            const location = await this.locationRepository.findById(targetLocationId);
+            if (location) {
+                const hasAreas = location.areas && location.areas.length > 0;
+                if (hasAreas) {
+                    const validAreaIds = location.areas.map(a => a.id);
+                    if (input.areaId !== undefined && !validAreaIds.includes(input.areaId)) {
+                        throw new Error(`El área seleccionada no está habilitada para la sede "${location.nombre}".`);
+                    }
+                    if (input.areaId === undefined && !validAreaIds.includes(activo.areaId)) {
+                        const respId = input.responsibleId || activo.responsibleId;
+                        if (respId) {
+                            const resp = await this.responsibleRepository.findById(respId);
+                            if (resp && resp.area && validAreaIds.includes(resp.area.id!)) {
+                                activo.changeArea(resp.area.id!);
+                            } else {
+                                activo.changeArea(validAreaIds[0]!);
+                            }
+                        } else {
+                            activo.changeArea(validAreaIds[0]!);
+                        }
+                    }
+                } else {
+                    activo.changeArea('8b8b9c8c-1e2a-43cf-8a27-024848bb0000'); // NO APLICA
+                }
+            }
+        }
+
+        if (input.areaId !== undefined) {
+            if (targetLocationId) {
+                const location = await this.locationRepository.findById(targetLocationId);
+                const hasAreas = location && location.areas && location.areas.length > 0;
+                if (hasAreas) {
+                    activo.changeArea(input.areaId);
+                } else {
+                    activo.changeArea('8b8b9c8c-1e2a-43cf-8a27-024848bb0000');
+                }
+            } else {
+                activo.changeArea(input.areaId);
             }
         }
 
@@ -64,7 +111,7 @@ export class UpdateActivo {
 
         const oldEstado = activo.estado;
         const targetEstado = input.estado !== undefined ? input.estado : activo.estado;
-        const targetLocationId = input.locationId !== undefined ? input.locationId : activo.locationId;
+        targetLocationId = input.locationId !== undefined ? input.locationId : activo.locationId;
 
         // Regla de Bloqueo: Si estaba en MANTENIMIENTO y quiere salir de él, verificar si tiene una ficha activa
         if (oldEstado === EstadoActivo.MANTENIMIENTO && targetEstado !== EstadoActivo.MANTENIMIENTO) {

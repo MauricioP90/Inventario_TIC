@@ -94,7 +94,8 @@ export class RegisterMovement {
         
         const isLocalSIM = ['SIM_ASIGNACION', 'SIM_CAMBIO', 'SIM_RETIRO', 'SIM_RETIRO_TOTAL', 'INGRESO_MANTENIMIENTO', 'SALIDA_MANTENIMIENTO'].includes(dto.type);
         
-        if (!isLocalSIM && dto.originLocationId === dto.destinationLocationId) {
+        // Se permiten traslados en la misma sede para soportar cambios de área/responsable
+        if (false && !isLocalSIM && dto.originLocationId === dto.destinationLocationId) {
             throw new Error('La ubicación de origen y destino no pueden ser la misma.');
         }
 

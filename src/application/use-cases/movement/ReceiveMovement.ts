@@ -3,6 +3,8 @@ import { IMovementRepository } from "../../../domain/repositories/IMovementRepos
 import { IActivoRepository } from "../../../domain/repositories/IActivoRepository";
 import { ISIMCardRepository } from "../../../domain/repositories/ISIMCardRepository";
 import { IMaintenanceReportRepository } from "../../../domain/repositories/IMaintenanceReportRepository";
+import { IResponsibleRepository } from "../../../domain/repositories/IResponsibleRepository";
+import { ILocationRepository } from "../../../domain/repositories/ILocationRepository";
 import { MaintenanceReport, ModalidadMantenimiento, TipoMantenimiento, EstadoFicha } from "../../../domain/entities/MaintenanceReport";
 
 export class ReceiveMovement {
@@ -10,7 +12,9 @@ export class ReceiveMovement {
         private readonly movementRepository: IMovementRepository,
         private readonly activoRepository: IActivoRepository,
         private readonly simCardRepository: ISIMCardRepository,
-        private readonly maintenanceReportRepository: IMaintenanceReportRepository
+        private readonly maintenanceReportRepository: IMaintenanceReportRepository,
+        private readonly responsibleRepository: IResponsibleRepository,
+        private readonly locationRepository: ILocationRepository
     ) { }
 
     async execute(id: string, receiverId: string, receiverEvidenceUrl: string, destinationLocationId?: string): Promise<Movement> {
@@ -25,11 +29,34 @@ export class ReceiveMovement {
         }
         // 3. Aplicar lógica de dominio para recibir
         movement.receive(receiverId, receiverEvidenceUrl);
+
+        // Cargar el custodio destino
+        const destinationResponsible = await this.responsibleRepository.findById(movement.responsibleId);
+        if (!destinationResponsible) {
+            throw new Error('El responsable de destino no existe en el sistema.');
+        }
+
+        // Cargar la sede de destino y verificar áreas
+        const location = await this.locationRepository.findById(movement.destinationLocationId);
+        let newAreaId = '8b8b9c8c-1e2a-43cf-8a27-024848bb0000'; // NO APLICA por defecto
+        if (location && location.areas && location.areas.length > 0) {
+            if (destinationResponsible.area) {
+                newAreaId = destinationResponsible.area.id!;
+            } else {
+                newAreaId = location.areas[0].id!;
+            }
+        }
+
         // 4. Actualizar la ubicación de todos los activos involucrados
         const assets = await this.activoRepository.findAll(); // En un entorno real usaríamos findByIds
         const assetsInMovement = assets.filter(a => movement.activoIds.includes(a.id!));
         for (const activo of assetsInMovement) {
+            // Actualizar estado operativo del activo
             activo.aplicarRecepcionDeMovimiento(movement.type, movement.destinationLocationId);
+            // Actualizar custodia (responsable) y área
+            activo.asignarResponsable(destinationResponsible);
+            activo.changeArea(newAreaId);
+            
             await this.activoRepository.update(activo);
 
             // Si el movimiento recibido es de tipo RETORNO_POR_RECHAZO, creamos automáticamente una Ficha de Mantenimiento y su movimiento de ingreso

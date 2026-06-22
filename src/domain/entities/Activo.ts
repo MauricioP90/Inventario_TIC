@@ -3,6 +3,7 @@ import { SIMCard } from './SIMCard';
 import { Location, EstadoLocation } from './Location';
 import { Responsible } from './Responsible';
 import { TipoActivo } from './TipoActivo';
+import { Area } from './Area';
 
 export enum EstadoActivo {
     DISPONIBLE = 'DISPONIBLE',
@@ -25,6 +26,8 @@ export interface ActivoProps {
     responsable?: Responsible;
     responsibleId?: string;
     tipoActivo?: TipoActivo;
+    areaId: string;
+    area?: Area;
     estado: EstadoActivo;
     facturaUrl?: string;
     fechaIngreso: Date;
@@ -53,6 +56,7 @@ export class Activo {
         if (!this.props.fechaIngreso) throw new Error('La fecha de ingreso es obligatoria');
         if (!this.props.location && !this.props.locationId) throw new Error('La ubicación es obligatoria');
         if (!this.props.responsable && !this.props.responsibleId) throw new Error('El responsable es obligatorio');
+        if (!this.props.areaId) throw new Error('El área es obligatoria');
     }
 
     // Getters
@@ -70,6 +74,8 @@ export class Activo {
     get locationId() { return this.props.locationId; }
     get responsable() { return this.props.responsable; }
     get responsibleId() { return this.props.responsibleId; }
+    get areaId() { return this.props.areaId; }
+    get area() { return this.props.area; }
     get precioCompra() { return this.props.precioCompra; }
 
     // Lógica de negocio: Cambiar estado
@@ -144,6 +150,12 @@ export class Activo {
         this.props.location = undefined;
     }
 
+    public changeArea(areaId: string) {
+        if (!areaId) throw new Error('El área es obligatoria');
+        this.props.areaId = areaId;
+        this.props.area = undefined;
+    }
+
     public update(props: Partial<ActivoProps>) {
         this.props = {
             ...this.props,
@@ -158,7 +170,8 @@ export class Activo {
             id: this.id, // Asegurar que el ID esté presente
             simCards: this._simCards, // Incluir SIMCards
             location: this.props.location ? this.props.location.toJSON() : undefined,
-            responsable: this.props.responsable ? this.props.responsable.toJSON() : undefined
+            responsable: this.props.responsable ? this.props.responsable.toJSON() : undefined,
+            area: this.props.area ? this.props.area.toJSON() : undefined
         };
     }
 

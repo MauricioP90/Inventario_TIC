@@ -16,6 +16,7 @@ interface createActivoInput {
     fechaIngreso: Date | string; // Aceptamos string para parsear
     locationId: string;
     responsibleId: string;
+    areaId: string;
     precioCompra?: number;
 }
 
@@ -42,20 +43,32 @@ export class CreateActivo {
             }
         }
 
-        const activo = new Activo({
-            ...input,
-            estado: EstadoActivo.DISPONIBLE,
-            id: input.id,
-            fechaIngreso: fechaParseada,
-            precioCompra
-        });
-
         // Validar existencia de ubicación y responsable
         const location = await this.locationRepository.findById(input.locationId);
         if (!location) throw new Error('Ubicación no encontrada');
 
         const responsible = await this.responsibleRepository.findById(input.responsibleId);
         if (!responsible) throw new Error('Responsable no encontrado');
+
+        let targetAreaId = input.areaId;
+        const hasAreas = location.areas && location.areas.length > 0;
+        if (hasAreas) {
+            const validAreaIds = location.areas.map(a => a.id);
+            if (!validAreaIds.includes(targetAreaId)) {
+                throw new Error(`El área seleccionada no está habilitada para la sede "${location.nombre}".`);
+            }
+        } else {
+            targetAreaId = '8b8b9c8c-1e2a-43cf-8a27-024848bb0000'; // NO APLICA
+        }
+
+        const activo = new Activo({
+            ...input,
+            areaId: targetAreaId,
+            estado: EstadoActivo.DISPONIBLE,
+            id: input.id,
+            fechaIngreso: fechaParseada,
+            precioCompra
+        });
 
         // Validación estricta: el responsable debe tener permisos en la sede seleccionada
         if (!responsible.locationIds.includes(input.locationId)) {

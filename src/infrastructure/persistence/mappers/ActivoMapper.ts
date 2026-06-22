@@ -4,6 +4,7 @@ import { LocationMapper } from './LocationMapper';
 import { ResponsibleMapper } from './ResponsibleMapper';
 import { TipoActivoMapper } from './TipoActivoMapper';
 import { SIMCardMapper } from './SIMCardMapper';
+import { AreaMapper } from './AreaMapper';
 
 export class ActivoMapper {
     // Convierte de la base de datos al Dominio
@@ -20,9 +21,11 @@ export class ActivoMapper {
             facturaUrl: entity.facturaUrl,
             locationId: entity.locationId,
             responsibleId: entity.responsibleId,
+            areaId: entity.areaId,
             location: entity.location ? LocationMapper.toDomain(entity.location) : undefined,
             responsable: entity.responsible ? ResponsibleMapper.toDomain(entity.responsible) : undefined,
             tipoActivo: entity.tipoActivo ? TipoActivoMapper.toDomain(entity.tipoActivo) : undefined,
+            area: entity.area ? AreaMapper.toDomain(entity.area) : undefined,
             precioCompra: entity.precioCompra ? Number(entity.precioCompra) : undefined
         });
 
@@ -49,6 +52,7 @@ export class ActivoMapper {
         entity.facturaUrl = domain.facturaUrl;
         entity.locationId = domain.locationId;
         entity.responsibleId = domain.responsibleId;
+        entity.areaId = domain.areaId;
         entity.precioCompra = domain.precioCompra;
         return entity;
     }

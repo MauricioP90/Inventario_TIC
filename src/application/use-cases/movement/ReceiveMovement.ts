@@ -36,14 +36,20 @@ export class ReceiveMovement {
             throw new Error('El responsable de destino no existe en el sistema.');
         }
 
-        // Cargar la sede de destino y verificar áreas
-        const location = await this.locationRepository.findById(movement.destinationLocationId);
+        // Determinar el área destino:
+        // Para TRASLADO_AREA usamos el área explícita almacenada en el movimiento.
+        // Para otros tipos lo derivamos del responsable o de la primera área de la sede.
         let newAreaId = '8b8b9c8c-1e2a-43cf-8a27-024848bb0000'; // NO APLICA por defecto
-        if (location && location.areas && location.areas.length > 0) {
-            if (destinationResponsible.area) {
-                newAreaId = destinationResponsible.area.id!;
-            } else {
-                newAreaId = location.areas[0].id!;
+        if (movement.type === 'TRASLADO_AREA' && movement.destinationAreaId) {
+            newAreaId = movement.destinationAreaId;
+        } else {
+            const location = await this.locationRepository.findById(movement.destinationLocationId);
+            if (location && location.areas && location.areas.length > 0) {
+                if (destinationResponsible.area) {
+                    newAreaId = destinationResponsible.area.id!;
+                } else {
+                    newAreaId = location.areas[0].id!;
+                }
             }
         }
 

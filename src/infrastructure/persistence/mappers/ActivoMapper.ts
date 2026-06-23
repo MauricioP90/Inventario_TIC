@@ -23,7 +23,7 @@ export class ActivoMapper {
             responsibleId: entity.responsibleId,
             areaId: entity.areaId,
             location: entity.location ? LocationMapper.toDomain(entity.location) : undefined,
-            responsable: entity.responsible ? ResponsibleMapper.toDomain(entity.responsible) : undefined,
+            responsible: entity.responsible ? ResponsibleMapper.toDomain(entity.responsible) : undefined,
             tipoActivo: entity.tipoActivo ? TipoActivoMapper.toDomain(entity.tipoActivo) : undefined,
             area: entity.area ? AreaMapper.toDomain(entity.area) : undefined,
             precioCompra: entity.precioCompra ? Number(entity.precioCompra) : undefined

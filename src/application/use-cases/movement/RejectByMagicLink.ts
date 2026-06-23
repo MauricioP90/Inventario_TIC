@@ -32,6 +32,12 @@ export class RejectByMagicLink {
 
         await this.movementRepository.update(movement);
 
+        // Para TRASLADO_AREA no hay retorno físico: el equipo no se movió,
+        // solo se cancela el acta y no se crea movimiento de retorno.
+        if (movement.type === 'TRASLADO_AREA') {
+            return movement;
+        }
+
         // 3. Crear el movimiento de retorno automático (misma lógica que RejectMovement)
         const returnMovement = new Movement({
             type: 'RETORNO_POR_RECHAZO',

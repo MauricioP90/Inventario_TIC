@@ -19,6 +19,7 @@ export enum MovementType {
     RETURN_BY_REJECTION = 'RETORNO_POR_RECHAZO',
     INGRESO_MANTENIMIENTO = 'INGRESO_MANTENIMIENTO',
     SALIDA_MANTENIMIENTO = 'SALIDA_MANTENIMIENTO',
+    AREA_TRANSFER = 'TRASLADO_AREA',
     // SIM Cards
     SIM_ASSIGNMENT = 'SIM_ASIGNACION',
     SIM_CHANGE = 'SIM_CAMBIO',
@@ -33,6 +34,7 @@ export interface MovementProps {
     type: MovementType | string; // Permitimos string temporalmente para retrocompatibilidad
     originLocationId: string;
     destinationLocationId: string;
+    destinationAreaId?: string; // Solo para TRASLADO_AREA: área destino dentro de la misma sede
     responsibleId: string;
     receiverId?: string;
     status: MovementStatus;
@@ -58,6 +60,7 @@ export class Movement {
     private props: MovementProps;
 
     constructor(props: MovementProps) {
+        const isNew = !props.createdAt;
         this.props = {
             ...props,
             id: props.id || randomUUID(),
@@ -66,13 +69,24 @@ export class Movement {
             activoIds: props.activoIds || [],
             simCardIds: props.simCardIds || []
         };
-        this.validar();
+        this.validar(isNew);
     }
 
-    private validar() {
+    private validar(isNew: boolean) {
         if (!this.props.type) throw new Error('El tipo de movimiento es obligatorio');
         if (!this.props.originLocationId) throw new Error('La sede de origen es obligatoria');
         if (!this.props.destinationLocationId) throw new Error('La sede de destino es obligatoria');
+
+        const isAreaTransfer = this.props.type === 'TRASLADO_AREA';
+
+        // Para traslado entre áreas la sede de origen y destino deben ser la misma
+        if (isAreaTransfer && this.props.originLocationId !== this.props.destinationLocationId) {
+            throw new Error('Un traslado entre áreas debe ocurrir dentro de la misma sede.');
+        }
+        if (isAreaTransfer && !this.props.destinationAreaId) {
+            throw new Error('El área destino es obligatoria para un traslado entre áreas.');
+        }
+
         const isLocalSIMMovement = [
             'SIM_ASIGNACION',
             'SIM_CAMBIO',
@@ -82,9 +96,9 @@ export class Movement {
             'SALIDA_MANTENIMIENTO'
         ].includes(this.props.type);
 
-        // Permitimos movimientos dentro de la misma sede para traslados entre diferentes áreas/responsables.
-        if (false && !isLocalSIMMovement && this.props.originLocationId === this.props.destinationLocationId) {
-            throw new Error('La sede de origen y destino no pueden ser la misma');
+        // Solo los traslados normales no pueden tener misma sede en origen/destino
+        if (isNew && !isAreaTransfer && !isLocalSIMMovement && this.props.originLocationId === this.props.destinationLocationId) {
+            throw new Error('La sede de origen y destino no pueden ser la misma (excepto en traslados de área).');
         }
         if (!this.props.responsibleId) throw new Error('El responsable es obligatorio');
 
@@ -114,16 +128,20 @@ export class Movement {
     get receivedAt(): Date | undefined { return this.props.receivedAt; }
     get magicLinkToken(): string | undefined { return this.props.magicLinkToken; }
     get physicalReceiverName(): string | undefined { return this.props.physicalReceiverName; }
+    get destinationAreaId(): string | undefined { return this.props.destinationAreaId; }
 
 
     public dispatch(evidenceUrl?: string) {
+        if (this.props.type === 'TRASLADO_AREA') {
+            throw new Error('Los traslados entre áreas no requieren despacho. Se confirman directamente por magic link.');
+        }
         if (this.props.status !== MovementStatus.PENDING) {
             throw new Error('Solo se pueden despachar movimientos pendientes');
         }
         this.props.status = MovementStatus.EN_TRANSIT;
         this.props.shippedAt = new Date();
         this.props.evidenceUrl = evidenceUrl;
-        
+
         // Generar magic link token
         const { randomUUID } = require('node:crypto');
         this.props.magicLinkToken = randomUUID();

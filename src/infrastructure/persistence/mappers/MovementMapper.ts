@@ -13,6 +13,7 @@ export class MovementMapper {
             type: entity.type,
             originLocationId: entity.originLocationId,
             destinationLocationId: entity.destinationLocationId,
+            destinationAreaId: entity.destinationAreaId,
             responsibleId: entity.responsibleId,
             receiverId: entity.receiverId,
             status: entity.status as MovementStatus,
@@ -42,6 +43,7 @@ export class MovementMapper {
         entity.type = domain.type;
         entity.originLocationId = domain.originLocationId;
         entity.destinationLocationId = domain.destinationLocationId;
+        entity.destinationAreaId = domain.destinationAreaId;
         entity.responsibleId = domain.responsibleId;
         entity.receiverId = domain.receiverId;
         entity.status = domain.status;

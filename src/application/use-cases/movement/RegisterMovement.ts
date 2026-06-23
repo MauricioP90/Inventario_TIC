@@ -14,6 +14,7 @@ export interface RegisterMovementDto {
     simCardIds?: string[];
     notes?: string;
     recipients?: string[];
+    destinationAreaId?: string; // Solo para TRASLADO_AREA
 }
 
 export class RegisterMovement {
@@ -93,21 +94,48 @@ export class RegisterMovement {
         }
         
         const isLocalSIM = ['SIM_ASIGNACION', 'SIM_CAMBIO', 'SIM_RETIRO', 'SIM_RETIRO_TOTAL', 'INGRESO_MANTENIMIENTO', 'SALIDA_MANTENIMIENTO'].includes(dto.type);
-        
-        // Se permiten traslados en la misma sede para soportar cambios de área/responsable
-        if (false && !isLocalSIM && dto.originLocationId === dto.destinationLocationId) {
+        const isAreaTransfer = dto.type === 'TRASLADO_AREA';
+
+        // Para traslado entre áreas: validar que la sede origen === destino y que venga el área destino
+        if (isAreaTransfer) {
+            if (dto.originLocationId !== dto.destinationLocationId) {
+                throw new Error('Un traslado entre áreas debe ocurrir dentro de la misma sede.');
+            }
+            if (!dto.destinationAreaId) {
+                throw new Error('El área destino es obligatoria para un traslado entre áreas.');
+            }
+            // Validar que el área destino pertenece a la sede
+            const loc = await this.locationRepository.findById(dto.originLocationId);
+            if (loc && loc.areas && loc.areas.length > 0) {
+                const validAreaIds = loc.areas.map((a: any) => a.id);
+                if (!validAreaIds.includes(dto.destinationAreaId)) {
+                    throw new Error('El área destino no pertenece a la sede seleccionada.');
+                }
+            }
+        }
+
+        // Se permiten traslados en la misma sede únicamente para TRASLADO_AREA y SIM locales
+        if (!isAreaTransfer && !isLocalSIM && dto.originLocationId === dto.destinationLocationId) {
             throw new Error('La ubicación de origen y destino no pueden ser la misma.');
         }
 
         const destinationLocationId = isLocalSIM ? dto.originLocationId : dto.destinationLocationId;
 
+        // Generar magic link de inmediato para TRASLADO_AREA (sin paso de despacho)
+        const { randomUUID } = isAreaTransfer ? require('node:crypto') : { randomUUID: () => undefined };
+        const areaTransferToken = isAreaTransfer ? randomUUID() : undefined;
+
         // 1. Crear la instancia de dominio (esto ya valida los campos básicos)
         const movement = new Movement({
             ...dto,
             destinationLocationId,
-            status: isLocalSIM ? MovementStatus.RECEIVED : MovementStatus.PENDING,
-            shippedAt: isLocalSIM ? new Date() : undefined,
-            receivedAt: isLocalSIM ? new Date() : undefined
+            destinationAreaId: dto.destinationAreaId,
+            status: isLocalSIM ? MovementStatus.RECEIVED
+                   : isAreaTransfer ? MovementStatus.EN_TRANSIT
+                   : MovementStatus.PENDING,
+            shippedAt: isLocalSIM ? new Date() : isAreaTransfer ? new Date() : undefined,
+            receivedAt: isLocalSIM ? new Date() : undefined,
+            magicLinkToken: areaTransferToken
         });
         // 2. Persistir en la base de datos
         const savedMovement = await this.movementRepository.create(movement);

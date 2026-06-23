@@ -29,7 +29,7 @@ export class SIMCardMapper {
                 responsibleId: entity.activo.responsibleId,
                 areaId: entity.activo.areaId,
                 location: entity.activo.location ? LocationMapper.toDomain(entity.activo.location) : undefined,
-                responsable: entity.activo.responsible ? ResponsibleMapper.toDomain(entity.activo.responsible) : undefined
+                responsible: entity.activo.responsible ? ResponsibleMapper.toDomain(entity.activo.responsible) : undefined
             }) : null,
             location: entity.location ? LocationMapper.toDomain(entity.location) : (entity.activo?.location ? LocationMapper.toDomain(entity.activo.location) : null),
             responsible: entity.activo?.responsible ? ResponsibleMapper.toDomain(entity.activo.responsible) : null

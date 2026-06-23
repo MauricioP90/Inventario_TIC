@@ -23,7 +23,7 @@ export interface ActivoProps {
     serial: string;
     location?: Location;
     locationId?: string;
-    responsable?: Responsible;
+    responsible?: Responsible;
     responsibleId?: string;
     tipoActivo?: TipoActivo;
     areaId: string;
@@ -55,7 +55,7 @@ export class Activo {
         if (!this.props.estado) throw new Error('El estado es obligatorio');
         if (!this.props.fechaIngreso) throw new Error('La fecha de ingreso es obligatoria');
         if (!this.props.location && !this.props.locationId) throw new Error('La ubicación es obligatoria');
-        if (!this.props.responsable && !this.props.responsibleId) throw new Error('El responsable es obligatorio');
+        if (!this.props.responsible && !this.props.responsibleId) throw new Error('El responsable es obligatorio');
         if (!this.props.areaId) throw new Error('El área es obligatoria');
     }
 
@@ -72,7 +72,7 @@ export class Activo {
     get fechaIngreso() { return this.props.fechaIngreso; }
     get location() { return this.props.location; }
     get locationId() { return this.props.locationId; }
-    get responsable() { return this.props.responsable; }
+    get responsible() { return this.props.responsible; }
     get responsibleId() { return this.props.responsibleId; }
     get areaId() { return this.props.areaId; }
     get area() { return this.props.area; }
@@ -127,7 +127,7 @@ export class Activo {
     // Lógica de negocio: Asignar Responsable
     public asignarResponsable(responsable: Responsible) {
         if (!responsable) throw new Error('El responsable es obligatorio');
-        this.props.responsable = responsable;
+        this.props.responsible = responsable;
         this.props.responsibleId = responsable.id;
     }
 
@@ -167,11 +167,12 @@ export class Activo {
     public toJSON() {
         return {
             ...this.props,
-            id: this.id, // Asegurar que el ID esté presente
-            simCards: this._simCards, // Incluir SIMCards
+            id: this.id,
+            simCards: this._simCards,
             location: this.props.location ? this.props.location.toJSON() : undefined,
-            responsable: this.props.responsable ? this.props.responsable.toJSON() : undefined,
-            area: this.props.area ? this.props.area.toJSON() : undefined
+            responsible: this.props.responsible ? this.props.responsible.toJSON() : undefined,
+            area: this.props.area ? this.props.area.toJSON() : undefined,
+            tipoActivo: this.props.tipoActivo ? this.props.tipoActivo : undefined
         };
     }
 

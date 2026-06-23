@@ -34,7 +34,7 @@ export const swaggerSchemas = {
             locationId: { type: 'string', format: 'uuid' },
             responsibleId: { type: 'string', format: 'uuid' },
             location: { $ref: '#/components/schemas/Location' },
-            responsable: { $ref: '#/components/schemas/Responsible' },
+            responsible: { $ref: '#/components/schemas/Responsible' },
             maintenanceModalidad: { type: 'string', enum: ['INTERNO', 'EXTERNO', 'INTERNO_ESCALADO'] },
             maintenanceTipo: { type: 'string', enum: ['PREVENTIVO', 'CORRECTIVO'] },
             maintenanceCostoEstimado: { type: 'number' },

@@ -34,6 +34,9 @@ export class MovementEntity {
     @Column({ name: 'destination_location_id' })
     destinationLocationId!: string;
 
+    @Column({ name: 'destination_area_id', nullable: true })
+    destinationAreaId?: string;
+
     @Column({
         type: 'varchar',
         default: MovementStatus.PENDING

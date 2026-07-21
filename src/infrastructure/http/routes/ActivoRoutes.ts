@@ -29,6 +29,8 @@ import { GetActivoMetadata } from "../../../application/use-cases/activo/GetActi
 import { FindByIdActivo } from "../../../application/use-cases/activo/FindByActivo";
 import { GetDashboardSummary } from "../../../application/use-cases/activo/GetDashboardSummary";
 import { CreateTipoActivo } from "../../../application/use-cases/tipoActivo/CreateTipoActivo";
+import { GetAllTipoActivo } from "../../../application/use-cases/tipoActivo/GetAllTipoActivo";
+import { UpdateTipoActivo } from "../../../application/use-cases/tipoActivo/UpdateTipoActivo";
 
 const activoRouter = Router();
 
@@ -51,6 +53,8 @@ const getMetadataUC = new GetActivoMetadata(tipoActivoRepo, locationRepo);
 const findByIdUC = new FindByIdActivo(activoRepo);
 const getDashboardSummaryUC = new GetDashboardSummary(activoRepo);
 const createTipoActivoUC = new CreateTipoActivo(tipoActivoRepo);
+const getAllTipoActivoUC = new GetAllTipoActivo(tipoActivoRepo);
+const updateTipoActivoUC = new UpdateTipoActivo(tipoActivoRepo);
 
 const controller = new ActivoController(
     createUC, 
@@ -61,12 +65,16 @@ const controller = new ActivoController(
     getMetadataUC, 
     findByIdUC, 
     getDashboardSummaryUC,
-    createTipoActivoUC
+    createTipoActivoUC,
+    getAllTipoActivoUC,
+    updateTipoActivoUC
 );
 
 // 4. Definimos Rutas
 activoRouter.post("/", keycloak.protect(), (req, res) => controller.create(req, res));
 activoRouter.post("/types", keycloak.protect(), (req, res) => controller.createTipoActivo(req, res));
+activoRouter.get("/types", keycloak.protect(), (req, res) => controller.getAllTipoActivo(req, res));
+activoRouter.put("/types/:id", keycloak.protect(), (req, res) => controller.updateTipoActivo(req, res));
 activoRouter.get("/", keycloak.protect(), (req, res) => controller.getAll(req, res));
 activoRouter.get("/metadata", keycloak.protect(), (req, res) => controller.getActivoMetadata(req, res));
 activoRouter.get("/dashboard", keycloak.protect(), (req, res) => controller.getDashboardSummary(req, res));

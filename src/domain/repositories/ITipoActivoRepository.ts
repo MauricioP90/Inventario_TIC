@@ -4,5 +4,6 @@ export interface ITipoActivoRepository {
     save(tipo: TipoActivo): Promise<void>;
     findAll(): Promise<TipoActivo[]>;
     findById(id: string): Promise<TipoActivo | null>;
+    findByNombreInsensitive(nombre: string): Promise<TipoActivo | null>;
     update(tipo: TipoActivo): Promise<TipoActivo>;
 }

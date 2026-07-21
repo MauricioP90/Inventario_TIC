@@ -8,6 +8,8 @@ import { GetActivoMetadata } from "../../../application/use-cases/activo/GetActi
 import { FindByIdActivo } from "../../../application/use-cases/activo/FindByActivo";
 import { GetDashboardSummary } from "../../../application/use-cases/activo/GetDashboardSummary";
 import { CreateTipoActivo } from "../../../application/use-cases/tipoActivo/CreateTipoActivo";
+import { GetAllTipoActivo } from "../../../application/use-cases/tipoActivo/GetAllTipoActivo";
+import { UpdateTipoActivo } from "../../../application/use-cases/tipoActivo/UpdateTipoActivo";
 
 export class ActivoController {
     constructor(
@@ -19,7 +21,9 @@ export class ActivoController {
         private getMetadataUseCase: GetActivoMetadata,
         private findByIdActivo: FindByIdActivo,
         private getDashboardSummaryUseCase: GetDashboardSummary,
-        private createTipoActivoUC: CreateTipoActivo
+        private createTipoActivoUC: CreateTipoActivo,
+        private getAllTipoActivoUC: GetAllTipoActivo,
+        private updateTipoActivoUC: UpdateTipoActivo
     ) { }
 
     /**
@@ -293,6 +297,25 @@ export class ActivoController {
             const { nombre, estado } = req.body;
             const newType = await this.createTipoActivoUC.execute({ nombre, estado });
             res.status(201).json(newType.toJSON());
+        } catch (error: any) {
+            res.status(400).json({ message: error.message });
+        }
+    }
+
+    async getAllTipoActivo(req: Request, res: Response) {
+        try {
+            const tipos = await this.getAllTipoActivoUC.execute();
+            res.json(tipos.map(t => t.toJSON()));
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    async updateTipoActivo(req: Request, res: Response) {
+        try {
+            const { id } = req.params;
+            const updated = await this.updateTipoActivoUC.execute(id as string, req.body);
+            res.json(updated.toJSON());
         } catch (error: any) {
             res.status(400).json({ message: error.message });
         }

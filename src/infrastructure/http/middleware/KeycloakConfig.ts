@@ -4,7 +4,7 @@ import session from 'express-session';
 const memoryStore = new session.MemoryStore();
 
 const keycloakConfig = {
-    realm: process.env.KEYCLOAK_REALM || 'inventory-realm',
+    realm: process.env.KEYCLOAK_REALM || 'Inventory-realm',
     'auth-server-url': process.env.KEYCLOAK_SERVER_URL || 'http://localhost:8080',
     resource: process.env.KEYCLOAK_CLIENT_ID || 'inventory-backend',
     'ssl-required': 'external',

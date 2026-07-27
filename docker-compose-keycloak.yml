@@ -15,6 +15,7 @@ services:
     command: start-dev
     volumes:
       - keycloak_data:/opt/keycloak/data
+      - ./themes:/opt/keycloak/themes
 
 volumes:
   keycloak_data:

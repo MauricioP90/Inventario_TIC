@@ -1,4 +1,6 @@
 import { Request, Response } from "express";
+import { AppDataSource } from "../../../data-source";
+import { ActivoDocumentHistoryEntity } from "../../persistence/typeorm/entities/ActivoDocumentHistoryEntity";
 import { CreateActivo } from "../../../application/use-cases/activo/CreateActivo";
 import { GetAllActivo } from "../../../application/use-cases/activo/GetAllActivo";
 import { GetOneActivo } from "../../../application/use-cases/activo/GetOneActivo";
@@ -144,6 +146,20 @@ export class ActivoController {
             res.json(activo);
         } catch (error: any) {
             res.status(400).json({ message: error.message });
+        }
+    }
+
+    async getAuditHistory(req: Request, res: Response) {
+        try {
+            const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+            const historyRepo = AppDataSource.getRepository(ActivoDocumentHistoryEntity);
+            const history = await historyRepo.find({
+                where: { activoId: id },
+                order: { createdAt: 'DESC' }
+            });
+            res.json(history);
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
         }
     }
 

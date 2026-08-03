@@ -5,7 +5,7 @@ export interface IFileStorageService {
      * @param base64Data Contenido del archivo en Base64 (sin el prefijo data:...)
      * @param originalName Nombre original del archivo (ej: "factura.pdf")
      * @param folder Carpeta lógica donde se guardará (ej: "facturas")
-     * @returns URL pública/relativa del archivo guardado
+     * @returns URL pública/accesible del archivo guardado
      */
     uploadBase64(base64Data: string, originalName: string, folder: string): Promise<string>;
 
@@ -13,4 +13,9 @@ export interface IFileStorageService {
      * Elimina un archivo por su URL
      */
     delete(fileUrl: string): Promise<void>;
+
+    /**
+     * Genera una URL temporal firmada para acceso seguro a un archivo
+     */
+    getSignedUrl?(fileKey: string, expiresInSeconds?: number): Promise<string>;
 }

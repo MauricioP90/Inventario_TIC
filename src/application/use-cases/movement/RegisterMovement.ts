@@ -13,6 +13,8 @@ export interface RegisterMovementDto {
     activoIds: string[];
     simCardIds?: string[];
     notes?: string;
+    documentUrl?: string;
+    evidenceUrl?: string;
     recipients?: string[];
     destinationAreaId?: string; // Solo para TRASLADO_AREA
 }
@@ -128,6 +130,10 @@ export class RegisterMovement {
         // 1. Crear la instancia de dominio (esto ya valida los campos básicos)
         const movement = new Movement({
             ...dto,
+            // documentUrl: comodato / acta de soporte inicial (registro)
+            documentUrl: dto.documentUrl || undefined,
+            // evidenceUrl: guía de despacho (se asigna en dispatch(), NO aquí)
+            evidenceUrl: undefined,
             destinationLocationId,
             destinationAreaId: dto.destinationAreaId,
             status: isLocalSIM ? MovementStatus.RECEIVED

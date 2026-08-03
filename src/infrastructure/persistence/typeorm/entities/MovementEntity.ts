@@ -49,6 +49,9 @@ export class MovementEntity {
     @Column({ name: 'evidence_url', nullable: true })
     evidenceUrl?: string;
 
+    @Column({ name: 'document_url', nullable: true })
+    documentUrl?: string;
+
     @CreateDateColumn({ name: 'created_at' })
     createdAt!: Date;
 

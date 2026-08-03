@@ -22,8 +22,9 @@ import * as path from 'path';
 const app = express();
 const PORT = 3000;
 
-// Middleware para leer JSON
-app.use(express.json());
+// Middleware para leer JSON con límite extendido para carga de archivos Base64 (hasta 50MB)
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Habilitar CORS
 app.use(cors({

@@ -41,7 +41,8 @@ export interface MovementProps {
     activoIds: string[];
     simCardIds?: string[];
     notes?: string;
-    evidenceUrl?: string;
+    evidenceUrl?: string;      // Guía / soporte de despacho
+    documentUrl?: string;      // Comodato / acta de soporte (registro inicial)
     receivedEvidenceUrl?: string;
     createdAt?: Date;
     shippedAt?: Date;
@@ -123,6 +124,7 @@ export class Movement {
     get simCards(): any[] { return this.props.simCards || []; }
     get notes(): string | undefined { return this.props.notes; }
     get evidenceUrl(): string | undefined { return this.props.evidenceUrl; }
+    get documentUrl(): string | undefined { return this.props.documentUrl; }
     get createdAt(): Date | undefined { return this.props.createdAt; }
     get shippedAt(): Date | undefined { return this.props.shippedAt; }
     get receivedAt(): Date | undefined { return this.props.receivedAt; }

@@ -8,6 +8,9 @@ import { Movement, MovementStatus } from "../../../domain/entities/Movement";
 import { IMaintenanceReportRepository } from "../../../domain/repositories/IMaintenanceReportRepository";
 import { MaintenanceReport, ModalidadMantenimiento, TipoMantenimiento } from "../../../domain/entities/MaintenanceReport";
 
+import { AppDataSource } from "../../../data-source";
+import { ActivoDocumentHistoryEntity } from "../../../infrastructure/persistence/typeorm/entities/ActivoDocumentHistoryEntity";
+
 interface UpdateActivoInput {
     placa: string;
     tipoActivoId?: string;
@@ -21,6 +24,8 @@ interface UpdateActivoInput {
     areaId?: string;
     fechaIngreso?: Date | string;
     precioCompra?: number;
+    changedByUser?: string;
+    justification?: string;
     maintenanceModalidad?: ModalidadMantenimiento;
     maintenanceTipo?: TipoMantenimiento;
     maintenanceCostoEstimado?: number;
@@ -140,12 +145,36 @@ export class UpdateActivo {
             activo.asignarResponsable(responsible);
         }
 
+        const oldFacturaUrl = activo.facturaUrl;
+        const oldPrecioCompra = activo.precioCompra;
+
+        const hasFacturaChange = input.facturaUrl !== undefined && input.facturaUrl !== oldFacturaUrl;
+        const hasPrecioChange = input.precioCompra !== undefined && input.precioCompra !== oldPrecioCompra;
+
+        if (hasFacturaChange || hasPrecioChange) {
+            if (oldFacturaUrl && hasFacturaChange && !input.justification) {
+                throw new Error('Se requiere una justificación de auditoría obligatoria para reemplazar o modificar la factura de compra existente.');
+            }
+
+            const historyRepo = AppDataSource.getRepository(ActivoDocumentHistoryEntity);
+            await historyRepo.save({
+                activoId: activo.id!,
+                previousFacturaUrl: oldFacturaUrl,
+                newFacturaUrl: input.facturaUrl !== undefined ? input.facturaUrl : oldFacturaUrl,
+                previousPrecioCompra: oldPrecioCompra,
+                newPrecioCompra: input.precioCompra !== undefined ? input.precioCompra : oldPrecioCompra,
+                changedByUser: input.changedByUser || 'Usuario Autenticado',
+                justification: input.justification || (hasFacturaChange ? 'Actualización de soporte / factura' : 'Actualización de precio de compra')
+            });
+        }
+
         activo.update({
             ...(input.tipoActivoId && { tipoActivoId: input.tipoActivoId }),
             ...(input.marca && { marca: input.marca }),
             ...(input.modelo && { modelo: input.modelo }),
             ...(input.serial && { serial: input.serial }),
             ...(input.estado && { estado: input.estado }),
+            ...(input.precioCompra !== undefined && { precioCompra: input.precioCompra }),
             ...(input.facturaUrl !== undefined && { facturaUrl: input.facturaUrl })
         });
 

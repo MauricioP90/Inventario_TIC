@@ -78,6 +78,7 @@ activoRouter.put("/types/:id", keycloak.protect(), (req, res) => controller.upda
 activoRouter.get("/", keycloak.protect(), (req, res) => controller.getAll(req, res));
 activoRouter.get("/metadata", keycloak.protect(), (req, res) => controller.getActivoMetadata(req, res));
 activoRouter.get("/dashboard", keycloak.protect(), (req, res) => controller.getDashboardSummary(req, res));
+activoRouter.get("/:id/audit-history", keycloak.protect(), (req, res) => controller.getAuditHistory(req, res));
 activoRouter.get("/:placa", keycloak.protect(), (req, res) => controller.getOne(req, res));
 activoRouter.put("/:placa", keycloak.protect(), (req, res) => controller.update(req, res));
 activoRouter.patch("/:placa/baja", keycloak.protect(), (req, res) => controller.darDeBaja(req, res));

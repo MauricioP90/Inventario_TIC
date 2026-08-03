@@ -40,6 +40,10 @@ export class LocalDiskStorageAdapter implements IFileStorageService {
         }
     }
 
+    async getSignedUrl(fileUrl: string): Promise<string> {
+        return fileUrl;
+    }
+
     private ensureDirectoryExists(dirPath: string): void {
         if (!fs.existsSync(dirPath)) {
             fs.mkdirSync(dirPath, { recursive: true });

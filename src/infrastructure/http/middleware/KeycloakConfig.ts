@@ -5,7 +5,7 @@ const memoryStore = new session.MemoryStore();
 
 const keycloakConfig = {
     realm: process.env.KEYCLOAK_REALM || 'Inventory-realm',
-    'auth-server-url': process.env.KEYCLOAK_SERVER_URL || 'http://localhost:8080',
+    'auth-server-url': process.env.KEYCLOAK_SERVER_URL || 'http://localhost:8180',
     resource: process.env.KEYCLOAK_CLIENT_ID || 'inventory-backend',
     'ssl-required': 'external',
     'confidential-port': 0,

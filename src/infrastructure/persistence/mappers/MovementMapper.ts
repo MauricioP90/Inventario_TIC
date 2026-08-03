@@ -21,6 +21,7 @@ export class MovementMapper {
             simCardIds: entity.simCards?.map(s => s.id) || [],
             notes: entity.notes,
             evidenceUrl: entity.evidenceUrl,
+            documentUrl: entity.documentUrl,
             receivedEvidenceUrl: entity.receivedEvidenceUrl,
             createdAt: entity.createdAt,
             shippedAt: entity.shippedAt || undefined,
@@ -49,6 +50,7 @@ export class MovementMapper {
         entity.status = domain.status;
         entity.notes = domain.notes;
         entity.evidenceUrl = domain.evidenceUrl;
+        entity.documentUrl = domain.documentUrl;
         entity.receivedEvidenceUrl = domain.receivedEvidenceUrl;
         entity.createdAt = domain.createdAt!;
         entity.shippedAt = domain.shippedAt;

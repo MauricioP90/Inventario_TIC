@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { keycloak } from '../middleware/KeycloakConfig';
 import { FileController } from '../controllers/FileController';
-import { LocalDiskStorageAdapter } from '../../storage/LocalDiskStorageAdapter';
+import { StorageAdapterFactory } from '../../storage/StorageAdapterFactory';
 
 const fileRouter = Router();
 
-// Instanciar el adaptador y el controlador
-const storageAdapter = new LocalDiskStorageAdapter();
+// Instanciar el adaptador mediante Factory según la variable de entorno
+const storageAdapter = StorageAdapterFactory.getAdapter();
 const fileController = new FileController(storageAdapter);
 
 /**

@@ -20,7 +20,7 @@ import { TypeORMResponsibleRepository } from "../../persistence/typeorm/reposito
 import { TypeORMSIMCardRepository } from "../../persistence/typeorm/repositories/TypeORMSIMCardRepository";
 import { TypeORMMaintenanceReportRepository } from "../../persistence/typeorm/repositories/TypeORMMaintenanceReportRepository";
 import { SIMCardEntity } from "../../persistence/typeorm/entities/SIMCardEntity";
-import { ConsoleEmailService } from "../../services/ConsoleEmailService";
+import { EmailServiceFactory } from "../../services/EmailServiceFactory";
 import { MovementController } from "../controllers/MovementController";
 import { keycloak } from "../middleware/KeycloakConfig";
 
@@ -33,8 +33,8 @@ const locationRepo = new TypeORMLocationRepository(AppDataSource.getRepository(L
 const responsibleRepo = new TypeORMResponsibleRepository(AppDataSource.getRepository(ResponsibleEntity));
 const simCardRepo = new TypeORMSIMCardRepository(AppDataSource.getRepository(SIMCardEntity));
 const maintenanceReportRepo = new TypeORMMaintenanceReportRepository(AppDataSource.getRepository(MaintenanceReportEntity));
-//Inicializa el servicio de correo nativo
-const emailService = new ConsoleEmailService();
+// Inicializa el servicio de correo mediante fábrica desacoplada (SMTP / Console)
+const emailService = EmailServiceFactory.create();
 
 // 2. Inicializamos Casos de Uso
 const registerUC = new RegisterMovement(movementRepo, activoRepo, locationRepo, responsibleRepo, emailService);

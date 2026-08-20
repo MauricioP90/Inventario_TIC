@@ -23,6 +23,12 @@ export class UpdateSIMCard {
             throw new Error('La SIM Card está vinculada a un dispositivo y no se puede cambiar su ubicación de forma independiente.');
         }
 
+        const targetEstado = input.estado as EstadoSIM;
+        if (targetEstado === EstadoSIM.BAJA && targetActivoId) {
+            const placaInfo = simCard.activo?.placa ? ` ("${simCard.activo.placa}")` : '';
+            throw new Error(`No se puede inactivar o dar de baja la SIM Card porque está vinculada al dispositivo con placa${placaInfo}. Primero debes desvincularla del equipo.`);
+        }
+
         simCard.update({
             iccid: input.iccid,
             numero: input.numero,

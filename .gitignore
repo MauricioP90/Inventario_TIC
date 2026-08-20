@@ -54,3 +54,4 @@ Thumbs.db
 # Uploads & MinIO Storage
 uploads/
 minio-data/
+email_preview_latest.html

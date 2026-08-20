@@ -60,6 +60,14 @@ export class SIMCard {
     }
 
     public update(props: Partial<SIMCardProps>) {
+        const targetActivoId = props.activoId !== undefined ? props.activoId : this.props.activoId;
+        const targetEstado = props.estado !== undefined ? props.estado : this.props.estado;
+
+        if (targetEstado === EstadoSIM.BAJA && targetActivoId) {
+            const placa = this.props.activo?.placa ? ` ("${this.props.activo.placa}")` : '';
+            throw new Error(`No se puede dar de baja / inactivar la SIM Card porque está vinculada a un dispositivo${placa}. Primero debes desvincularla del dispositivo.`);
+        }
+
         this.props = {
             ...this.props,
             ...props,

@@ -118,6 +118,12 @@ export class UpdateActivo {
         const targetEstado = input.estado !== undefined ? input.estado : activo.estado;
         targetLocationId = input.locationId !== undefined ? input.locationId : activo.locationId;
 
+        // Regla de Bloqueo: No se puede inactivar / dar de baja el activo si tiene SIM Cards asignadas
+        if (targetEstado === EstadoActivo.BAJA && activo.simCards && activo.simCards.length > 0) {
+            const numeros = activo.simCards.map(s => s.numero || s.iccid).join(', ');
+            throw new Error(`No se puede inactivar / dar de baja el activo porque tiene ${activo.simCards.length} tarjeta(s) SIM vinculada(s) (${numeros}). Primero debes desvincular las tarjetas SIM del dispositivo.`);
+        }
+
         // Regla de Bloqueo: Si estaba en MANTENIMIENTO y quiere salir de él, verificar si tiene una ficha activa
         if (oldEstado === EstadoActivo.MANTENIMIENTO && targetEstado !== EstadoActivo.MANTENIMIENTO) {
             const activeReports = await this.maintenanceRepository.findAllActive();

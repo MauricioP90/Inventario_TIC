@@ -10,6 +10,7 @@ import { TipoActivoEntity } from "./infrastructure/persistence/typeorm/entities/
 import { MaintenanceReportEntity } from "./infrastructure/persistence/typeorm/entities/MaintenanceReportEntity";
 import { AreaEntity } from "./infrastructure/persistence/typeorm/entities/AreaEntity";
 import { ActivoDocumentHistoryEntity } from "./infrastructure/persistence/typeorm/entities/ActivoDocumentHistoryEntity";
+import { NotificationRecipientEntity } from "./infrastructure/persistence/typeorm/entities/NotificationRecipientEntity";
 
 export const AppDataSource = new DataSource({
     type: "postgres",
@@ -30,7 +31,8 @@ export const AppDataSource = new DataSource({
         TipoActivoEntity, 
         MaintenanceReportEntity, 
         AreaEntity,
-        ActivoDocumentHistoryEntity
+        ActivoDocumentHistoryEntity,
+        NotificationRecipientEntity
     ],
     migrations: ["src/infrastructure/persistence/typeorm/migrations/*.ts"],
     subscribers: [],

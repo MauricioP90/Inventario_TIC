@@ -8,9 +8,8 @@ async function main() {
     console.log('🚀 Probando servicio de correo...');
     console.log('Configuración actual:');
     console.log('  EMAIL_PROVIDER :', process.env.EMAIL_PROVIDER);
-    console.log('  SMTP_HOST      :', process.env.SMTP_HOST);
-    console.log('  SMTP_PORT      :', process.env.SMTP_PORT);
-    console.log('  SMTP_USER      :', process.env.SMTP_USER);
+    console.log('  MAIL_API_URL   :', process.env.MAIL_API_URL);
+    console.log('  MAIL_CONCEPTO  :', process.env.MAIL_CONCEPTO);
 
     const emailService = EmailServiceFactory.create();
 
@@ -23,11 +22,13 @@ async function main() {
         createdAt: new Date(),
         status: 'PENDING' as any,
         activoIds: ['act-1'],
-        notes: 'Prueba de envío de correo con soporte y diseño corporativo.',
-        documentUrl: 'http://localhost:9000/inventario-docs/comodatos/ejemplo.pdf'
+        notes: 'Prueba de envío de notificación mediante API REST interna de Flota La Macarena.',
+        documentUrl: '' // Se enviará con la estructura vacía por defecto
     });
 
-    const recipients = [process.env.SMTP_USER || 'test@example.com'];
+    const testRecipient = process.env.TEST_EMAIL_TO || 'analistasistemasdeinformacion@flotalamacarena.com';
+    const testCc = process.env.TEST_EMAIL_CC ? [process.env.TEST_EMAIL_CC] : [];
+    const recipients = [testRecipient, ...testCc];
 
     try {
         await emailService.sendMovementNotification(

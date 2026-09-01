@@ -1,6 +1,7 @@
 import { IEmailService } from '../../domain/services/IEmailService';
 import { ConsoleEmailService } from './ConsoleEmailService';
 import { NodemailerEmailService } from './NodemailerEmailService';
+import { HttpApiEmailService } from './HttpApiEmailService';
 
 export class EmailServiceFactory {
     private static instance: IEmailService | null = null;
@@ -9,8 +10,11 @@ export class EmailServiceFactory {
         if (!this.instance) {
             const provider = (process.env.EMAIL_PROVIDER || 'console').toLowerCase().trim();
 
-            if (provider === 'smtp' || provider === 'nodemailer' || provider === 'gmail') {
-                console.log('📧 [EmailServiceFactory] Inicializando servicio de correo real (SMTP / Nodemailer)...');
+            if (provider === 'api' || provider === 'http' || provider === 'sambetting' || provider === 'mailq') {
+                console.log('📡 [EmailServiceFactory] Inicializando servicio de correo API REST (HttpApiEmailService)...');
+                this.instance = new HttpApiEmailService();
+            } else if (provider === 'smtp' || provider === 'nodemailer' || provider === 'gmail') {
+                console.log('📧 [EmailServiceFactory] Inicializando servicio de correo SMTP (NodemailerEmailService)...');
                 this.instance = new NodemailerEmailService();
             } else {
                 console.log('📝 [EmailServiceFactory] Inicializando servicio de correo en consola (ConsoleEmailService)...');

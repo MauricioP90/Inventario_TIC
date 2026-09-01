@@ -12,7 +12,7 @@ export class ConsoleEmailService implements IEmailService {
             destinationLocation: string;
             responsibleName: string;
         }
-    ): Promise<void> {
+    ): Promise<string | null> {
         const timestamp = new Date().toLocaleString();
         const listaActivos = details.activos
             .map(act => `  • Placa: [${act.placa}] - ${act.marca} ${act.modelo} (S/N: ${act.serial || 'N/A'})`)
@@ -20,7 +20,7 @@ export class ConsoleEmailService implements IEmailService {
         // Impresión visual estructurada del soporte en los logs del servidor
         console.log(`
 ================================================================================
-📧 [SERVICIO DE CORREOS - PROVEEDOR NATIVO]
+📧 [SERVICIO DE CORREOS - PROVEEDOR NATIVO (CONSOLE)]
 ================================================================================
 Fecha de Envío : ${timestamp}
 Movimiento ID   : ${movement.id}
@@ -38,8 +38,34 @@ ${listaActivos}
 Observaciones del Traslado:
   "${movement.notes || 'Sin observaciones adicionales.'}"
 ================================================================================
-Soporte Digital Emitido de Forma Exitosa.
+Soporte Digital Emitido de Forma Exitosa (Mock Console).
 ================================================================================
         `);
+        return `mock-console-uuid-${Date.now()}`;
+    }
+
+    async sendMovementReceiptNotification(
+        movement: Movement,
+        details: {
+            activos: any[];
+            originLocation: string;
+            destinationLocation: string;
+            responsibleName: string;
+            receiverName: string;
+            receivedEvidenceUrl?: string;
+        }
+    ): Promise<string | null> {
+        console.log(`
+================================================================================
+✅ [RECEPCIÓN CONFIRMADA - CONSOLE MOCK]
+================================================================================
+Movimiento ID   : ${movement.id}
+Sede Origen     : ${details.originLocation}
+Sede Destino    : ${details.destinationLocation}
+Recibió Físico  : ${details.receiverName}
+Soporte Firma   : ${details.receivedEvidenceUrl || 'Adjunto'}
+================================================================================
+        `);
+        return `mock-console-receipt-${Date.now()}`;
     }
 }

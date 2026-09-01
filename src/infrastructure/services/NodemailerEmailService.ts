@@ -46,10 +46,10 @@ export class NodemailerEmailService implements IEmailService {
             destinationLocation: string;
             responsibleName: string;
         }
-    ): Promise<void> {
+    ): Promise<string | null> {
         if (!recipients || recipients.length === 0) {
             console.log('ℹ️ [NodemailerEmailService] No hay destinatarios para el movimiento', movement.id);
-            return;
+            return null;
         }
 
         const from = process.env.SMTP_FROM || `"Inventario Flota La Macarena" <${process.env.SMTP_USER || 'notificaciones@flotalamacarena.com'}>`;
@@ -70,10 +70,26 @@ export class NodemailerEmailService implements IEmailService {
                 html
             });
             console.log(`✅ [NodemailerEmailService] Correo enviado exitosamente a [${recipients.join(', ')}]. Message ID: ${info.messageId}`);
+            return info.messageId || null;
         } catch (error) {
             console.error('❌ [NodemailerEmailService] Error al enviar correo:', error);
-            throw error;
+            return null;
         }
+    }
+
+    async sendMovementReceiptNotification(
+        movement: Movement,
+        details: {
+            activos: any[];
+            originLocation: string;
+            destinationLocation: string;
+            responsibleName: string;
+            receiverName: string;
+            receivedEvidenceUrl?: string;
+        }
+    ): Promise<string | null> {
+        console.log(`ℹ️ [NodemailerEmailService] Notificación de recepción simulada para movimiento ${movement.id}`);
+        return `mock-receipt-${Date.now()}`;
     }
 
     public buildHtmlTemplate(

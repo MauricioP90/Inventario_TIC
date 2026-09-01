@@ -1,4 +1,5 @@
 import { Movement, MovementStatus } from "../../../domain/entities/Movement";
+import { EstadoActivo } from "../../../domain/entities/Activo";
 import { IMovementRepository } from "../../../domain/repositories/IMovementRepository";
 import { IActivoRepository } from "../../../domain/repositories/IActivoRepository";
 import { ILocationRepository } from "../../../domain/repositories/ILocationRepository";
@@ -95,8 +96,16 @@ export class RegisterMovement {
             }
         }
         
-        const isLocalSIM = ['SIM_ASIGNACION', 'SIM_CAMBIO', 'SIM_RETIRO', 'SIM_RETIRO_TOTAL', 'INGRESO_MANTENIMIENTO', 'SALIDA_MANTENIMIENTO'].includes(dto.type);
+        const isTheftOrLoss = dto.type === 'HURTO_PERDIDA';
+        const isLocalSIM = ['SIM_ASIGNACION', 'SIM_CAMBIO', 'SIM_RETIRO', 'SIM_RETIRO_TOTAL', 'INGRESO_MANTENIMIENTO', 'SALIDA_MANTENIMIENTO', 'BAJA_ACTIVO', 'HURTO_PERDIDA'].includes(dto.type);
         const isAreaTransfer = dto.type === 'TRASLADO_AREA';
+
+        // Validación de Hurto/Pérdida: Exigir denuncio policial
+        if (isTheftOrLoss) {
+            if (!dto.documentUrl && !dto.evidenceUrl) {
+                throw new Error('El soporte o documento del denuncio policial es OBLIGATORIO para registrar un hurto o pérdida.');
+            }
+        }
 
         // Para traslado entre áreas: validar que la sede origen === destino y que venga el área destino
         if (isAreaTransfer) {
@@ -116,7 +125,7 @@ export class RegisterMovement {
             }
         }
 
-        // Se permiten traslados en la misma sede únicamente para TRASLADO_AREA y SIM locales
+        // Se permiten traslados en la misma sede únicamente para TRASLADO_AREA y eventos locales
         if (!isAreaTransfer && !isLocalSIM && dto.originLocationId === dto.destinationLocationId) {
             throw new Error('La ubicación de origen y destino no pueden ser la misma.');
         }
@@ -130,10 +139,9 @@ export class RegisterMovement {
         // 1. Crear la instancia de dominio (esto ya valida los campos básicos)
         const movement = new Movement({
             ...dto,
-            // documentUrl: comodato / acta de soporte inicial (registro)
-            documentUrl: dto.documentUrl || undefined,
-            // evidenceUrl: guía de despacho (se asigna en dispatch(), NO aquí)
-            evidenceUrl: undefined,
+            // documentUrl: comodato / acta / denuncio policial
+            documentUrl: dto.documentUrl || dto.evidenceUrl || undefined,
+            evidenceUrl: dto.evidenceUrl || undefined,
             destinationLocationId,
             destinationAreaId: dto.destinationAreaId,
             status: isLocalSIM ? MovementStatus.RECEIVED
@@ -143,11 +151,24 @@ export class RegisterMovement {
             receivedAt: isLocalSIM ? new Date() : undefined,
             magicLinkToken: areaTransferToken
         });
+
         // 2. Persistir en la base de datos
         const savedMovement = await this.movementRepository.create(movement);
+
+        // 2.1 Si es HURTO_PERDIDA o BAJA_ACTIVO, actualizamos inmediatamente el estado del activo a BAJA
+        if (isTheftOrLoss || dto.type === 'BAJA_ACTIVO') {
+            for (const activoId of dto.activoIds) {
+                const act = await this.activoRepository.findById(activoId);
+                if (act) {
+                    act.setStatus(EstadoActivo.BAJA);
+                    await this.activoRepository.update(act);
+                }
+            }
+        }
+
         // 3. Sistema de Envío de Soporte por Correo (Excepto SIMCards)
         const isSimMovement = dto.type && dto.type.startsWith('SIM_');
-        if (!isSimMovement && dto.recipients && dto.recipients.length > 0) {
+        if (!isSimMovement) {
             try {
                 // Obtenemos los nombres reales de origen, destino y responsable para el cuerpo del correo
                 const originLoc = await this.locationRepository.findById(dto.originLocationId);
@@ -166,10 +187,16 @@ export class RegisterMovement {
                         });
                     }
                 }
+
+                // Destinatarios: si no se enviaron explícitos, dejamos array vacío (el servicio consultará el catálogo de eventos)
+                const recipientsList = dto.recipients && dto.recipients.length > 0
+                    ? dto.recipients
+                    : (resp && resp.email ? [resp.email] : []);
+
                 // Disparamos la notificación al proveedor de correos de forma asíncrona
-                await this.emailService.sendMovementNotification(
+                const notifUuid = await this.emailService.sendMovementNotification(
                     savedMovement,
-                    dto.recipients,
+                    recipientsList,
                     {
                         activos: assetsDetails,
                         originLocation: originLoc?.nombre ?? 'Sin sede origen',
@@ -177,6 +204,11 @@ export class RegisterMovement {
                         responsibleName: resp?.nombre ?? 'Sin responsable'
                     }
                 );
+                // Si el servicio de correo generó un UUID de auditoría, lo asociamos al movimiento
+                if (notifUuid) {
+                    savedMovement.setNotificationUuid(notifUuid);
+                    await this.movementRepository.update(savedMovement);
+                }
             } catch (mailError) {
                 // Capturamos el error para no interrumpir el flujo principal si falla el servicio de correo
                 console.error("Error al enviar notificación de soporte por correo:", mailError);

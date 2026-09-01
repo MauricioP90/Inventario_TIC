@@ -6,6 +6,7 @@ import { IMaintenanceReportRepository } from "../../../domain/repositories/IMain
 import { IResponsibleRepository } from "../../../domain/repositories/IResponsibleRepository";
 import { ILocationRepository } from "../../../domain/repositories/ILocationRepository";
 import { MaintenanceReport, ModalidadMantenimiento, TipoMantenimiento, EstadoFicha } from "../../../domain/entities/MaintenanceReport";
+import { IEmailService } from "../../../domain/services/IEmailService";
 
 export class ReceiveMovement {
     constructor(
@@ -14,7 +15,8 @@ export class ReceiveMovement {
         private readonly simCardRepository: ISIMCardRepository,
         private readonly maintenanceReportRepository: IMaintenanceReportRepository,
         private readonly responsibleRepository: IResponsibleRepository,
-        private readonly locationRepository: ILocationRepository
+        private readonly locationRepository: ILocationRepository,
+        private readonly emailService?: IEmailService
     ) { }
 
     async execute(id: string, receiverId: string, receiverEvidenceUrl: string, destinationLocationId?: string): Promise<Movement> {
@@ -102,6 +104,39 @@ export class ReceiveMovement {
             }
         }
         // 6. Persistir cambios del movimiento
-        return await this.movementRepository.update(movement);
+        const updatedMovement = await this.movementRepository.update(movement);
+
+        // 7. Notificación automática de recepción (con acta/foto adjunta) a los buzones suscritos
+        if (this.emailService) {
+            try {
+                const originLoc = await this.locationRepository.findById(movement.originLocationId);
+                const destLoc = await this.locationRepository.findById(movement.destinationLocationId);
+                const originResp = await this.responsibleRepository.findById(movement.responsibleId);
+                const receiverResp = await this.responsibleRepository.findById(receiverId);
+
+                const assetsDetails = assetsInMovement.map(act => ({
+                    placa: act.placa,
+                    marca: act.marca,
+                    modelo: act.modelo,
+                    serial: act.serial
+                }));
+
+                await this.emailService.sendMovementReceiptNotification(
+                    updatedMovement,
+                    {
+                        activos: assetsDetails,
+                        originLocation: originLoc?.nombre ?? 'Sin sede origen',
+                        destinationLocation: destLoc?.nombre ?? 'Sin sede destino',
+                        responsibleName: originResp?.nombre ?? 'Sin custodio',
+                        receiverName: receiverResp?.nombre ?? movement.physicalReceiverName ?? 'Receptor Destino',
+                        receivedEvidenceUrl: receiverEvidenceUrl
+                    }
+                );
+            } catch (mailError) {
+                console.error("Error al despachar notificación de recepción:", mailError);
+            }
+        }
+
+        return updatedMovement;
     }
 }

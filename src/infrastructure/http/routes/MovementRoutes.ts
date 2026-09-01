@@ -39,7 +39,7 @@ const emailService = EmailServiceFactory.create();
 // 2. Inicializamos Casos de Uso
 const registerUC = new RegisterMovement(movementRepo, activoRepo, locationRepo, responsibleRepo, emailService);
 const dispatchUC = new DispatchMovement(movementRepo, activoRepo);
-const receiveUC = new ReceiveMovement(movementRepo, activoRepo, simCardRepo, maintenanceReportRepo, responsibleRepo, locationRepo);
+const receiveUC = new ReceiveMovement(movementRepo, activoRepo, simCardRepo, maintenanceReportRepo, responsibleRepo, locationRepo, emailService);
 const getUC = new GetMovements(movementRepo);
 const rejectUC = new RejectMovement(movementRepo, activoRepo);
 const receiveByMagicLinkUC = new ReceiveByMagicLink(movementRepo, activoRepo, simCardRepo, maintenanceReportRepo, responsibleRepo, locationRepo);

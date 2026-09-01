@@ -22,6 +22,7 @@ export class MovementMapper {
             notes: entity.notes,
             evidenceUrl: entity.evidenceUrl,
             documentUrl: entity.documentUrl,
+            notificationUuid: entity.notificationUuid,
             receivedEvidenceUrl: entity.receivedEvidenceUrl,
             createdAt: entity.createdAt,
             shippedAt: entity.shippedAt || undefined,
@@ -51,6 +52,7 @@ export class MovementMapper {
         entity.notes = domain.notes;
         entity.evidenceUrl = domain.evidenceUrl;
         entity.documentUrl = domain.documentUrl;
+        entity.notificationUuid = domain.notificationUuid;
         entity.receivedEvidenceUrl = domain.receivedEvidenceUrl;
         entity.createdAt = domain.createdAt!;
         entity.shippedAt = domain.shippedAt;

@@ -43,6 +43,7 @@ export interface MovementProps {
     notes?: string;
     evidenceUrl?: string;      // Guía / soporte de despacho
     documentUrl?: string;      // Comodato / acta de soporte (registro inicial)
+    notificationUuid?: string; // UUID devuelto por el servicio de correo para auditoría
     receivedEvidenceUrl?: string;
     createdAt?: Date;
     shippedAt?: Date;
@@ -94,7 +95,9 @@ export class Movement {
             'SIM_RETIRO',
             'SIM_RETIRO_TOTAL',
             'INGRESO_MANTENIMIENTO',
-            'SALIDA_MANTENIMIENTO'
+            'SALIDA_MANTENIMIENTO',
+            'BAJA_ACTIVO',
+            'HURTO_PERDIDA'
         ].includes(this.props.type);
 
         // Solo los traslados normales no pueden tener misma sede en origen/destino
@@ -125,12 +128,17 @@ export class Movement {
     get notes(): string | undefined { return this.props.notes; }
     get evidenceUrl(): string | undefined { return this.props.evidenceUrl; }
     get documentUrl(): string | undefined { return this.props.documentUrl; }
+    get notificationUuid(): string | undefined { return this.props.notificationUuid; }
     get createdAt(): Date | undefined { return this.props.createdAt; }
     get shippedAt(): Date | undefined { return this.props.shippedAt; }
     get receivedAt(): Date | undefined { return this.props.receivedAt; }
     get magicLinkToken(): string | undefined { return this.props.magicLinkToken; }
     get physicalReceiverName(): string | undefined { return this.props.physicalReceiverName; }
     get destinationAreaId(): string | undefined { return this.props.destinationAreaId; }
+
+    setNotificationUuid(uuid: string): void {
+        this.props.notificationUuid = uuid;
+    }
 
 
     public dispatch(evidenceUrl?: string) {

@@ -52,6 +52,9 @@ export class MovementEntity {
     @Column({ name: 'document_url', nullable: true })
     documentUrl?: string;
 
+    @Column({ name: 'notification_uuid', nullable: true })
+    notificationUuid?: string;
+
     @CreateDateColumn({ name: 'created_at' })
     createdAt!: Date;
 

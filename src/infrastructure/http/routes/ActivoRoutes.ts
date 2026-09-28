@@ -31,6 +31,7 @@ import { GetDashboardSummary } from "../../../application/use-cases/activo/GetDa
 import { CreateTipoActivo } from "../../../application/use-cases/tipoActivo/CreateTipoActivo";
 import { GetAllTipoActivo } from "../../../application/use-cases/tipoActivo/GetAllTipoActivo";
 import { UpdateTipoActivo } from "../../../application/use-cases/tipoActivo/UpdateTipoActivo";
+import { SearchActivos } from "../../../application/use-cases/activo/SearchActivos";
 
 const activoRouter = Router();
 
@@ -55,6 +56,7 @@ const getDashboardSummaryUC = new GetDashboardSummary(activoRepo);
 const createTipoActivoUC = new CreateTipoActivo(tipoActivoRepo);
 const getAllTipoActivoUC = new GetAllTipoActivo(tipoActivoRepo);
 const updateTipoActivoUC = new UpdateTipoActivo(tipoActivoRepo);
+const searchUC = new SearchActivos(activoRepo);
 
 const controller = new ActivoController(
     createUC, 
@@ -67,7 +69,8 @@ const controller = new ActivoController(
     getDashboardSummaryUC,
     createTipoActivoUC,
     getAllTipoActivoUC,
-    updateTipoActivoUC
+    updateTipoActivoUC,
+    searchUC
 );
 
 // 4. Definimos Rutas

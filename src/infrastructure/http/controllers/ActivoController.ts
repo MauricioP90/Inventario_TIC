@@ -13,6 +13,8 @@ import { CreateTipoActivo } from "../../../application/use-cases/tipoActivo/Crea
 import { GetAllTipoActivo } from "../../../application/use-cases/tipoActivo/GetAllTipoActivo";
 import { UpdateTipoActivo } from "../../../application/use-cases/tipoActivo/UpdateTipoActivo";
 
+import { SearchActivos } from "../../../application/use-cases/activo/SearchActivos";
+
 export class ActivoController {
     constructor(
         private createActivo: CreateActivo,
@@ -25,7 +27,8 @@ export class ActivoController {
         private getDashboardSummaryUseCase: GetDashboardSummary,
         private createTipoActivoUC: CreateTipoActivo,
         private getAllTipoActivoUC: GetAllTipoActivo,
-        private updateTipoActivoUC: UpdateTipoActivo
+        private updateTipoActivoUC: UpdateTipoActivo,
+        private searchActivosUC: SearchActivos
     ) { }
 
     /**
@@ -63,20 +66,98 @@ export class ActivoController {
      * @swagger
      * /api/activos:
      *   get:
-     *     summary: Obtener todos los activos
+     *     summary: Obtener o buscar activos con filtros y paginación
      *     tags: [Activos]
+     *     parameters:
+     *       - in: query
+     *         name: search
+     *         schema:
+     *           type: string
+     *         description: Texto para buscar en placa, serial, marca o modelo
+     *       - in: query
+     *         name: tipoActivoId
+     *         schema:
+     *           type: string
+     *           format: uuid
+     *         description: Filtrar por ID de Tipo de Activo
+     *       - in: query
+     *         name: locationId
+     *         schema:
+     *           type: string
+     *           format: uuid
+     *         description: Filtrar por ID de Sede / Ubicación
+     *       - in: query
+     *         name: responsibleId
+     *         schema:
+     *           type: string
+     *           format: uuid
+     *         description: Filtrar por ID de Responsable
+     *       - in: query
+     *         name: estado
+     *         schema:
+     *           type: string
+     *           enum: ['BODEGA', 'OPERACION', 'MANTENIMIENTO', 'BAJA']
+     *         description: Filtrar por Estado del Activo
+     *       - in: query
+     *         name: page
+     *         schema:
+     *           type: integer
+     *           default: 1
+     *         description: Número de página (comienza en 1)
+     *       - in: query
+     *         name: limit
+     *         schema:
+     *           type: integer
+     *           default: 10
+     *         description: Cantidad de registros por página
      *     responses:
      *       200:
-     *         description: Lista de activos
+     *         description: Lista de activos o resultado de búsqueda paginado
      *         content:
      *           application/json:
      *             schema:
-     *               type: array
-     *               items:
-     *                 $ref: '#/components/schemas/Activo'
+     *               oneOf:
+     *                 - type: array
+     *                   items:
+     *                     $ref: '#/components/schemas/Activo'
+     *                 - type: object
+     *                   properties:
+     *                     data:
+     *                       type: array
+     *                       items:
+     *                         $ref: '#/components/schemas/Activo'
+     *                     total:
+     *                       type: integer
+     *                     page:
+     *                       type: integer
+     *                     limit:
+     *                       type: integer
+     *                     totalPages:
+     *                       type: integer
      */
     async getAll(req: Request, res: Response) {
         try {
+            const hasQueryParams = req.query.search !== undefined ||
+                req.query.tipoActivoId !== undefined ||
+                req.query.locationId !== undefined ||
+                req.query.responsibleId !== undefined ||
+                req.query.estado !== undefined ||
+                req.query.page !== undefined ||
+                req.query.limit !== undefined;
+
+            if (hasQueryParams) {
+                const result = await this.searchActivosUC.execute({
+                    search: req.query.search as string,
+                    tipoActivoId: req.query.tipoActivoId as string,
+                    locationId: req.query.locationId as string,
+                    responsibleId: req.query.responsibleId as string,
+                    estado: req.query.estado as string,
+                    page: req.query.page ? Number(req.query.page) : 1,
+                    limit: req.query.limit ? Number(req.query.limit) : 10
+                });
+                return res.json(result);
+            }
+
             const activos = await this.getAllActivo.execute();
             res.json(activos);
         } catch (error: any) {

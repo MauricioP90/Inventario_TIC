@@ -42,8 +42,8 @@ export class TypeORMResponsibleRepository implements IResponsibleRepository {
             .leftJoinAndSelect('responsible.locations', 'locations')
             .leftJoinAndSelect('responsible.activos', 'activos')
             .leftJoinAndSelect('activos.simCards', 'simCards')
-            .leftJoinAndSelect('responsible.role', 'role')
             .leftJoinAndSelect('responsible.area', 'area')
+            .leftJoinAndSelect('responsible.cargo', 'cargo')
             .getMany();
 
         return entities.map(entity => {
@@ -59,8 +59,8 @@ export class TypeORMResponsibleRepository implements IResponsibleRepository {
             .leftJoinAndSelect('responsible.locations', 'locations')
             .leftJoinAndSelect('responsible.activos', 'activos')
             .leftJoinAndSelect('activos.simCards', 'simCards')
-            .leftJoinAndSelect('responsible.role', 'role')
             .leftJoinAndSelect('responsible.area', 'area')
+            .leftJoinAndSelect('responsible.cargo', 'cargo')
             .where('responsible.id = :id', { id })
             .getOne();
 
@@ -75,7 +75,7 @@ export class TypeORMResponsibleRepository implements IResponsibleRepository {
     async findByNombre(nombre: string): Promise<Responsible | null> {
         const entity = await this.repository.findOne({
             where: { nombre },
-            relations: ['locations', 'role', 'area']
+            relations: ['locations', 'area', 'cargo']
         });
         return entity ? ResponsibleMapper.toDomain(entity) : null;
     }
@@ -84,8 +84,8 @@ export class TypeORMResponsibleRepository implements IResponsibleRepository {
         const entities = await this.repository
             .createQueryBuilder('responsible')
             .innerJoin('responsible.locations', 'location')
-            .leftJoinAndSelect('responsible.role', 'role')
             .leftJoinAndSelect('responsible.area', 'area')
+            .leftJoinAndSelect('responsible.cargo', 'cargo')
             .where('location.id = :locationId', { locationId })
             .getMany();
 

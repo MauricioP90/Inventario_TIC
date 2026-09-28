@@ -1,8 +1,8 @@
 import { Entity, PrimaryColumn, Column, ManyToMany, JoinTable, OneToMany, ManyToOne, JoinColumn } from 'typeorm';
 import { LocationEntity } from './LocationEntity';
 import { ActivoEntity } from './ActivoEntity';
-import { RoleEntity } from './RoleEntity';
 import { AreaEntity } from './AreaEntity';
+import { CargoEntity } from './CargoEntity';
 
 @Entity('responsables')
 export class ResponsibleEntity {
@@ -29,13 +29,13 @@ export class ResponsibleEntity {
     })
     locations!: LocationEntity[];
 
-    @ManyToOne(() => RoleEntity, (role) => role.responsibles)
-    @JoinColumn({ name: 'role_id' })
-    role?: RoleEntity;
-
     @ManyToOne(() => AreaEntity, (area) => area.responsibles)
     @JoinColumn({ name: 'area_id' })
     area?: AreaEntity;
+
+    @ManyToOne(() => CargoEntity, (cargo) => cargo.responsibles)
+    @JoinColumn({ name: 'cargo_id' })
+    cargo?: CargoEntity;
 
 
     @OneToMany(() => ActivoEntity, (activo) => activo.responsible)

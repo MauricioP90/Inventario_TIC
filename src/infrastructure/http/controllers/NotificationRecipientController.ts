@@ -14,6 +14,30 @@ export class NotificationRecipientController {
         private readonly toggleStatusUC: ToggleNotificationRecipientStatus
     ) {}
 
+    /**
+     * @swagger
+     * /api/notification-recipients:
+     *   get:
+     *     summary: Listar destinatarios de notificaciones automáticas
+     *     tags: [Notificaciones]
+     *     parameters:
+     *       - in: query
+     *         name: active
+     *         schema:
+     *           type: boolean
+     *         description: Si es true, retorna únicamente destinatarios activos
+     *     responses:
+     *       200:
+     *         description: Lista de destinatarios
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: array
+     *               items:
+     *                 $ref: '#/components/schemas/NotificationRecipient'
+     *       500:
+     *         description: Error interno del servidor
+     */
     async getAll(req: Request, res: Response): Promise<void> {
         try {
             const onlyActive = req.query.active === 'true';
@@ -34,6 +58,56 @@ export class NotificationRecipientController {
         }
     }
 
+    /**
+     * @swagger
+     * /api/notification-recipients:
+     *   post:
+     *     summary: Crear un nuevo destinatario de notificaciones
+     *     tags: [Notificaciones]
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required:
+     *               - email
+     *               - nombre
+     *               - tipoCopia
+     *               - eventos
+     *             properties:
+     *               email:
+     *                 type: string
+     *                 format: email
+     *                 example: contabilidad@flotalamacarena.com
+     *               nombre:
+     *                 type: string
+     *                 example: Buzón Contabilidad
+     *               area:
+     *                 type: string
+     *                 example: Contabilidad
+     *               tipoCopia:
+     *                 type: string
+     *                 enum: ['CC', 'BCC']
+     *                 default: 'CC'
+     *               isActive:
+     *                 type: boolean
+     *                 default: true
+     *               eventos:
+     *                 type: array
+     *                 items:
+     *                   type: string
+     *                 example: ['DESPACHO_TRASLADO', 'RECEPCION_TRASLADO', 'BAJA_ACTIVO', 'HURTO_PERDIDA']
+     *     responses:
+     *       201:
+     *         description: Destinatario creado exitosamente
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/NotificationRecipient'
+     *       400:
+     *         description: Datos inválidos
+     */
     async create(req: Request, res: Response): Promise<void> {
         try {
             const { email, nombre, area, tipoCopia, isActive, eventos } = req.body;
@@ -61,6 +135,52 @@ export class NotificationRecipientController {
         }
     }
 
+    /**
+     * @swagger
+     * /api/notification-recipients/{id}:
+     *   put:
+     *     summary: Actualizar un destinatario de notificaciones
+     *     tags: [Notificaciones]
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *           format: uuid
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               email:
+     *                 type: string
+     *                 format: email
+     *               nombre:
+     *                 type: string
+     *               area:
+     *                 type: string
+     *               tipoCopia:
+     *                 type: string
+     *                 enum: ['CC', 'BCC']
+     *               isActive:
+     *                 type: boolean
+     *               eventos:
+     *                 type: array
+     *                 items:
+     *                   type: string
+     *     responses:
+     *       200:
+     *         description: Destinatario actualizado exitosamente
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/NotificationRecipient'
+     *       400:
+     *         description: Error en los datos o destinatario no encontrado
+     */
     async update(req: Request, res: Response): Promise<void> {
         try {
             const id = req.params.id as string;
@@ -90,6 +210,25 @@ export class NotificationRecipientController {
         }
     }
 
+    /**
+     * @swagger
+     * /api/notification-recipients/{id}:
+     *   delete:
+     *     summary: Eliminar un destinatario de notificaciones
+     *     tags: [Notificaciones]
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *           format: uuid
+     *     responses:
+     *       204:
+     *         description: Destinatario eliminado exitosamente
+     *       400:
+     *         description: Error al eliminar
+     */
     async delete(req: Request, res: Response): Promise<void> {
         try {
             const id = req.params.id as string;
@@ -100,6 +239,29 @@ export class NotificationRecipientController {
         }
     }
 
+    /**
+     * @swagger
+     * /api/notification-recipients/{id}/toggle-status:
+     *   patch:
+     *     summary: Alternar estado activo/inactivo de un destinatario
+     *     tags: [Notificaciones]
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *           format: uuid
+     *     responses:
+     *       200:
+     *         description: Estado alternado exitosamente
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/NotificationRecipient'
+     *       400:
+     *         description: Error al cambiar estado
+     */
     async toggleStatus(req: Request, res: Response): Promise<void> {
         try {
             const id = req.params.id as string;

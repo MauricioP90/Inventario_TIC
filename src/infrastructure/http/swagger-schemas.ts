@@ -1,11 +1,11 @@
 export const swaggerSchemas = {
-    Role: {
+    Cargo: {
         type: 'object',
         required: ['nombre', 'estado'],
         properties: {
             id: { type: 'string', format: 'uuid' },
-            nombre: { type: 'string' },
-            estado: { type: 'string', enum: ['ACTIVO', 'INACTIVO'] }
+            nombre: { type: 'string', example: 'Coordinador' },
+            estado: { type: 'string', enum: ['ACTIVO', 'INACTIVO'], example: 'ACTIVO' }
         }
     },
     Area: {
@@ -70,8 +70,8 @@ export const swaggerSchemas = {
             email: { type: 'string' },
             telefono: { type: 'string' },
             estado: { type: 'string', enum: ['ACTIVO', 'INACTIVO'] },
-            role: { $ref: '#/components/schemas/Role' },
-            area: { $ref: '#/components/schemas/Area' },
+            area: { $ref: '#/components/schemas/Area', nullable: true },
+            cargo: { $ref: '#/components/schemas/Cargo', nullable: true },
             locationIds: {
                 type: 'array',
                 items: { type: 'string', format: 'uuid' }
@@ -171,6 +171,25 @@ export const swaggerSchemas = {
             fechaRetornoProveedor: { type: 'string', format: 'date-time', nullable: true },
             fechaCierre: { type: 'string', format: 'date-time', nullable: true },
             movimientoOrigenId: { type: 'string', format: 'uuid', nullable: true }
+        }
+    },
+    NotificationRecipient: {
+        type: 'object',
+        required: ['email', 'nombre', 'tipoCopia', 'eventos'],
+        properties: {
+            id: { type: 'string', format: 'uuid' },
+            email: { type: 'string', format: 'email', example: 'usuario@flotalamacarena.com' },
+            nombre: { type: 'string', example: 'Juan Pérez' },
+            area: { type: 'string', nullable: true, example: 'Contabilidad' },
+            tipoCopia: { type: 'string', enum: ['CC', 'BCC'], example: 'CC' },
+            isActive: { type: 'boolean', example: true },
+            eventos: {
+                type: 'array',
+                items: { type: 'string' },
+                example: ['DESPACHO_TRASLADO', 'RECEPCION_TRASLADO']
+            },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' }
         }
     }
 };

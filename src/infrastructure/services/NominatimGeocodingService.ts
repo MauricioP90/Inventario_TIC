@@ -3,8 +3,10 @@ import { IGeocodingService } from "../../domain/services/IGeocodingService";
 export class NominatimGeocodingService implements IGeocodingService {
     async reverseGeocode(lat: number, lon: number): Promise<string> {
         try {
-            // Bypassear validación de certificados SSL por restricciones/inspección de red corporativa
-            process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+            // En entornos corporativos con proxy/firewall de inspección SSL se puede habilitar si es necesario
+            if (process.env.ALLOW_INSECURE_TLS === 'true') {
+                process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+            }
 
             const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=es`;
             const response = await fetch(url, {

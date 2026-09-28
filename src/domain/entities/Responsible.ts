@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { Role } from './Role';
 import { Area } from './Area';
+import { Cargo } from './Cargo';
 
 export enum EstadoResponsable {
     ACTIVO = 'ACTIVO',
@@ -13,8 +13,8 @@ export interface ResponsibleProps {
     email: string;
     telefono: string;
     estado: EstadoResponsable;
-    role?: Role;
     area?: Area;
+    cargo?: Cargo | null;
     locationIds?: string[];
     totalActivos?: number;
     totalSIMCards?: number;
@@ -27,8 +27,8 @@ export class Responsible {
         this.props = {
             ...props,
             id: props.id || randomUUID(),
-            role: props.role || undefined,
             area: props.area || undefined,
+            cargo: props.cargo ?? undefined,
         };
 
         this.validar();
@@ -44,7 +44,6 @@ export class Responsible {
         if (this.props.telefono.length > 20) throw new Error('El telefono debe tener menos de 20 caracteres'); // Ampliado por el refactor
         if (this.props.telefono.length < 7) throw new Error('El telefono debe tener mas de 7 caracteres');
         if (!this.props.estado) throw new Error('El estado es obligatorio');
-        if (!this.props.role) throw new Error('El rol es obligatorio');
     }
 
     get id() { return this.props.id; }
@@ -52,8 +51,8 @@ export class Responsible {
     get email() { return this.props.email; }
     get telefono() { return this.props.telefono; }
     get estado() { return this.props.estado; }
-    get role() { return this.props.role; }
     get area() { return this.props.area; }
+    get cargo() { return this.props.cargo; }
     get locationIds() { return this.props.locationIds || []; }
     get totalActivos() { return this.props.totalActivos || 0; }
     get totalSIMCards() { return this.props.totalSIMCards || 0; }

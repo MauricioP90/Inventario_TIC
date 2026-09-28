@@ -15,28 +15,45 @@ import { fileRouter } from "./infrastructure/http/routes/FileRoutes";
 import { maintenanceRouter } from "./infrastructure/http/routes/MaintenanceRoutes";
 import { AreaRouter } from "./infrastructure/http/routes/AreaRoutes";
 import { notificationRecipientRouter } from "./infrastructure/http/routes/NotificationRecipientRoutes";
+import { cargoRouter } from "./infrastructure/http/routes/CargoRoutes";
 import { setupSwagger } from "./infrastructure/http/swagger";
 import { keycloak, memoryStore } from "./infrastructure/http/middleware/KeycloakConfig";
 import * as path from 'path';
 
 
 const app = express();
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 
 // Middleware para leer JSON con límite extendido para carga de archivos Base64 (hasta 50MB)
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Habilitar CORS
+// Habilitar CORS configurable (soporta múltiples orígenes separados por comas)
+const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:4200')
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(Boolean);
+
 app.use(cors({
-    origin: 'http://localhost:4200',
+    origin: (requestOrigin, callback) => {
+        if (!requestOrigin || allowedOrigins.includes('*') || allowedOrigins.includes(requestOrigin)) {
+            callback(null, true);
+        } else {
+            callback(new Error(`Bloqueado por política CORS: Origen ${requestOrigin} no autorizado`));
+        }
+    },
     credentials: true
 }));
 
 // Configuración de Sesión (Requerido por Keycloak-connect)
+const sessionSecret = process.env.SESSION_SECRET || 'a_very_secret_key_123';
+if (process.env.NODE_ENV === 'production' && sessionSecret === 'a_very_secret_key_123') {
+    console.warn('⚠️ [Seguridad] SESSION_SECRET por defecto detectado. Se recomienda definir un secreto robusto en el archivo .env');
+}
+
 app.use(
     session({
-        secret: process.env.SESSION_SECRET || 'secret',
+        secret: sessionSecret,
         resave: false,
         saveUninitialized: true,
         store: memoryStore
@@ -62,6 +79,7 @@ app.use("/api/files", fileRouter);
 app.use("/api/maintenance", maintenanceRouter);
 app.use("/api/areas", AreaRouter);
 app.use("/api/notification-recipients", notificationRecipientRouter);
+app.use("/api/cargos", cargoRouter);
 
 
 /**

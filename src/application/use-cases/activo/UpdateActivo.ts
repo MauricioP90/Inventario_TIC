@@ -1,4 +1,5 @@
 import { Activo, EstadoActivo } from "../../../domain/entities/Activo";
+import { TipoLocation } from "../../../domain/entities/Location";
 import { IActivoRepository } from "../../../domain/repositories/IActivoRepository";
 import { Responsible } from "../../../domain/entities/Responsible";
 import { ILocationRepository } from "../../../domain/repositories/ILocationRepository";
@@ -135,8 +136,8 @@ export class UpdateActivo {
 
         if (targetEstado === EstadoActivo.MANTENIMIENTO && targetLocationId) {
             const location = await this.locationRepository.findById(targetLocationId);
-            if (location && location.tipo !== 'BODEGA' && location.tipo !== 'PROVEEDOR') {
-                throw new Error('Un activo solo puede estar en estado MANTENIMIENTO si se encuentra en una Bodega o Proveedor.');
+            if (location && location.tipo !== TipoLocation.PUNTO_TI && (location.tipo as any) !== 'BODEGA' && location.tipo !== TipoLocation.PROVEEDOR) {
+                throw new Error('Un activo solo puede estar en estado MANTENIMIENTO si se encuentra en un Punto TI / Soporte o Proveedor.');
             }
         }
 

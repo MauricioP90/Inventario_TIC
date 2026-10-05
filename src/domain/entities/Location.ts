@@ -3,9 +3,9 @@ import { Coordinates } from '../value-objects/Coordinates';
 import { Area } from './Area';
 
 export enum TipoLocation {
-    BODEGA = 'BODEGA',
-    OFICINA = 'OFICINA',
-    REGIONAL = 'REGIONAL',
+    PUNTO_TI = 'PUNTO_TI',
+    OFICINA_PROPIA = 'OFICINA_PROPIA',
+    CONTRATISTA = 'CONTRATISTA',
     PROVEEDOR = 'PROVEEDOR'
 }
 
@@ -50,7 +50,7 @@ export class Location {
     get code() { return this.props.code; }
     get nombre() { return this.props.nombre; }
     get coordenadas() { return this.props.coordenadas; }
-    get tipo() { return this.props.tipo || TipoLocation.OFICINA; }
+    get tipo() { return this.props.tipo || TipoLocation.OFICINA_PROPIA; }
     get estado() { return this.props.estado; }
     get responsibleIds() { return this.props.responsibleIds || []; }
     get areas() { return this.props.areas || []; }
@@ -72,7 +72,8 @@ export class Location {
     public toJSON() {
         return {
             ...this.props,
-            id: this.id
+            id: this.id,
+            tipo: this.tipo
         };
     }
 }

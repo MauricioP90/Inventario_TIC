@@ -1,5 +1,6 @@
 import { Movement, MovementStatus } from "../../../domain/entities/Movement";
 import { EstadoActivo } from "../../../domain/entities/Activo";
+import { TipoLocation } from "../../../domain/entities/Location";
 import { IMovementRepository } from "../../../domain/repositories/IMovementRepository";
 import { IActivoRepository } from "../../../domain/repositories/IActivoRepository";
 import { ILocationRepository } from "../../../domain/repositories/ILocationRepository";
@@ -40,10 +41,10 @@ export class RegisterMovement {
             throw new Error('Ubicación de origen o destino no encontrada.');
         }
 
-        const isOriginBodega = originLocation.tipo === 'BODEGA';
-        const isDestBodega = destinationLocation.tipo === 'BODEGA';
-        const isOriginProvider = originLocation.tipo === 'PROVEEDOR';
-        const isDestProvider = destinationLocation.tipo === 'PROVEEDOR';
+        const isOriginBodega = originLocation.tipo === TipoLocation.PUNTO_TI || (originLocation.tipo as any) === 'BODEGA';
+        const isDestBodega = destinationLocation.tipo === TipoLocation.PUNTO_TI || (destinationLocation.tipo as any) === 'BODEGA';
+        const isOriginProvider = originLocation.tipo === TipoLocation.PROVEEDOR;
+        const isDestProvider = destinationLocation.tipo === TipoLocation.PROVEEDOR;
 
         if (isOriginProvider && isDestProvider) {
             throw new Error('No se permiten traslados directos entre Proveedores.');
@@ -56,7 +57,7 @@ export class RegisterMovement {
                 if (activo.estado === 'BAJA') {
                     throw new Error(`El equipo con placa "${activo.placa}" se encuentra dado de BAJA (Inactivo). No está permitido realizar movimientos sobre él.`);
                 }
-                // Validación de mantenimiento: equipos en mantenimiento no pueden moverse a menos que sea a Bodega o Proveedor
+                // Validación de mantenimiento: equipos en mantenimiento no pueden moverse a menos que sea a Bodega/Punto TI o Proveedor
                 if (activo.estado === 'MANTENIMIENTO') {
                     const isAllowedMaintenanceMovement = 
                         ['RETORNO_SOPORTE', 'REINGRESO_SOPORTE', 'RETORNO_PROVEEDOR'].includes(dto.type.toUpperCase()) ||
@@ -66,7 +67,7 @@ export class RegisterMovement {
                         (dto.type.toUpperCase() === 'TRASLADO_REGIONAL' && isOriginBodega && isDestBodega);
 
                     if (!isAllowedMaintenanceMovement) {
-                        throw new Error(`El equipo con placa "${activo.placa}" está en MANTENIMIENTO. Solo se permiten traslados entre Bodegas, envíos a Proveedor o retornos.`);
+                        throw new Error(`El equipo con placa "${activo.placa}" está en MANTENIMIENTO. Solo se permiten traslados entre Puntos TI / Soporte, envíos a Proveedor o retornos.`);
                     }
                 }
             }
@@ -84,15 +85,15 @@ export class RegisterMovement {
 
         // Validación de destino para envío a proveedor (mantenimiento)
         if (dto.type && dto.type.toUpperCase() === 'ENVIO_PROVEEDOR') {
-            if (originLocation.tipo !== 'BODEGA' || destinationLocation.tipo !== 'PROVEEDOR') {
-                throw new Error('El envío a proveedor solo se puede realizar desde una Bodega hacia un Proveedor.');
+            if (!isOriginBodega || destinationLocation.tipo !== TipoLocation.PROVEEDOR) {
+                throw new Error('El envío a proveedor solo se puede realizar desde un Punto TI / Soporte hacia un Proveedor.');
             }
         }
 
         // Validación de destino para retorno de proveedor
         if (dto.type && dto.type.toUpperCase() === 'RETORNO_PROVEEDOR') {
-            if (originLocation.tipo !== 'PROVEEDOR' || destinationLocation.tipo !== 'BODEGA') {
-                throw new Error('El retorno de proveedor solo se puede realizar desde un Proveedor hacia una Bodega.');
+            if (originLocation.tipo !== TipoLocation.PROVEEDOR || !isDestBodega) {
+                throw new Error('El retorno de proveedor solo se puede realizar desde un Proveedor hacia un Punto TI / Soporte.');
             }
         }
         

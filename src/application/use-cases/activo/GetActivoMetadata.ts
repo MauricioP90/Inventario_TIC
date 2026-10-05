@@ -14,9 +14,9 @@ export class GetActivoMetadata {
         const tiposDB = await this.tipoActivoRepo.findAll();
         const tiposActivos = tiposDB.filter(t => t.estado === EstadoTipoActivo.ACTIVO);
 
-        // Solo las ubicaciones de tipo BODEGA se muestran en el formulario de creación
+        // Solo las ubicaciones de tipo PUNTO_TI se muestran en el formulario de creación de activos
         const todasLasLocations = await this.locationRepo.findAll();
-        const bodegas = todasLasLocations.filter(l => l.tipo === TipoLocation.BODEGA);
+        const bodegas = todasLasLocations.filter(l => l.tipo === TipoLocation.PUNTO_TI || (l.tipo as any) === 'BODEGA');
 
         return {
             statuses: [

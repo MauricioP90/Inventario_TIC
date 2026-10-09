@@ -37,6 +37,18 @@ export class ResponsibleEntity {
     @JoinColumn({ name: 'cargo_id' })
     cargo?: CargoEntity;
 
+    @Column({ name: 'tipo_documento', default: 'CC', nullable: true })
+    tipoDocumento?: string;
+
+    @Column({ name: 'numero_documento', nullable: true })
+    numeroDocumento?: string;
+
+    @Column({ name: 'fecha_expedicion_documento', type: 'date', nullable: true })
+    fechaExpedicionDocumento?: string | null;
+
+    @Column({ nullable: true })
+    direccion?: string;
+
 
     @OneToMany(() => ActivoEntity, (activo) => activo.responsible)
     activos!: ActivoEntity[];

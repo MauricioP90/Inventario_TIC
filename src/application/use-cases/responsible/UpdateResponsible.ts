@@ -12,6 +12,10 @@ interface UpdateResponsibleInput {
     estado?: EstadoResponsable;
     area?: string;
     cargo?: string | null;
+    tipoDocumento?: string;
+    numeroDocumento?: string;
+    fechaExpedicionDocumento?: string | null;
+    direccion?: string;
     locationIds?: string[];
 }
 
@@ -43,12 +47,29 @@ export class UpdateResponsible {
             }
         }
 
+        const cargoFinal = cargoObj !== undefined ? cargoObj : responsible.cargo;
+        if (cargoFinal && cargoFinal.nombre.trim().toUpperCase() === 'CONTRATISTA') {
+            const numDoc = input.numeroDocumento !== undefined ? input.numeroDocumento : responsible.numeroDocumento;
+            const tipoDoc = input.tipoDocumento !== undefined ? input.tipoDocumento : responsible.tipoDocumento;
+            const fechaExp = input.fechaExpedicionDocumento !== undefined ? input.fechaExpedicionDocumento : responsible.fechaExpedicionDocumento;
+            const dir = input.direccion !== undefined ? input.direccion : responsible.direccion;
+
+            if (!numDoc || !numDoc.trim()) throw new Error('El número de documento es obligatorio para contratistas');
+            if (!tipoDoc || !tipoDoc.trim()) throw new Error('El tipo de documento es obligatorio para contratistas');
+            if (!fechaExp) throw new Error('La fecha de expedición del documento es obligatoria para contratistas');
+            if (!dir || !dir.trim()) throw new Error('La dirección es obligatoria para contratistas');
+        }
+
         responsible.update({
             nombre: input.nombre,
             email: input.email,
             telefono: input.telefono,
             estado: input.estado,
             area: areaObj,
+            tipoDocumento: input.tipoDocumento,
+            numeroDocumento: input.numeroDocumento,
+            fechaExpedicionDocumento: input.fechaExpedicionDocumento,
+            direccion: input.direccion,
             ...(cargoObj !== undefined ? { cargo: cargoObj } : {}),
             locationIds: input.locationIds
         });

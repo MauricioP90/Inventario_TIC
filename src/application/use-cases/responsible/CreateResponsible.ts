@@ -9,7 +9,11 @@ interface CreateResponsibleInput {
     telefono: string;
     estado: EstadoResponsable;
     area?: string;
-    cargo?: string;
+    cargo: string;
+    tipoDocumento?: string;
+    numeroDocumento?: string;
+    fechaExpedicionDocumento?: string | null;
+    direccion?: string;
     locationIds?: string[];
 }
 
@@ -26,16 +30,36 @@ export class CreateResponsible {
             throw new Error('El responsable con nombre ' + input.nombre + ' ya existe');
         }
 
+        if (!input.cargo) {
+            throw new Error('El cargo es obligatorio para completar la creación del responsable');
+        }
+
+        const cargo = await this.cargoRepository.findById(input.cargo);
+        if (!cargo) {
+            throw new Error('Cargo no encontrado');
+        }
+
+        // Si el cargo es CONTRATISTA, documento, fecha de expedición y dirección son obligatorios
+        const esContratista = cargo.nombre.trim().toUpperCase() === 'CONTRATISTA';
+        if (esContratista) {
+            if (!input.numeroDocumento || !input.numeroDocumento.trim()) {
+                throw new Error('El número de documento es obligatorio para contratistas');
+            }
+            if (!input.tipoDocumento || !input.tipoDocumento.trim()) {
+                throw new Error('El tipo de documento es obligatorio para contratistas');
+            }
+            if (!input.fechaExpedicionDocumento) {
+                throw new Error('La fecha de expedición del documento es obligatoria para contratistas');
+            }
+            if (!input.direccion || !input.direccion.trim()) {
+                throw new Error('La dirección es obligatoria para contratistas');
+            }
+        }
+
         let area = undefined;
         if (input.area) {
             area = await this.areaRepository.findById(input.area);
             if (!area) throw new Error('Área no encontrada');
-        }
-
-        let cargo = undefined;
-        if (input.cargo) {
-            cargo = await this.cargoRepository.findById(input.cargo);
-            if (!cargo) throw new Error('Cargo no encontrado');
         }
 
         const responsible = new Responsible({
@@ -43,8 +67,12 @@ export class CreateResponsible {
             email: input.email,
             telefono: input.telefono,
             estado: input.estado,
+            tipoDocumento: input.tipoDocumento || 'CC',
+            numeroDocumento: input.numeroDocumento || undefined,
+            fechaExpedicionDocumento: input.fechaExpedicionDocumento || undefined,
+            direccion: input.direccion || undefined,
             area: area || undefined,
-            cargo: cargo || undefined,
+            cargo: cargo,
             locationIds: input.locationIds
         });
 

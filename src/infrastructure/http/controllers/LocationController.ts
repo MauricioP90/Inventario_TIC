@@ -148,8 +148,8 @@ export class LocationController {
                 res.status(400).json({ message: "La latitud y longitud deben ser números válidos" });
                 return;
             }
-            const address = await this.reverseGeocodeUseCase.execute(latitude, longitude);
-            res.json({ address });
+            const result = await this.reverseGeocodeUseCase.execute(latitude, longitude);
+            res.json(result);
         } catch (error: any) {
             res.status(500).json({ message: error.message });
         }

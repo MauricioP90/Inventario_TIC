@@ -13,6 +13,7 @@ export interface LocationProps {
     id?: string;
     code: string;
     nombre: string;
+    ciudad?: string | null;
     coordenadas?: string | null;
     tipo?: TipoLocation;
     estado: EstadoLocation;
@@ -49,6 +50,7 @@ export class Location {
     get id() { return this.props.id; }
     get code() { return this.props.code; }
     get nombre() { return this.props.nombre; }
+    get ciudad() { return this.props.ciudad || undefined; }
     get coordenadas() { return this.props.coordenadas; }
     get tipo() { return this.props.tipo || TipoLocation.OFICINA_PROPIA; }
     get estado() { return this.props.estado; }

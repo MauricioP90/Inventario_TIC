@@ -13,6 +13,9 @@ export class LocationEntity {
     @Column()
     nombre!: string;
 
+    @Column({ nullable: true, length: 100 })
+    ciudad?: string;
+
     @Column({ nullable: true })
     coordenadas?: string;
 

@@ -10,6 +10,7 @@ export interface CreateLocationInput {
     id?: string;
     code: string;
     nombre: string;
+    ciudad?: string;
     coordenadas?: string;
     tipo?: TipoLocation;
     estado: EstadoLocation;
@@ -45,6 +46,7 @@ export class CreateLocation {
             id: input.id,
             code: input.code,
             nombre: input.nombre,
+            ciudad: input.ciudad,
             coordenadas: input.coordenadas,
             tipo: input.tipo,
             estado: input.estado,

@@ -9,6 +9,7 @@ import { Area } from "../../../domain/entities/Area";
 export interface UpdateLocationInput {
     code: string;
     nombre?: string;
+    ciudad?: string;
     coordenadas?: string;
     tipo?: TipoLocation;
     estado?: EstadoLocation;
@@ -72,6 +73,7 @@ export class UpdateLocation {
         // 5. Actualizar la entidad con los nuevos datos
         location.update({
             nombre: input.nombre,
+            ciudad: input.ciudad,
             coordenadas: input.coordenadas,
             tipo: input.tipo,
             estado: input.estado,

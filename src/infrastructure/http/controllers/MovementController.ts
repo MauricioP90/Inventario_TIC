@@ -9,6 +9,8 @@ import { RejectMovement } from "../../../application/use-cases/movement/RejectMo
 import { ReceiveByMagicLink } from "../../../application/use-cases/movement/ReceiveByMagicLink";
 import { GetMovementByMagicLink } from "../../../application/use-cases/movement/GetMovementByMagicLink";
 import { RejectByMagicLink } from "../../../application/use-cases/movement/RejectByMagicLink";
+import { UpdateMovementNotes } from "../../../application/use-cases/movement/UpdateMovementNotes";
+import { CancelMovement } from "../../../application/use-cases/movement/CancelMovement";
 
 export class MovementController {
     constructor(
@@ -19,7 +21,9 @@ export class MovementController {
         private rejectMovement: RejectMovement,
         private receiveByMagicLink: ReceiveByMagicLink,
         private getMovementByMagicLink: GetMovementByMagicLink,
-        private rejectByMagicLink: RejectByMagicLink
+        private rejectByMagicLink: RejectByMagicLink,
+        private updateMovementNotes: UpdateMovementNotes,
+        private cancelMovement: CancelMovement
     ) { }
 
     /**
@@ -72,7 +76,12 @@ export class MovementController {
      */
     async dispatch(req: Request, res: Response) {
         try {
-            const result = await this.dispatchMovement.execute(req.params.id as string, req.body.evidenceUrl as string);
+            const result = await this.dispatchMovement.execute(
+                req.params.id as string,
+                req.body.evidenceUrl as string | undefined,
+                req.body.documentUrl as string | undefined,
+                req.body.recipients as string[] | undefined
+            );
             res.status(200).json(result);
         } catch (error: any) {
             res.status(500).json({ message: error.message });
@@ -172,6 +181,31 @@ export class MovementController {
                 req.params.token as string,
                 req.body.rejectionReason as string
             );
+            res.status(200).json(result);
+        } catch (error: any) {
+            res.status(400).json({ message: error.message });
+        }
+    }
+
+    async updateNotes(req: Request, res: Response) {
+        try {
+            const id = req.params.id as string;
+            const { notes } = req.body;
+            const result = await this.updateMovementNotes.execute(id, notes || "");
+            res.status(200).json(result);
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    async cancel(req: Request, res: Response) {
+        try {
+            const id = req.params.id as string;
+            const { reason } = req.body;
+            const user = (req as any).kauth?.grant?.access_token?.content?.preferred_username 
+                      || (req as any).kauth?.grant?.access_token?.content?.name 
+                      || req.body.cancelledBy;
+            const result = await this.cancelMovement.execute(id, reason, user);
             res.status(200).json(result);
         } catch (error: any) {
             res.status(400).json({ message: error.message });

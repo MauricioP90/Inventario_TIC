@@ -13,6 +13,8 @@ import { RejectMovement } from "../../../application/use-cases/movement/RejectMo
 import { ReceiveByMagicLink } from "../../../application/use-cases/movement/ReceiveByMagicLink";
 import { GetMovementByMagicLink } from "../../../application/use-cases/movement/GetMovementByMagicLink";
 import { RejectByMagicLink } from "../../../application/use-cases/movement/RejectByMagicLink";
+import { UpdateMovementNotes } from "../../../application/use-cases/movement/UpdateMovementNotes";
+import { CancelMovement } from "../../../application/use-cases/movement/CancelMovement";
 import { TypeORMMovementRepository } from "../../persistence/typeorm/repositories/TypeORMMovementRepository";
 import { TypeORMActivoRepository } from "../../persistence/typeorm/repositories/TypeORMActivoRepository";
 import { TypeORMLocationRepository } from "../../persistence/typeorm/repositories/TypeORMLocationRepository";
@@ -37,17 +39,19 @@ const maintenanceReportRepo = new TypeORMMaintenanceReportRepository(AppDataSour
 const emailService = EmailServiceFactory.create();
 
 // 2. Inicializamos Casos de Uso
-const registerUC = new RegisterMovement(movementRepo, activoRepo, locationRepo, responsibleRepo, emailService);
-const dispatchUC = new DispatchMovement(movementRepo, activoRepo);
+const registerUC = new RegisterMovement(movementRepo, activoRepo, locationRepo, responsibleRepo, emailService, simCardRepo);
+const dispatchUC = new DispatchMovement(movementRepo, activoRepo, locationRepo, responsibleRepo, emailService);
 const receiveUC = new ReceiveMovement(movementRepo, activoRepo, simCardRepo, maintenanceReportRepo, responsibleRepo, locationRepo, emailService);
 const getUC = new GetMovements(movementRepo);
 const rejectUC = new RejectMovement(movementRepo, activoRepo);
 const receiveByMagicLinkUC = new ReceiveByMagicLink(movementRepo, activoRepo, simCardRepo, maintenanceReportRepo, responsibleRepo, locationRepo);
 const getMovementByMagicLinkUC = new GetMovementByMagicLink(movementRepo);
 const rejectByMagicLinkUC = new RejectByMagicLink(movementRepo, activoRepo);
+const updateMovementNotesUC = new UpdateMovementNotes(movementRepo);
+const cancelUC = new CancelMovement(movementRepo, activoRepo);
 
 // 3. Inicializamos Controlador
-const controller = new MovementController(registerUC, dispatchUC, receiveUC, getUC, rejectUC, receiveByMagicLinkUC, getMovementByMagicLinkUC, rejectByMagicLinkUC);
+const controller = new MovementController(registerUC, dispatchUC, receiveUC, getUC, rejectUC, receiveByMagicLinkUC, getMovementByMagicLinkUC, rejectByMagicLinkUC, updateMovementNotesUC, cancelUC);
 
 // 4. Definimos Rutas
 movementRouter.post("/", keycloak.protect(), (req, res) => controller.register(req, res));
@@ -55,6 +59,8 @@ movementRouter.get("/", keycloak.protect(), (req, res) => controller.getAll(req,
 movementRouter.patch("/:id/dispatch", keycloak.protect(), (req, res) => controller.dispatch(req, res));
 movementRouter.patch("/:id/receive", keycloak.protect(), (req, res) => controller.receive(req, res));
 movementRouter.patch("/:id/reject", keycloak.protect(), (req, res) => controller.reject(req, res));
+movementRouter.patch("/:id/notes", keycloak.protect(), (req, res) => controller.updateNotes(req, res));
+movementRouter.patch("/:id/cancel", keycloak.protect(), (req, res) => controller.cancel(req, res));
 
 // Rutas Públicas (Magic Links) - No requieren Keycloak
 movementRouter.get("/public/magic-link/:token", (req, res) => controller.getPublicMovement(req, res));

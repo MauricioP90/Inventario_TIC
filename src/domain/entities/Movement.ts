@@ -141,7 +141,7 @@ export class Movement {
     }
 
 
-    public dispatch(evidenceUrl?: string) {
+    public dispatch(evidenceUrl?: string, documentUrl?: string) {
         if (this.props.type === 'TRASLADO_AREA') {
             throw new Error('Los traslados entre áreas no requieren despacho. Se confirman directamente por magic link.');
         }
@@ -150,7 +150,8 @@ export class Movement {
         }
         this.props.status = MovementStatus.EN_TRANSIT;
         this.props.shippedAt = new Date();
-        this.props.evidenceUrl = evidenceUrl;
+        if (evidenceUrl) this.props.evidenceUrl = evidenceUrl;
+        if (documentUrl) this.props.documentUrl = documentUrl;
 
         // Generar magic link token
         const { randomUUID } = require('node:crypto');

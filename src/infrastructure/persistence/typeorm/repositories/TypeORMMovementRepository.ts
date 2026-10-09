@@ -43,7 +43,7 @@ export class TypeORMMovementRepository implements IMovementRepository {
             });
         }
 
-        const updatedEntity = await this.repository.save(entity);
+        await this.repository.save(entity);
 
         // TypeORM omite los NULL en save() cuando la entidad no fue cargada desde DB.
         // Usamos una query directa para forzar magic_link_token = NULL cuando el token fue consumido.
@@ -54,13 +54,20 @@ export class TypeORMMovementRepository implements IMovementRepository {
             );
         }
 
-        return MovementMapper.toDomain(updatedEntity);
+        // Recargar siempre la entidad completa con todas sus relaciones (responsables, cargos, activos, ubicaciones)
+        const fullyLoaded = await this.findById(movement.id!);
+        return fullyLoaded || MovementMapper.toDomain(entity);
     }
 
     async findById(id: string): Promise<Movement | null> {
         const entity = await this.repository.findOne({
             where: { id },
-            relations: ['activos', 'activos.simCards', 'simCards', 'originLocation', 'destinationLocation', 'responsible', 'receiver']
+            relations: [
+                'activos', 'activos.simCards', 'simCards', 
+                'originLocation', 'destinationLocation', 
+                'responsible', 'responsible.cargo', 'responsible.area', 'responsible.locations',
+                'receiver', 'receiver.cargo', 'receiver.area', 'receiver.locations'
+            ]
         });
 
         return entity ? MovementMapper.toDomain(entity) : null;
@@ -75,7 +82,13 @@ export class TypeORMMovementRepository implements IMovementRepository {
             .leftJoinAndSelect('movement.originLocation', 'originLocation')
             .leftJoinAndSelect('movement.destinationLocation', 'destinationLocation')
             .leftJoinAndSelect('movement.responsible', 'responsible')
+            .leftJoinAndSelect('responsible.cargo', 'responsibleCargo')
+            .leftJoinAndSelect('responsible.area', 'responsibleArea')
+            .leftJoinAndSelect('responsible.locations', 'responsibleLocations')
             .leftJoinAndSelect('movement.receiver', 'receiver')
+            .leftJoinAndSelect('receiver.cargo', 'receiverCargo')
+            .leftJoinAndSelect('receiver.area', 'receiverArea')
+            .leftJoinAndSelect('receiver.locations', 'receiverLocations')
             .orderBy('movement.created_at', 'DESC')
             .getMany();
 
@@ -88,7 +101,12 @@ export class TypeORMMovementRepository implements IMovementRepository {
                 { originLocationId: locationId },
                 { destinationLocationId: locationId }
             ],
-            relations: ['activos', 'activos.simCards', 'simCards', 'originLocation', 'destinationLocation', 'responsible', 'receiver'],
+            relations: [
+                'activos', 'activos.simCards', 'simCards', 
+                'originLocation', 'destinationLocation', 
+                'responsible', 'responsible.cargo', 'responsible.area', 'responsible.locations',
+                'receiver', 'receiver.cargo', 'receiver.area', 'receiver.locations'
+            ],
             order: { createdAt: 'DESC' }
         });
 
@@ -97,7 +115,12 @@ export class TypeORMMovementRepository implements IMovementRepository {
 
     async findAll(): Promise<Movement[]> {
         const entities = await this.repository.find({
-            relations: ['activos', 'activos.simCards', 'simCards', 'originLocation', 'destinationLocation', 'responsible', 'receiver'],
+            relations: [
+                'activos', 'activos.simCards', 'simCards', 
+                'originLocation', 'destinationLocation', 
+                'responsible', 'responsible.cargo', 'responsible.area', 'responsible.locations',
+                'receiver', 'receiver.cargo', 'receiver.area', 'receiver.locations'
+            ],
             order: { createdAt: 'DESC' }
         });
 
@@ -107,7 +130,12 @@ export class TypeORMMovementRepository implements IMovementRepository {
     async findByMagicLinkToken(token: string): Promise<Movement | null> {
         const entity = await this.repository.findOne({
             where: { magicLinkToken: token },
-            relations: ['activos', 'activos.simCards', 'simCards', 'originLocation', 'destinationLocation', 'responsible', 'receiver']
+            relations: [
+                'activos', 'activos.simCards', 'simCards', 
+                'originLocation', 'destinationLocation', 
+                'responsible', 'responsible.cargo', 'responsible.area', 'responsible.locations',
+                'receiver', 'receiver.cargo', 'receiver.area', 'receiver.locations'
+            ]
         });
 
         return entity ? MovementMapper.toDomain(entity) : null;

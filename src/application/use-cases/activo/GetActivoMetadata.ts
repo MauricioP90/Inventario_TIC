@@ -23,6 +23,8 @@ export class GetActivoMetadata {
                 { id: EstadoActivo.DISPONIBLE, label: 'Disponible' },
                 { id: EstadoActivo.OPERACION, label: 'Operación' },
                 { id: EstadoActivo.MANTENIMIENTO, label: 'Mantenimiento' },
+                { id: EstadoActivo.EN_TRANSIT, label: 'En Tránsito' },
+                { id: EstadoActivo.RECHAZADO, label: 'Rechazado' },
                 { id: EstadoActivo.BAJA, label: 'Inactivo' }
             ],
             types: tiposActivos.map(t => ({

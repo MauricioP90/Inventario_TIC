@@ -62,6 +62,10 @@ export class TypeORMActivoRepository implements IActivoRepository {
             qb.andWhere('activo.estado = :estado', { estado: query.estado });
         }
 
+        if (query.modelo && query.modelo.trim()) {
+            qb.andWhere('LOWER(activo.modelo) = LOWER(:modelo)', { modelo: query.modelo.trim() });
+        }
+
         qb.orderBy('activo.fechaIngreso', 'DESC')
           .addOrderBy('activo.placa', 'ASC');
 

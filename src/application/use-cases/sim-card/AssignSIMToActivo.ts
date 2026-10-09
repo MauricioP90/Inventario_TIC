@@ -27,7 +27,10 @@ export class AssignSIMToActivo {
         if (simCard.estado !== EstadoSIM.BODEGA) {
             throw new Error('La SIM no está disponible (debe estar en BODEGA)');
         }
-        const allowedActivoStates = [EstadoActivo.DISPONIBLE, EstadoActivo.OPERACION, EstadoActivo.MANTENIMIENTO];
+        if (activo.estado === EstadoActivo.MANTENIMIENTO) {
+            throw new Error(`El equipo con placa "${activo.placa}" está en MANTENIMIENTO. Para asignar o cambiar SIM Card, el equipo debe ser liberado de mantenimiento y pasar a estado DISPONIBLE u OPERACIÓN.`);
+        }
+        const allowedActivoStates = [EstadoActivo.DISPONIBLE, EstadoActivo.OPERACION];
         if (!allowedActivoStates.includes(activo.estado)) {
             throw new Error(`El activo no está disponible para asignación (estado actual: ${activo.estado})`);
         }

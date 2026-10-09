@@ -103,9 +103,14 @@ export class Activo {
             tipo === 'TRASLADO_REGIONAL' || 
             tipo === 'SALIDA_PRESTAMO' ||
             tipo === 'ASIGNACION' ||
-            tipo === 'TRASLADO'
+            tipo === 'TRASLADO' ||
+            tipo === 'TRASLADO_AREA'
         ) {
             this.setStatus(EstadoActivo.OPERACION);
+        } else if (tipo.startsWith('SIM_')) {
+            if (this.props.estado === EstadoActivo.EN_TRANSIT) {
+                this.setStatus(this.props.responsibleId ? EstadoActivo.OPERACION : EstadoActivo.DISPONIBLE);
+            }
         } else if (tipo === 'RETORNO_SOPORTE' || tipo === 'REINGRESO_SOPORTE' || tipo === 'RETORNO_PROVEEDOR' || tipo === 'SALIDA_MANTENIMIENTO') {
             this.setStatus(EstadoActivo.DISPONIBLE);
         } else if (tipo === 'ENVIO_PROVEEDOR' || tipo === 'RETORNO_POR_RECHAZO' || tipo === 'INGRESO_MANTENIMIENTO') {
@@ -121,6 +126,12 @@ export class Activo {
             throw new Error('El activo ya tiene el numero maximo de SIMCards asignadas');
         }
         this._simCards.push(simCard);
+    }
+    public removerSIMCard(simCardId: string) {
+        this._simCards = this._simCards.filter(s => s.id !== simCardId);
+    }
+    public limpiarSIMCards() {
+        this._simCards = [];
     }
     get simCards() { return this._simCards; }
 

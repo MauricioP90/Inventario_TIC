@@ -6,6 +6,7 @@ export interface SearchActivosQuery {
     locationId?: string;
     responsibleId?: string;
     estado?: string;
+    modelo?: string;
     page?: number;
     limit?: number;
 }

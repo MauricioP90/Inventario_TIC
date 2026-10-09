@@ -142,6 +142,7 @@ export class ActivoController {
                 req.query.locationId !== undefined ||
                 req.query.responsibleId !== undefined ||
                 req.query.estado !== undefined ||
+                req.query.modelo !== undefined ||
                 req.query.page !== undefined ||
                 req.query.limit !== undefined;
 
@@ -152,6 +153,7 @@ export class ActivoController {
                     locationId: req.query.locationId as string,
                     responsibleId: req.query.responsibleId as string,
                     estado: req.query.estado as string,
+                    modelo: req.query.modelo as string,
                     page: req.query.page ? Number(req.query.page) : 1,
                     limit: req.query.limit ? Number(req.query.limit) : 10
                 });
@@ -190,8 +192,8 @@ export class ActivoController {
      */
     async getOne(req: Request, res: Response) {
         try {
-            const { id } = req.params;
-            const activo = await this.getOneActivo.execute({ placa: id as string });
+            const placa = req.params.placa || req.params.id;
+            const activo = await this.getOneActivo.execute({ placa: placa as string });
             res.json(activo);
         } catch (error: any) {
             res.status(404).json({ message: error.message });

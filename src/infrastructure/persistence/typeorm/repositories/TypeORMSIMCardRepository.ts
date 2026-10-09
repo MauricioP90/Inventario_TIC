@@ -10,6 +10,19 @@ export class TypeORMSIMCardRepository implements ISIMCardRepository {
     async save(simCard: SIMCard): Promise<void> {
         const entity = SIMCardMapper.toPersistence(simCard);
         await this.repository.save(entity);
+
+        if (!simCard.activoId) {
+            await this.repository.query(
+                'UPDATE sim_cards SET activo_id = NULL WHERE id = $1',
+                [simCard.id]
+            );
+        }
+        if (!simCard.locationId) {
+            await this.repository.query(
+                'UPDATE sim_cards SET location_id = NULL WHERE id = $1',
+                [simCard.id]
+            );
+        }
     }
     async findById(id: string): Promise<SIMCard | null> {
         const entity = await this.repository.findOne({ where: { id }, relations: ['activo', 'location', 'activo.location', 'activo.responsible', 'activo.responsible.area', 'activo.area'] });

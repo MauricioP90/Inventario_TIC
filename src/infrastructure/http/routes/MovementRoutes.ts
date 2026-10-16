@@ -15,6 +15,7 @@ import { GetMovementByMagicLink } from "../../../application/use-cases/movement/
 import { RejectByMagicLink } from "../../../application/use-cases/movement/RejectByMagicLink";
 import { UpdateMovementNotes } from "../../../application/use-cases/movement/UpdateMovementNotes";
 import { CancelMovement } from "../../../application/use-cases/movement/CancelMovement";
+import { AttachMovementDocument } from "../../../application/use-cases/movement/AttachMovementDocument";
 import { TypeORMMovementRepository } from "../../persistence/typeorm/repositories/TypeORMMovementRepository";
 import { TypeORMActivoRepository } from "../../persistence/typeorm/repositories/TypeORMActivoRepository";
 import { TypeORMLocationRepository } from "../../persistence/typeorm/repositories/TypeORMLocationRepository";
@@ -23,6 +24,8 @@ import { TypeORMSIMCardRepository } from "../../persistence/typeorm/repositories
 import { TypeORMMaintenanceReportRepository } from "../../persistence/typeorm/repositories/TypeORMMaintenanceReportRepository";
 import { SIMCardEntity } from "../../persistence/typeorm/entities/SIMCardEntity";
 import { EmailServiceFactory } from "../../services/EmailServiceFactory";
+import { WasapiNotificationService } from "../../services/WasapiNotificationService";
+import { StorageAdapterFactory } from "../../storage/StorageAdapterFactory";
 import { MovementController } from "../controllers/MovementController";
 import { keycloak } from "../middleware/KeycloakConfig";
 
@@ -35,23 +38,39 @@ const locationRepo = new TypeORMLocationRepository(AppDataSource.getRepository(L
 const responsibleRepo = new TypeORMResponsibleRepository(AppDataSource.getRepository(ResponsibleEntity));
 const simCardRepo = new TypeORMSIMCardRepository(AppDataSource.getRepository(SIMCardEntity));
 const maintenanceReportRepo = new TypeORMMaintenanceReportRepository(AppDataSource.getRepository(MaintenanceReportEntity));
-// Inicializa el servicio de correo mediante fábrica desacoplada (SMTP / Console)
+
+// Inicializa servicios externos (Correo, WhatsApp y Almacenamiento)
 const emailService = EmailServiceFactory.create();
+const whatsAppService = new WasapiNotificationService();
+const fileStorageService = StorageAdapterFactory.getAdapter();
 
 // 2. Inicializamos Casos de Uso
 const registerUC = new RegisterMovement(movementRepo, activoRepo, locationRepo, responsibleRepo, emailService, simCardRepo);
-const dispatchUC = new DispatchMovement(movementRepo, activoRepo, locationRepo, responsibleRepo, emailService);
+const dispatchUC = new DispatchMovement(movementRepo, activoRepo, locationRepo, responsibleRepo, emailService, whatsAppService);
 const receiveUC = new ReceiveMovement(movementRepo, activoRepo, simCardRepo, maintenanceReportRepo, responsibleRepo, locationRepo, emailService);
 const getUC = new GetMovements(movementRepo);
 const rejectUC = new RejectMovement(movementRepo, activoRepo);
-const receiveByMagicLinkUC = new ReceiveByMagicLink(movementRepo, activoRepo, simCardRepo, maintenanceReportRepo, responsibleRepo, locationRepo);
+const receiveByMagicLinkUC = new ReceiveByMagicLink(movementRepo, activoRepo, simCardRepo, maintenanceReportRepo, responsibleRepo, locationRepo, fileStorageService);
 const getMovementByMagicLinkUC = new GetMovementByMagicLink(movementRepo);
 const rejectByMagicLinkUC = new RejectByMagicLink(movementRepo, activoRepo);
 const updateMovementNotesUC = new UpdateMovementNotes(movementRepo);
 const cancelUC = new CancelMovement(movementRepo, activoRepo);
+const attachMovementDocumentUC = new AttachMovementDocument(movementRepo);
 
 // 3. Inicializamos Controlador
-const controller = new MovementController(registerUC, dispatchUC, receiveUC, getUC, rejectUC, receiveByMagicLinkUC, getMovementByMagicLinkUC, rejectByMagicLinkUC, updateMovementNotesUC, cancelUC);
+const controller = new MovementController(
+    registerUC, 
+    dispatchUC, 
+    receiveUC, 
+    getUC, 
+    rejectUC, 
+    receiveByMagicLinkUC, 
+    getMovementByMagicLinkUC, 
+    rejectByMagicLinkUC, 
+    updateMovementNotesUC, 
+    cancelUC,
+    attachMovementDocumentUC
+);
 
 // 4. Definimos Rutas
 movementRouter.post("/", keycloak.protect(), (req, res) => controller.register(req, res));
@@ -61,6 +80,7 @@ movementRouter.patch("/:id/receive", keycloak.protect(), (req, res) => controlle
 movementRouter.patch("/:id/reject", keycloak.protect(), (req, res) => controller.reject(req, res));
 movementRouter.patch("/:id/notes", keycloak.protect(), (req, res) => controller.updateNotes(req, res));
 movementRouter.patch("/:id/cancel", keycloak.protect(), (req, res) => controller.cancel(req, res));
+movementRouter.patch("/:id/documents", keycloak.protect(), (req, res) => controller.attachDocuments(req, res));
 
 // Rutas Públicas (Magic Links) - No requieren Keycloak
 movementRouter.get("/public/magic-link/:token", (req, res) => controller.getPublicMovement(req, res));

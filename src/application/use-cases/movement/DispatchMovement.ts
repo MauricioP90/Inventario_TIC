@@ -4,6 +4,7 @@ import { IActivoRepository } from "../../../domain/repositories/IActivoRepositor
 import { ILocationRepository } from "../../../domain/repositories/ILocationRepository";
 import { IResponsibleRepository } from "../../../domain/repositories/IResponsibleRepository";
 import { IEmailService } from "../../../domain/services/IEmailService";
+import { IWhatsAppNotificationService } from "../../../domain/services/IWhatsAppNotificationService";
 import { EstadoActivo } from "../../../domain/entities/Activo";
 
 export class DispatchMovement {
@@ -12,7 +13,8 @@ export class DispatchMovement {
         private readonly activoRepository: IActivoRepository,
         private readonly locationRepository?: ILocationRepository,
         private readonly responsibleRepository?: IResponsibleRepository,
-        private readonly emailService?: IEmailService
+        private readonly emailService?: IEmailService,
+        private readonly whatsAppService?: IWhatsAppNotificationService
     ) { }
 
     async execute(id: string, evidenceUrl?: string, documentUrl?: string, recipients?: string[]): Promise<Movement> {
@@ -80,6 +82,32 @@ export class DispatchMovement {
                 }
             } catch (mailError) {
                 console.error("Error al enviar notificación de soporte por correo al despachar:", mailError);
+            }
+        }
+
+        // 6. Enviar notificación por WhatsApp (Wasapi) si el responsable tiene celular registrado
+        if (this.whatsAppService && this.responsibleRepository && savedMovement.magicLinkToken) {
+            try {
+                const resp = await this.responsibleRepository.findById(movement.responsibleId);
+                const phone = resp?.telefono;
+                if (phone && phone.trim()) {
+                    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:4200';
+                    const magicLinkUrl = `${frontendUrl}/public/receive/${savedMovement.magicLinkToken}`;
+                    const originLoc = this.locationRepository ? await this.locationRepository.findById(movement.originLocationId) : null;
+                    const destLoc = this.locationRepository ? await this.locationRepository.findById(movement.destinationLocationId) : null;
+
+                    await this.whatsAppService.sendMovementDispatchNotification({
+                        toPhone: phone,
+                        receiverName: resp.nombre,
+                        consecutivo: savedMovement.id || '',
+                        magicLinkUrl,
+                        equiposSummary: `${savedMovement.activoIds.length} equipo(s)`,
+                        originLocation: originLoc?.nombre,
+                        destinationLocation: destLoc?.nombre
+                    });
+                }
+            } catch (waError: any) {
+                console.error("Error al enviar notificación de WhatsApp al despachar:", waError.message);
             }
         }
 

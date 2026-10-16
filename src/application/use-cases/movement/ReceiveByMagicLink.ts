@@ -5,6 +5,7 @@ import { ISIMCardRepository } from "../../../domain/repositories/ISIMCardReposit
 import { IMaintenanceReportRepository } from "../../../domain/repositories/IMaintenanceReportRepository";
 import { IResponsibleRepository } from "../../../domain/repositories/IResponsibleRepository";
 import { ILocationRepository } from "../../../domain/repositories/ILocationRepository";
+import { IFileStorageService } from "../../../domain/services/IFileStorageService";
 import { MaintenanceReport, ModalidadMantenimiento, TipoMantenimiento, EstadoFicha } from "../../../domain/entities/MaintenanceReport";
 
 export class ReceiveByMagicLink {
@@ -14,10 +15,15 @@ export class ReceiveByMagicLink {
         private readonly simCardRepository: ISIMCardRepository,
         private readonly maintenanceReportRepository: IMaintenanceReportRepository,
         private readonly responsibleRepository: IResponsibleRepository,
-        private readonly locationRepository: ILocationRepository
+        private readonly locationRepository: ILocationRepository,
+        private readonly fileStorageService?: IFileStorageService
     ) { }
 
-    async execute(token: string, physicalReceiverName: string): Promise<Movement> {
+    async execute(
+        token: string, 
+        physicalReceiverName: string,
+        evidenceFile?: { base64: string; fileName: string }
+    ): Promise<Movement> {
         // 1. Buscar el movimiento por el token mágico
         const movement = await this.movementRepository.findByMagicLinkToken(token);
 
@@ -33,14 +39,39 @@ export class ReceiveByMagicLink {
             throw new Error('El nombre de quien recibe es obligatorio.');
         }
 
-        // 2. Cambiar estado y guardar datos de recepción directamente en los props internos.
+        // 2. Procesar archivo de evidencia opcional (subida por link mágico)
+        let uploadedEvidenceUrl: string | null = null;
+        if (evidenceFile && evidenceFile.base64 && this.fileStorageService) {
+            const ext = (evidenceFile.fileName.split('.').pop() || '').toLowerCase();
+            const allowedExts = ['pdf', 'png', 'jpg', 'jpeg', 'webp'];
+            if (!allowedExts.includes(ext)) {
+                throw new Error('Formato de archivo no permitido. Solo se aceptan PDF, PNG, JPG o WEBP.');
+            }
+
+            // Validar tamaño aproximado (máximo 7.5MB base64 ≈ 5.5MB binario)
+            if (evidenceFile.base64.length > 7.5 * 1024 * 1024) {
+                throw new Error('El archivo supera el tamaño máximo permitido de 5 MB.');
+            }
+
+            const cleanBase64 = evidenceFile.base64.includes('base64,')
+                ? evidenceFile.base64.split('base64,')[1]
+                : evidenceFile.base64;
+
+            uploadedEvidenceUrl = await this.fileStorageService.uploadBase64(
+                cleanBase64,
+                evidenceFile.fileName,
+                'soportes'
+            );
+        }
+
+        // 3. Cambiar estado y guardar datos de recepción directamente en los props internos.
         // NO se pasa receiverId porque quien recibe no tiene cuenta en el sistema.
         // physicalReceiverName es el único dato de identidad del receptor externo.
         (movement as any).props.status = 'RECEIVED';
         (movement as any).props.receivedAt = new Date();
         (movement as any).props.physicalReceiverName = physicalReceiverName.trim();
         (movement as any).props.magicLinkToken = null; // Consumir el token (un solo uso)
-        (movement as any).props.receivedEvidenceUrl = null;
+        (movement as any).props.receivedEvidenceUrl = uploadedEvidenceUrl;
 
         // Cargar el custodio destino
         const destinationResponsible = await this.responsibleRepository.findById(movement.responsibleId);

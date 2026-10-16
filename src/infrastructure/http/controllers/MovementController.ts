@@ -11,6 +11,7 @@ import { GetMovementByMagicLink } from "../../../application/use-cases/movement/
 import { RejectByMagicLink } from "../../../application/use-cases/movement/RejectByMagicLink";
 import { UpdateMovementNotes } from "../../../application/use-cases/movement/UpdateMovementNotes";
 import { CancelMovement } from "../../../application/use-cases/movement/CancelMovement";
+import { AttachMovementDocument } from "../../../application/use-cases/movement/AttachMovementDocument";
 
 export class MovementController {
     constructor(
@@ -23,7 +24,8 @@ export class MovementController {
         private getMovementByMagicLink: GetMovementByMagicLink,
         private rejectByMagicLink: RejectByMagicLink,
         private updateMovementNotes: UpdateMovementNotes,
-        private cancelMovement: CancelMovement
+        private cancelMovement: CancelMovement,
+        private attachMovementDocument: AttachMovementDocument
     ) { }
 
     /**
@@ -167,8 +169,30 @@ export class MovementController {
         try {
             const result = await this.receiveByMagicLink.execute(
                 req.params.token as string,
-                req.body.physicalReceiverName as string
+                req.body.physicalReceiverName as string,
+                req.body.evidenceFile
             );
+            res.status(200).json(result);
+        } catch (error: any) {
+            res.status(400).json({ message: error.message });
+        }
+    }
+
+    async attachDocuments(req: Request, res: Response) {
+        try {
+            const movementId = req.params.id as string;
+            const { documentUrl, receivedEvidenceUrl, notes } = req.body;
+            const uploadedBy = (req as any).kauth?.grant?.access_token?.content?.name 
+                            || (req as any).kauth?.grant?.access_token?.content?.preferred_username 
+                            || req.body.uploadedBy;
+
+            const result = await this.attachMovementDocument.execute({
+                movementId,
+                documentUrl,
+                receivedEvidenceUrl,
+                notes,
+                uploadedBy
+            });
             res.status(200).json(result);
         } catch (error: any) {
             res.status(400).json({ message: error.message });

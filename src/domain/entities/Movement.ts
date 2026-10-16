@@ -186,6 +186,11 @@ export class Movement {
         this.props.destinationLocationId = locationId;
     }
 
+    public updateDocuments(documentUrl?: string, receivedEvidenceUrl?: string) {
+        if (documentUrl !== undefined) this.props.documentUrl = documentUrl;
+        if (receivedEvidenceUrl !== undefined) this.props.receivedEvidenceUrl = receivedEvidenceUrl;
+    }
+
     public toJSON() {
         return {
             ...this.props

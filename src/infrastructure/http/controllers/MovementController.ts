@@ -78,11 +78,13 @@ export class MovementController {
      */
     async dispatch(req: Request, res: Response) {
         try {
+            const notifyWhatsApp = req.body.notifyWhatsApp !== undefined ? Boolean(req.body.notifyWhatsApp) : true;
             const result = await this.dispatchMovement.execute(
                 req.params.id as string,
                 req.body.evidenceUrl as string | undefined,
                 req.body.documentUrl as string | undefined,
-                req.body.recipients as string[] | undefined
+                req.body.recipients as string[] | undefined,
+                notifyWhatsApp
             );
             res.status(200).json(result);
         } catch (error: any) {

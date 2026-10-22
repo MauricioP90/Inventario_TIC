@@ -17,7 +17,7 @@ export class DispatchMovement {
         private readonly whatsAppService?: IWhatsAppNotificationService
     ) { }
 
-    async execute(id: string, evidenceUrl?: string, documentUrl?: string, recipients?: string[]): Promise<Movement> {
+    async execute(id: string, evidenceUrl?: string, documentUrl?: string, recipients?: string[], notifyWhatsApp: boolean = true): Promise<Movement> {
         // 1. Buscar el movimiento
         const movement = await this.movementRepository.findById(id);
         if (!movement) {
@@ -27,12 +27,19 @@ export class DispatchMovement {
         // 2. Aplicar lógica de dominio (cambiar a EN_TRANSIT y asociar guía de envío y/o acta/comodato firmado)
         movement.dispatch(evidenceUrl, documentUrl);
 
-        // 3. Buscar los activos uno por uno y actualizarlos a EN_TRANSITO (solo para traslados físicos)
+        // 3. Buscar los activos uno por uno, guardar detalles y actualizarlos a EN_TRANSITO (para traslados físicos)
         const isLocalOperation = movement.type.startsWith('SIM_');
-        if (!isLocalOperation) {
-            for (const activoId of movement.activoIds) {
-                const activo = await this.activoRepository.findById(activoId);
-                if (activo) {
+        const assetsDetails: { placa: string; marca: string; modelo: string; serial: string }[] = [];
+        for (const activoId of movement.activoIds) {
+            const activo = await this.activoRepository.findById(activoId);
+            if (activo) {
+                assetsDetails.push({
+                    placa: activo.placa,
+                    marca: activo.marca,
+                    modelo: activo.modelo,
+                    serial: activo.serial
+                });
+                if (!isLocalOperation) {
                     activo.setStatus(EstadoActivo.EN_TRANSIT);
                     await this.activoRepository.update(activo);
                 }
@@ -48,19 +55,6 @@ export class DispatchMovement {
                 const originLoc = await this.locationRepository.findById(movement.originLocationId);
                 const destLoc = await this.locationRepository.findById(movement.destinationLocationId);
                 const resp = await this.responsibleRepository.findById(movement.responsibleId);
-                
-                const assetsDetails = [];
-                for (const actId of movement.activoIds) {
-                    const act = await this.activoRepository.findById(actId);
-                    if (act) {
-                        assetsDetails.push({
-                            placa: act.placa,
-                            marca: act.marca,
-                            modelo: act.modelo,
-                            serial: act.serial
-                        });
-                    }
-                }
 
                 const recipientsList = (recipients && recipients.length > 0)
                     ? recipients
@@ -85,8 +79,8 @@ export class DispatchMovement {
             }
         }
 
-        // 6. Enviar notificación por WhatsApp (Wasapi) si el responsable tiene celular registrado
-        if (this.whatsAppService && this.responsibleRepository && savedMovement.magicLinkToken) {
+        // 6. Enviar notificación por WhatsApp (Wasapi) si el despachador lo habilitó y el responsable tiene celular
+        if (notifyWhatsApp && this.whatsAppService && this.responsibleRepository && savedMovement.magicLinkToken) {
             try {
                 const resp = await this.responsibleRepository.findById(movement.responsibleId);
                 const phone = resp?.telefono;
@@ -96,12 +90,41 @@ export class DispatchMovement {
                     const originLoc = this.locationRepository ? await this.locationRepository.findById(movement.originLocationId) : null;
                     const destLoc = this.locationRepository ? await this.locationRepository.findById(movement.destinationLocationId) : null;
 
+                    // Formatear código de consecutivo amigable (ej: #E46AC397)
+                    const consecutivoCode = savedMovement.id
+                        ? `#${savedMovement.id.substring(0, 8).toUpperCase()}`
+                        : '';
+
+                    // Formatear resumen descriptivo de equipos enviados
+                    const formatAssetName = (act: { marca?: string; modelo?: string; placa?: string }) => {
+                        const marca = (act.marca || '').trim();
+                        const modelo = (act.modelo || '').trim();
+                        let fullName = '';
+                        if (marca && modelo) {
+                            fullName = modelo.toLowerCase().includes(marca.toLowerCase()) ? modelo : `${marca} ${modelo}`;
+                        } else {
+                            fullName = modelo || marca || 'Equipo';
+                        }
+                        return act.placa ? `${fullName} (Placa ${act.placa})` : fullName;
+                    };
+
+                    let equiposSummary = `${savedMovement.activoIds.length} equipo(s)`;
+                    if (assetsDetails.length === 1) {
+                        equiposSummary = formatAssetName(assetsDetails[0]);
+                    } else if (assetsDetails.length > 1 && assetsDetails.length <= 3) {
+                        const items = assetsDetails.map(a => formatAssetName(a)).join(', ');
+                        equiposSummary = `${assetsDetails.length} equipos: ${items}`;
+                    } else if (assetsDetails.length > 3) {
+                        const firstThree = assetsDetails.slice(0, 3).map(a => formatAssetName(a)).join(', ');
+                        equiposSummary = `${assetsDetails.length} equipos: ${firstThree} y ${assetsDetails.length - 3} más`;
+                    }
+
                     await this.whatsAppService.sendMovementDispatchNotification({
                         toPhone: phone,
                         receiverName: resp.nombre,
-                        consecutivo: savedMovement.id || '',
+                        consecutivo: consecutivoCode,
                         magicLinkUrl,
-                        equiposSummary: `${savedMovement.activoIds.length} equipo(s)`,
+                        equiposSummary,
                         originLocation: originLoc?.nombre,
                         destinationLocation: destLoc?.nombre
                     });

@@ -20,7 +20,7 @@ export const swaggerSchemas = {
     },
     Activo: {
         type: 'object',
-        required: ['placa', 'tipo', 'marca', 'modelo', 'serial', 'estado', 'fechaIngreso', 'locationId', 'responsibleId'],
+        required: ['placa', 'tipo', 'marca', 'modelo', 'serial', 'estado', 'fechaIngreso', 'locationId'],
         properties: {
             id: { type: 'string', format: 'uuid' },
             placa: { type: 'string' },
@@ -28,13 +28,20 @@ export const swaggerSchemas = {
             marca: { type: 'string' },
             modelo: { type: 'string' },
             serial: { type: 'string' },
-            estado: { type: 'string', enum: ['BODEGA', 'OPERACION', 'MANTENIMIENTO', 'BAJA'] },
-            facturaUrl: { type: 'string' },
+            precioCompra: { type: 'number', nullable: true },
+            estado: { type: 'string', enum: ['BODEGA', 'OPERACION', 'MANTENIMIENTO', 'BAJA', 'EN_TRANSITO'] },
+            facturaUrl: { type: 'string', nullable: true },
             fechaIngreso: { type: 'string', format: 'date-time' },
             locationId: { type: 'string', format: 'uuid' },
-            responsibleId: { type: 'string', format: 'uuid' },
+            areaId: { type: 'string', format: 'uuid', nullable: true },
+            responsibleId: { type: 'string', format: 'uuid', nullable: true },
             location: { $ref: '#/components/schemas/Location' },
-            responsible: { $ref: '#/components/schemas/Responsible' },
+            area: { $ref: '#/components/schemas/Area', nullable: true },
+            responsible: { $ref: '#/components/schemas/Responsible', nullable: true },
+            simCards: {
+                type: 'array',
+                items: { $ref: '#/components/schemas/SIMCard' }
+            },
             maintenanceModalidad: { type: 'string', enum: ['INTERNO', 'EXTERNO', 'INTERNO_ESCALADO'] },
             maintenanceTipo: { type: 'string', enum: ['PREVENTIVO', 'CORRECTIVO'] },
             maintenanceCostoEstimado: { type: 'number' },
@@ -48,8 +55,10 @@ export const swaggerSchemas = {
             id: { type: 'string', format: 'uuid' },
             code: { type: 'string' },
             nombre: { type: 'string' },
+            tipo: { type: 'string', enum: ['OFICINA', 'BODEGA', 'PROVEEDOR', 'REGIONAL'], example: 'OFICINA' },
+            ciudad: { type: 'string', nullable: true, example: 'Bogotá' },
             responsableId: { type: 'string', format: 'uuid', nullable: true },
-            coordenadas: { type: 'string', nullable: true },
+            coordenadas: { type: 'string', nullable: true, example: '4.60971,-74.08175' },
             estado: { type: 'string', enum: ['ACTIVO', 'INACTIVO'] },
             responsibleIds: {
                 type: 'array',
@@ -69,6 +78,10 @@ export const swaggerSchemas = {
             nombre: { type: 'string' },
             email: { type: 'string' },
             telefono: { type: 'string' },
+            tipoDocumento: { type: 'string', enum: ['CC', 'CE', 'NIT', 'PASAPORTE'], default: 'CC' },
+            numeroDocumento: { type: 'string', nullable: true },
+            fechaExpedicionDocumento: { type: 'string', format: 'date', nullable: true },
+            direccion: { type: 'string', nullable: true },
             estado: { type: 'string', enum: ['ACTIVO', 'INACTIVO'] },
             area: { $ref: '#/components/schemas/Area', nullable: true },
             cargo: { $ref: '#/components/schemas/Cargo', nullable: true },
@@ -89,7 +102,8 @@ export const swaggerSchemas = {
             numero: { type: 'string' },
             operador: { type: 'string' },
             estado: { type: 'string', enum: ['BODEGA', 'ASIGNADA', 'MANTENIMIENTO', 'BAJA'] },
-            activoId: { type: 'string', format: 'uuid' }
+            activoId: { type: 'string', format: 'uuid', nullable: true },
+            locationId: { type: 'string', format: 'uuid', nullable: true }
         }
     },
     Movement: {
@@ -114,29 +128,53 @@ export const swaggerSchemas = {
                     'SIM_CAMBIO',
                     'SIM_RETIRO',
                     'SIM_RETIRO_TOTAL',
-                    'SIM_TRASLADO'
+                    'SIM_TRASLADO',
+                    'TRASLADO_AREA',
+                    'HURTO_PERDIDA',
+                    'ENTREGA_COMISION',
+                    'PRESTAMO_PARTICIPE',
+                    'REINTEGRO_PARCIAL'
                 ],
                 example: 'TRASLADO_REGIONAL' 
             },
             originLocationId: { type: 'string', format: 'uuid' },
             destinationLocationId: { type: 'string', format: 'uuid' },
+            destinationAreaId: { type: 'string', format: 'uuid', nullable: true },
             responsibleId: { type: 'string', format: 'uuid' },
+            receiverId: { type: 'string', format: 'uuid', nullable: true },
             status: { type: 'string', enum: ['PENDING', 'EN_TRANSIT', 'RECEIVED', 'CANCELLED'] },
             activoIds: {
                 type: 'array',
                 items: { type: 'string', format: 'uuid' }
             },
+            simCardIds: {
+                type: 'array',
+                items: { type: 'string', format: 'uuid' }
+            },
             notes: { type: 'string', nullable: true },
+            documentUrl: { type: 'string', nullable: true },
             evidenceUrl: { type: 'string', nullable: true },
+            receivedEvidenceUrl: { type: 'string', nullable: true },
+            magicLinkToken: { type: 'string', nullable: true },
+            rejectionReason: { type: 'string', nullable: true },
+            rejectedAt: { type: 'string', format: 'date-time', nullable: true },
+            cancellationReason: { type: 'string', nullable: true },
+            cancelledBy: { type: 'string', nullable: true },
+            cancelledAt: { type: 'string', format: 'date-time', nullable: true },
             createdAt: { type: 'string', format: 'date-time' },
             shippedAt: { type: 'string', format: 'date-time', nullable: true },
             receivedAt: { type: 'string', format: 'date-time', nullable: true },
             originLocation: { $ref: '#/components/schemas/Location' },
             destinationLocation: { $ref: '#/components/schemas/Location' },
             responsible: { $ref: '#/components/schemas/Responsible' },
+            receiver: { $ref: '#/components/schemas/Responsible', nullable: true },
             activos: {
                 type: 'array',
                 items: { $ref: '#/components/schemas/Activo' }
+            },
+            simCards: {
+                type: 'array',
+                items: { $ref: '#/components/schemas/SIMCard' }
             }
         }
     },

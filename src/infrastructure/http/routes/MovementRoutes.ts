@@ -27,11 +27,13 @@ import { EmailServiceFactory } from "../../services/EmailServiceFactory";
 import { WasapiNotificationService } from "../../services/WasapiNotificationService";
 import { StorageAdapterFactory } from "../../storage/StorageAdapterFactory";
 import { MovementController } from "../controllers/MovementController";
+import { TypeORMUnitOfWork } from "../../persistence/typeorm/TypeORMUnitOfWork";
 import { keycloak } from "../middleware/KeycloakConfig";
 
 const movementRouter = Router();
 
-// 1. Inicializamos Repositorios
+// 1. Inicializamos Repositorios y Unidad de Trabajo (ACID)
+const unitOfWork = new TypeORMUnitOfWork(AppDataSource);
 const movementRepo = new TypeORMMovementRepository(AppDataSource.getRepository(MovementEntity));
 const activoRepo = new TypeORMActivoRepository(AppDataSource.getRepository(ActivoEntity));
 const locationRepo = new TypeORMLocationRepository(AppDataSource.getRepository(LocationEntity));
@@ -44,17 +46,17 @@ const emailService = EmailServiceFactory.create();
 const whatsAppService = new WasapiNotificationService();
 const fileStorageService = StorageAdapterFactory.getAdapter();
 
-// 2. Inicializamos Casos de Uso
-const registerUC = new RegisterMovement(movementRepo, activoRepo, locationRepo, responsibleRepo, emailService, simCardRepo);
-const dispatchUC = new DispatchMovement(movementRepo, activoRepo, locationRepo, responsibleRepo, emailService, whatsAppService);
-const receiveUC = new ReceiveMovement(movementRepo, activoRepo, simCardRepo, maintenanceReportRepo, responsibleRepo, locationRepo, emailService);
+// 2. Inicializamos Casos de Uso (Blindados con Transaccionalidad Atómica)
+const registerUC = new RegisterMovement(movementRepo, activoRepo, locationRepo, responsibleRepo, emailService, simCardRepo, unitOfWork);
+const dispatchUC = new DispatchMovement(movementRepo, activoRepo, locationRepo, responsibleRepo, emailService, whatsAppService, unitOfWork);
+const receiveUC = new ReceiveMovement(movementRepo, activoRepo, simCardRepo, maintenanceReportRepo, responsibleRepo, locationRepo, emailService, unitOfWork);
 const getUC = new GetMovements(movementRepo);
 const rejectUC = new RejectMovement(movementRepo, activoRepo);
-const receiveByMagicLinkUC = new ReceiveByMagicLink(movementRepo, activoRepo, simCardRepo, maintenanceReportRepo, responsibleRepo, locationRepo, fileStorageService);
+const receiveByMagicLinkUC = new ReceiveByMagicLink(movementRepo, activoRepo, simCardRepo, maintenanceReportRepo, responsibleRepo, locationRepo, fileStorageService, unitOfWork);
 const getMovementByMagicLinkUC = new GetMovementByMagicLink(movementRepo);
 const rejectByMagicLinkUC = new RejectByMagicLink(movementRepo, activoRepo);
 const updateMovementNotesUC = new UpdateMovementNotes(movementRepo);
-const cancelUC = new CancelMovement(movementRepo, activoRepo);
+const cancelUC = new CancelMovement(movementRepo, activoRepo, unitOfWork);
 const attachMovementDocumentUC = new AttachMovementDocument(movementRepo);
 
 // 3. Inicializamos Controlador

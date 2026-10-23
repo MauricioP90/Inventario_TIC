@@ -7,6 +7,7 @@ import { IResponsibleRepository } from "../../../domain/repositories/IResponsibl
 import { ILocationRepository } from "../../../domain/repositories/ILocationRepository";
 import { IFileStorageService } from "../../../domain/services/IFileStorageService";
 import { MaintenanceReport, ModalidadMantenimiento, TipoMantenimiento, EstadoFicha } from "../../../domain/entities/MaintenanceReport";
+import { IUnitOfWork } from "../../../domain/repositories/IUnitOfWork";
 
 export class ReceiveByMagicLink {
     constructor(
@@ -16,7 +17,8 @@ export class ReceiveByMagicLink {
         private readonly maintenanceReportRepository: IMaintenanceReportRepository,
         private readonly responsibleRepository: IResponsibleRepository,
         private readonly locationRepository: ILocationRepository,
-        private readonly fileStorageService?: IFileStorageService
+        private readonly fileStorageService?: IFileStorageService,
+        private readonly unitOfWork?: IUnitOfWork
     ) { }
 
     async execute(
@@ -96,44 +98,62 @@ export class ReceiveByMagicLink {
             }
         }
 
-        // 3. Actualizar la ubicación de todos los activos involucrados
-        for (const activoId of movement.activoIds) {
-            const activo = await this.activoRepository.findById(activoId);
-            if (activo) {
-                // Actualizar estado operativo del activo
-                activo.aplicarRecepcionDeMovimiento(movement.type, movement.destinationLocationId);
-                // Actualizar custodia (responsable) y área
-                activo.asignarResponsable(destinationResponsible);
-                activo.changeArea(newAreaId);
-
-                await this.activoRepository.update(activo);
-
-                // Si el movimiento recibido es de tipo RETORNO_POR_RECHAZO, creamos automáticamente una Ficha de Mantenimiento
-                if (movement.type === 'RETORNO_POR_RECHAZO') {
-                    const report = new MaintenanceReport({
-                        activoId: activo.id!,
-                        modalidad: ModalidadMantenimiento.INTERNO,
-                        tipoMantenimiento: TipoMantenimiento.CORRECTIVO,
-                        estado: EstadoFicha.PENDIENTE_DIAGNOSTICO,
-                        movimientoOrigenId: movement.id!,
-                        diagnostico: 'Creado automáticamente por reporte de NOVEDAD/RECHAZO en el traslado. Requiere realizar diagnóstico técnico completo para definir acciones.'
-                    });
-                    await this.maintenanceReportRepository.save(report);
-                }
-            }
-        }
-
-        // 4. Actualizar la ubicación de todas las SIM Cards involucradas
+        // Cargar SIM cards si existen
+        let simsInMovement: any[] = [];
         if (movement.simCardIds && movement.simCardIds.length > 0) {
             const sims = await this.simCardRepository.findAll();
-            const simsInMovement = sims.filter(s => movement.simCardIds.includes(s.id!));
-            for (const sim of simsInMovement) {
-                sim.update({ locationId: movement.destinationLocationId });
-                await this.simCardRepository.save(sim);
-            }
+            simsInMovement = sims.filter(s => movement.simCardIds.includes(s.id!));
         }
 
-        // 5. Persistir cambios del movimiento
-        return await this.movementRepository.update(movement);
+        // 3. Ejecutar mutaciones en una transacción atómica (ACID)
+        const executeMutations = async (repos: {
+            movementRepository: IMovementRepository;
+            activoRepository: IActivoRepository;
+            simCardRepository: ISIMCardRepository;
+            maintenanceReportRepository: IMaintenanceReportRepository;
+        }): Promise<Movement> => {
+            // Actualizar la ubicación de todos los activos involucrados
+            for (const activoId of movement.activoIds) {
+                const activo = await repos.activoRepository.findById(activoId);
+                if (activo) {
+                    activo.aplicarRecepcionDeMovimiento(movement.type, movement.destinationLocationId);
+                    activo.asignarResponsable(destinationResponsible);
+                    activo.changeArea(newAreaId);
+
+                    await repos.activoRepository.update(activo);
+
+                    // Si el movimiento recibido es de tipo RETORNO_POR_RECHAZO, creamos automáticamente una Ficha de Mantenimiento
+                    if (movement.type === 'RETORNO_POR_RECHAZO') {
+                        const report = new MaintenanceReport({
+                            activoId: activo.id!,
+                            modalidad: ModalidadMantenimiento.INTERNO,
+                            tipoMantenimiento: TipoMantenimiento.CORRECTIVO,
+                            estado: EstadoFicha.PENDIENTE_DIAGNOSTICO,
+                            movimientoOrigenId: movement.id!,
+                            diagnostico: 'Creado automáticamente por reporte de NOVEDAD/RECHAZO en el traslado. Requiere realizar diagnóstico técnico completo para definir acciones.'
+                        });
+                        await repos.maintenanceReportRepository.save(report);
+                    }
+                }
+            }
+
+            // Actualizar la ubicación de todas las SIM Cards involucradas
+            for (const sim of simsInMovement) {
+                sim.update({ locationId: movement.destinationLocationId });
+                await repos.simCardRepository.save(sim);
+            }
+
+            // Persistir cambios del movimiento
+            return await repos.movementRepository.update(movement);
+        };
+
+        return this.unitOfWork
+            ? await this.unitOfWork.runInTransaction(async (repos) => executeMutations(repos))
+            : await executeMutations({
+                movementRepository: this.movementRepository,
+                activoRepository: this.activoRepository,
+                simCardRepository: this.simCardRepository,
+                maintenanceReportRepository: this.maintenanceReportRepository
+            });
     }
 }

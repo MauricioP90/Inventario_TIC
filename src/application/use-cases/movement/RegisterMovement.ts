@@ -8,6 +8,7 @@ import { IResponsibleRepository } from "../../../domain/repositories/IResponsibl
 import { ISIMCardRepository } from "../../../domain/repositories/ISIMCardRepository";
 import { EstadoSIM } from "../../../domain/entities/SIMCard";
 import { IEmailService } from "../../../domain/services/IEmailService";
+import { IUnitOfWork } from "../../../domain/repositories/IUnitOfWork";
 
 export interface RegisterMovementDto {
     type: string;
@@ -36,7 +37,8 @@ export class RegisterMovement {
         private readonly locationRepository: ILocationRepository,
         private readonly responsibleRepository: IResponsibleRepository,
         private readonly emailService: IEmailService,
-        private readonly simCardRepository: ISIMCardRepository
+        private readonly simCardRepository: ISIMCardRepository,
+        private readonly unitOfWork?: IUnitOfWork
     ) { }
 
     async execute(dto: RegisterMovementDto): Promise<Movement> {
@@ -163,145 +165,166 @@ export class RegisterMovement {
         const { randomUUID } = isAreaTransfer ? require('node:crypto') : { randomUUID: () => undefined };
         const areaTransferToken = isAreaTransfer ? randomUUID() : undefined;
 
-        // Procesamiento Atómico de Operaciones de SIM Cards
-        const isSimOp = ['SIM_ASIGNACION', 'SIM_CAMBIO', 'SIM_RETIRO', 'SIM_RETIRO_TOTAL'].includes(dto.type);
-        if (isSimOp) {
-            if (!dto.activoIds || dto.activoIds.length === 0) {
-                throw new Error('Debe seleccionar un equipo para la operación de SIM Card.');
-            }
-            const targetActivo = await this.activoRepository.findById(dto.activoIds[0]);
-            if (!targetActivo) {
-                throw new Error('Equipo no encontrado.');
-            }
+        // Lógica de mutación de base de datos protegida por transacción ACID
+        const executeMutations = async (repos: {
+            movementRepository: IMovementRepository;
+            activoRepository: IActivoRepository;
+            simCardRepository: ISIMCardRepository;
+        }): Promise<Movement> => {
+            const movementRepo = repos.movementRepository;
+            const activoRepo = repos.activoRepository;
+            const simCardRepo = repos.simCardRepository;
 
-            if (dto.type === 'SIM_ASIGNACION') {
-                const simId = dto.simCardIdToAssign || (dto.simCardIds && dto.simCardIds[0]);
-                if (!simId) throw new Error('Debe seleccionar la SIM Card a asignar.');
-                if ((targetActivo.simCards?.length || 0) >= 2) {
-                    throw new Error(`El equipo con placa "${targetActivo.placa}" ya tiene 2 SIM Cards asignadas.`);
+            // Procesamiento Atómico de Operaciones de SIM Cards
+            const isSimOp = ['SIM_ASIGNACION', 'SIM_CAMBIO', 'SIM_RETIRO', 'SIM_RETIRO_TOTAL'].includes(dto.type);
+            if (isSimOp) {
+                if (!dto.activoIds || dto.activoIds.length === 0) {
+                    throw new Error('Debe seleccionar un equipo para la operación de SIM Card.');
                 }
-                const sim = await this.simCardRepository.findById(simId);
-                if (!sim) throw new Error('SIM Card a asignar no encontrada.');
-                if (sim.estado !== EstadoSIM.BODEGA || sim.activoId) {
-                    throw new Error('La SIM Card seleccionada no está disponible en Bodega.');
+                const targetActivo = await activoRepo.findById(dto.activoIds[0]);
+                if (!targetActivo) {
+                    throw new Error('Equipo no encontrado.');
                 }
-                if (sim.locationId && targetActivo.locationId && sim.locationId !== targetActivo.locationId) {
-                    throw new Error('No se puede asignar la SIM Card: La SIM Card y el Dispositivo deben estar registrados en la misma sede física.');
-                }
-                sim.asignarAActivo(targetActivo.id!);
-                await this.simCardRepository.save(sim);
-                targetActivo.asignarSIMCard(sim);
-                await this.activoRepository.save(targetActivo);
-                dto.simCardIds = [sim.id!];
-                const noteTag = `[SIM] Asignada SIM #${sim.numero} (${sim.operador})`;
-                dto.notes = dto.notes ? `${dto.notes}\n${noteTag}` : noteTag;
 
-            } else if (dto.type === 'SIM_CAMBIO') {
-                const oldSimId = dto.simCardIdToReplace;
-                const newSimId = dto.simCardIdToAssign;
-                if (!oldSimId || !newSimId) {
-                    throw new Error('Debe seleccionar la SIM a reemplazar y la nueva SIM a asignar.');
-                }
-                const oldSim = await this.simCardRepository.findById(oldSimId);
-                if (!oldSim || oldSim.activoId !== targetActivo.id) {
-                    throw new Error('La SIM a reemplazar no pertenece a este equipo.');
-                }
-                const newSim = await this.simCardRepository.findById(newSimId);
-                if (!newSim) throw new Error('Nueva SIM Card no encontrada.');
-                if (newSim.estado !== EstadoSIM.BODEGA || newSim.activoId) {
-                    throw new Error('La nueva SIM Card no está disponible en Bodega.');
-                }
-                if (newSim.locationId && targetActivo.locationId && newSim.locationId !== targetActivo.locationId) {
-                    throw new Error('No se puede cambiar la SIM Card: La nueva SIM Card y el Dispositivo deben estar registrados en la misma sede física.');
-                }
-                // La SIM saliente siempre queda en la sede actual del equipo (Regla de negocio)
-                oldSim.update({ estado: EstadoSIM.BODEGA, activoId: undefined, locationId: targetActivo.locationId });
-                await this.simCardRepository.save(oldSim);
+                if (dto.type === 'SIM_ASIGNACION') {
+                    const simId = dto.simCardIdToAssign || (dto.simCardIds && dto.simCardIds[0]);
+                    if (!simId) throw new Error('Debe seleccionar la SIM Card a asignar.');
+                    if ((targetActivo.simCards?.length || 0) >= 2) {
+                        throw new Error(`El equipo con placa "${targetActivo.placa}" ya tiene 2 SIM Cards asignadas.`);
+                    }
+                    const sim = await simCardRepo.findById(simId);
+                    if (!sim) throw new Error('SIM Card a asignar no encontrada.');
+                    if (sim.estado !== EstadoSIM.BODEGA || sim.activoId) {
+                        throw new Error('La SIM Card seleccionada no está disponible en Bodega.');
+                    }
+                    if (sim.locationId && targetActivo.locationId && sim.locationId !== targetActivo.locationId) {
+                        throw new Error('No se puede asignar la SIM Card: La SIM Card y el Dispositivo deben estar registrados en la misma sede física.');
+                    }
+                    sim.asignarAActivo(targetActivo.id!);
+                    await simCardRepo.save(sim);
+                    targetActivo.asignarSIMCard(sim);
+                    await activoRepo.save(targetActivo);
+                    dto.simCardIds = [sim.id!];
+                    const noteTag = `[SIM] Asignada SIM #${sim.numero} (${sim.operador})`;
+                    dto.notes = dto.notes ? `${dto.notes}\n${noteTag}` : noteTag;
 
-                newSim.asignarAActivo(targetActivo.id!);
-                await this.simCardRepository.save(newSim);
+                } else if (dto.type === 'SIM_CAMBIO') {
+                    const oldSimId = dto.simCardIdToReplace;
+                    const newSimId = dto.simCardIdToAssign;
+                    if (!oldSimId || !newSimId) {
+                        throw new Error('Debe seleccionar la SIM a reemplazar y la nueva SIM a asignar.');
+                    }
+                    const oldSim = await simCardRepo.findById(oldSimId);
+                    if (!oldSim || oldSim.activoId !== targetActivo.id) {
+                        throw new Error('La SIM a reemplazar no pertenece a este equipo.');
+                    }
+                    const newSim = await simCardRepo.findById(newSimId);
+                    if (!newSim) throw new Error('Nueva SIM Card no encontrada.');
+                    if (newSim.estado !== EstadoSIM.BODEGA || newSim.activoId) {
+                        throw new Error('La nueva SIM Card no está disponible en Bodega.');
+                    }
+                    if (newSim.locationId && targetActivo.locationId && newSim.locationId !== targetActivo.locationId) {
+                        throw new Error('No se puede cambiar la SIM Card: La nueva SIM Card y el Dispositivo deben estar registrados en la misma sede física.');
+                    }
+                    // La SIM saliente siempre queda en la sede actual del equipo (Regla de negocio)
+                    oldSim.update({ estado: EstadoSIM.BODEGA, activoId: undefined, locationId: targetActivo.locationId });
+                    await simCardRepo.save(oldSim);
 
-                targetActivo.removerSIMCard(oldSim.id!);
-                targetActivo.asignarSIMCard(newSim);
-                await this.activoRepository.save(targetActivo);
+                    newSim.asignarAActivo(targetActivo.id!);
+                    await simCardRepo.save(newSim);
 
-                dto.simCardIds = [oldSim.id!, newSim.id!];
-                const noteTag = `[SIM] Cambio: Sale #${oldSim.numero} a Bodega en sede, Ingresa #${newSim.numero}`;
-                dto.notes = dto.notes ? `${dto.notes}\n${noteTag}` : noteTag;
+                    targetActivo.removerSIMCard(oldSim.id!);
+                    targetActivo.asignarSIMCard(newSim);
+                    await activoRepo.save(targetActivo);
 
-            } else if (dto.type === 'SIM_RETIRO') {
-                const simId = dto.simCardIdToRemove || (dto.simCardIds && dto.simCardIds[0]);
-                if (!simId) throw new Error('Debe seleccionar la SIM Card a retirar.');
-                const simToRemove = await this.simCardRepository.findById(simId);
-                if (!simToRemove || simToRemove.activoId !== targetActivo.id) {
-                    throw new Error('La SIM Card a retirar no pertenece a este equipo.');
-                }
-                const targetState = (dto.removedSimNewState || 'BODEGA') as EstadoSIM;
-                // La SIM retirada siempre queda en la sede actual del equipo (Regla de negocio)
-                simToRemove.update({ estado: targetState, activoId: undefined, locationId: targetActivo.locationId });
-                await this.simCardRepository.save(simToRemove);
+                    dto.simCardIds = [oldSim.id!, newSim.id!];
+                    const noteTag = `[SIM] Cambio: Sale #${oldSim.numero} a Bodega en sede, Ingresa #${newSim.numero}`;
+                    dto.notes = dto.notes ? `${dto.notes}\n${noteTag}` : noteTag;
 
-                targetActivo.removerSIMCard(simToRemove.id!);
-                await this.activoRepository.save(targetActivo);
+                } else if (dto.type === 'SIM_RETIRO') {
+                    const simId = dto.simCardIdToRemove || (dto.simCardIds && dto.simCardIds[0]);
+                    if (!simId) throw new Error('Debe seleccionar la SIM Card a retirar.');
+                    const simToRemove = await simCardRepo.findById(simId);
+                    if (!simToRemove || simToRemove.activoId !== targetActivo.id) {
+                        throw new Error('La SIM Card a retirar no pertenece a este equipo.');
+                    }
+                    const targetState = (dto.removedSimNewState || 'BODEGA') as EstadoSIM;
+                    // La SIM retirada siempre queda en la sede actual del equipo (Regla de negocio)
+                    simToRemove.update({ estado: targetState, activoId: undefined, locationId: targetActivo.locationId });
+                    await simCardRepo.save(simToRemove);
 
-                dto.simCardIds = [simToRemove.id!];
-                const noteTag = `[SIM] Retirada SIM #${simToRemove.numero} (Pasa a ${targetState} en sede)`;
-                dto.notes = dto.notes ? `${dto.notes}\n${noteTag}` : noteTag;
+                    targetActivo.removerSIMCard(simToRemove.id!);
+                    await activoRepo.save(targetActivo);
 
-            } else if (dto.type === 'SIM_RETIRO_TOTAL') {
-                const allSims = (await this.simCardRepository.findAll()).filter(s => s.activoId === targetActivo.id);
-                if (allSims.length === 0) {
-                    throw new Error(`El equipo con placa "${targetActivo.placa}" no tiene SIM Cards asignadas para retirar.`);
-                }
-                const processedIds: string[] = [];
-                const numbers: string[] = [];
-                for (let idx = 0; idx < allSims.length; idx++) {
-                    const sim = allSims[idx];
-                    const targetState = ((dto.simStates && dto.simStates[idx]) || dto.removedSimNewState || 'BODEGA') as EstadoSIM;
-                    // Siempre queda en la sede actual del equipo
-                    sim.update({ estado: targetState, activoId: undefined, locationId: targetActivo.locationId });
-                    await this.simCardRepository.save(sim);
-                    processedIds.push(sim.id!);
-                    numbers.push(`#${sim.numero}`);
-                }
-                targetActivo.limpiarSIMCards();
-                await this.activoRepository.save(targetActivo);
+                    dto.simCardIds = [simToRemove.id!];
+                    const noteTag = `[SIM] Retirada SIM #${simToRemove.numero} (Pasa a ${targetState} en sede)`;
+                    dto.notes = dto.notes ? `${dto.notes}\n${noteTag}` : noteTag;
 
-                dto.simCardIds = processedIds;
-                const noteTag = `[SIM] Retiro total de SIM Cards (${numbers.join(', ')}) a Bodega en sede`;
-                dto.notes = dto.notes ? `${dto.notes}\n${noteTag}` : noteTag;
-            }
-        }
+                } else if (dto.type === 'SIM_RETIRO_TOTAL') {
+                    const allSims = (await simCardRepo.findAll()).filter(s => s.activoId === targetActivo.id);
+                    if (allSims.length === 0) {
+                        throw new Error(`El equipo con placa "${targetActivo.placa}" no tiene SIM Cards asignadas para retirar.`);
+                    }
+                    const processedIds: string[] = [];
+                    const numbers: string[] = [];
+                    for (let idx = 0; idx < allSims.length; idx++) {
+                        const sim = allSims[idx];
+                        const targetState = ((dto.simStates && dto.simStates[idx]) || dto.removedSimNewState || 'BODEGA') as EstadoSIM;
+                        // Siempre queda en la sede actual del equipo
+                        sim.update({ estado: targetState, activoId: undefined, locationId: targetActivo.locationId });
+                        await simCardRepo.save(sim);
+                        processedIds.push(sim.id!);
+                        numbers.push(`#${sim.numero}`);
+                    }
+                    targetActivo.limpiarSIMCards();
+                    await activoRepo.save(targetActivo);
 
-        // 1. Crear la instancia de dominio (esto ya valida los campos básicos)
-        const movement = new Movement({
-            ...dto,
-            // documentUrl: comodato / acta / denuncio policial
-            documentUrl: dto.documentUrl || dto.evidenceUrl || undefined,
-            evidenceUrl: dto.evidenceUrl || undefined,
-            destinationLocationId,
-            destinationAreaId: dto.destinationAreaId,
-            status: isLocalSIM ? MovementStatus.RECEIVED
-                   : isAreaTransfer ? MovementStatus.EN_TRANSIT
-                   : MovementStatus.PENDING,
-            shippedAt: isLocalSIM ? new Date() : isAreaTransfer ? new Date() : undefined,
-            receivedAt: isLocalSIM ? new Date() : undefined,
-            magicLinkToken: areaTransferToken
-        });
-
-        // 2. Persistir en la base de datos
-        const savedMovement = await this.movementRepository.create(movement);
-
-        // 2.1 Si es HURTO_PERDIDA o BAJA_ACTIVO, actualizamos inmediatamente el estado del activo a BAJA
-        if (isTheftOrLoss || dto.type === 'BAJA_ACTIVO') {
-            for (const activoId of dto.activoIds) {
-                const act = await this.activoRepository.findById(activoId);
-                if (act) {
-                    act.setStatus(EstadoActivo.BAJA);
-                    await this.activoRepository.update(act);
+                    dto.simCardIds = processedIds;
+                    const noteTag = `[SIM] Retiro total de SIM Cards (${numbers.join(', ')}) a Bodega en sede`;
+                    dto.notes = dto.notes ? `${dto.notes}\n${noteTag}` : noteTag;
                 }
             }
-        }
+
+            // 1. Crear la instancia de dominio (esto ya valida los campos básicos)
+            const movement = new Movement({
+                ...dto,
+                // documentUrl: comodato / acta / denuncio policial
+                documentUrl: dto.documentUrl || dto.evidenceUrl || undefined,
+                evidenceUrl: dto.evidenceUrl || undefined,
+                destinationLocationId,
+                destinationAreaId: dto.destinationAreaId,
+                status: isLocalSIM ? MovementStatus.RECEIVED
+                       : isAreaTransfer ? MovementStatus.EN_TRANSIT
+                       : MovementStatus.PENDING,
+                shippedAt: isLocalSIM ? new Date() : isAreaTransfer ? new Date() : undefined,
+                receivedAt: isLocalSIM ? new Date() : undefined,
+                magicLinkToken: areaTransferToken
+            });
+
+            // 2. Persistir en la base de datos
+            const saved = await movementRepo.create(movement);
+
+            // 2.1 Si es HURTO_PERDIDA o BAJA_ACTIVO, actualizamos inmediatamente el estado del activo a BAJA
+            if (isTheftOrLoss || dto.type === 'BAJA_ACTIVO') {
+                for (const activoId of dto.activoIds) {
+                    const act = await activoRepo.findById(activoId);
+                    if (act) {
+                        act.setStatus(EstadoActivo.BAJA);
+                        await activoRepo.update(act);
+                    }
+                }
+            }
+
+            return saved;
+        };
+
+        const savedMovement = this.unitOfWork
+            ? await this.unitOfWork.runInTransaction(async (repos) => executeMutations(repos))
+            : await executeMutations({
+                movementRepository: this.movementRepository,
+                activoRepository: this.activoRepository,
+                simCardRepository: this.simCardRepository
+            });
 
         // 3. Sistema de Envío de Soporte por Correo para traslados inmediatos (si el estado no es PENDING)
         // Los traslados en PENDING se notifican al momento del Despacho (DispatchMovement) con el acta/soporte firmado adjunto.

@@ -5,7 +5,8 @@ import { ILocationRepository } from "../../../domain/repositories/ILocationRepos
 import { IResponsibleRepository } from "../../../domain/repositories/IResponsibleRepository";
 import { IEmailService } from "../../../domain/services/IEmailService";
 import { IWhatsAppNotificationService } from "../../../domain/services/IWhatsAppNotificationService";
-import { EstadoActivo } from "../../../domain/entities/Activo";
+import { EstadoActivo, Activo } from "../../../domain/entities/Activo";
+import { IUnitOfWork } from "../../../domain/repositories/IUnitOfWork";
 
 export class DispatchMovement {
     constructor(
@@ -14,7 +15,8 @@ export class DispatchMovement {
         private readonly locationRepository?: ILocationRepository,
         private readonly responsibleRepository?: IResponsibleRepository,
         private readonly emailService?: IEmailService,
-        private readonly whatsAppService?: IWhatsAppNotificationService
+        private readonly whatsAppService?: IWhatsAppNotificationService,
+        private readonly unitOfWork?: IUnitOfWork
     ) { }
 
     async execute(id: string, evidenceUrl?: string, documentUrl?: string, recipients?: string[], notifyWhatsApp: boolean = true): Promise<Movement> {
@@ -27,27 +29,43 @@ export class DispatchMovement {
         // 2. Aplicar lógica de dominio (cambiar a EN_TRANSIT y asociar guía de envío y/o acta/comodato firmado)
         movement.dispatch(evidenceUrl, documentUrl);
 
-        // 3. Buscar los activos uno por uno, guardar detalles y actualizarlos a EN_TRANSITO (para traslados físicos)
+        // 3. Buscar los activos uno por uno para capturar detalles
         const isLocalOperation = movement.type.startsWith('SIM_');
         const assetsDetails: { placa: string; marca: string; modelo: string; serial: string }[] = [];
+        const loadedAssets: Activo[] = [];
         for (const activoId of movement.activoIds) {
             const activo = await this.activoRepository.findById(activoId);
             if (activo) {
+                loadedAssets.push(activo);
                 assetsDetails.push({
                     placa: activo.placa,
                     marca: activo.marca,
                     modelo: activo.modelo,
                     serial: activo.serial
                 });
-                if (!isLocalOperation) {
-                    activo.setStatus(EstadoActivo.EN_TRANSIT);
-                    await this.activoRepository.update(activo);
-                }
             }
         }
 
-        // 4. Persistir cambios del movimiento
-        const savedMovement = await this.movementRepository.update(movement);
+        // 4. Persistir cambios del movimiento y de los activos en transacción atómica (ACID)
+        const executeMutations = async (repos: {
+            movementRepository: IMovementRepository;
+            activoRepository: IActivoRepository;
+        }): Promise<Movement> => {
+            if (!isLocalOperation) {
+                for (const activo of loadedAssets) {
+                    activo.setStatus(EstadoActivo.EN_TRANSIT);
+                    await repos.activoRepository.update(activo);
+                }
+            }
+            return await repos.movementRepository.update(movement);
+        };
+
+        const savedMovement = this.unitOfWork
+            ? await this.unitOfWork.runInTransaction(async (repos) => executeMutations(repos))
+            : await executeMutations({
+                movementRepository: this.movementRepository,
+                activoRepository: this.activoRepository
+            });
 
         // 5. Enviar notificación por correo con el soporte de despacho / acta firmada
         if (this.emailService && this.locationRepository && this.responsibleRepository) {

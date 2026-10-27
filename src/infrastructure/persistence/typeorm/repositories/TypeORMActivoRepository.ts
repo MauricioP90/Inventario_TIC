@@ -1,4 +1,4 @@
-import { Repository } from "typeorm";
+import { Repository, In } from "typeorm";
 import { Activo } from "../../../../domain/entities/Activo";
 import { IActivoRepository } from "../../../../domain/repositories/IActivoRepository";
 import { SearchActivosQuery, SearchActivosResult } from "../../../../domain/repositories/SearchActivosQuery";
@@ -102,5 +102,14 @@ export class TypeORMActivoRepository implements IActivoRepository {
     async findById(id: string): Promise<Activo | null> {
         const entity = await this.repository.findOne({ where: { id }, relations: ['location', 'location.areas', 'responsible', 'responsible.area', 'tipoActivo', 'simCards', 'area'] });
         return entity ? ActivoMapper.toDomain(entity) : null;
+    }
+
+    async findByIds(ids: string[]): Promise<Activo[]> {
+        if (!ids || ids.length === 0) return [];
+        const entities = await this.repository.find({
+            where: { id: In(ids) },
+            relations: ['location', 'location.areas', 'responsible', 'responsible.area', 'tipoActivo', 'simCards', 'area']
+        });
+        return entities.map(ActivoMapper.toDomain);
     }
 }

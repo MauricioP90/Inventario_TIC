@@ -10,4 +10,5 @@ export interface IActivoRepository {
     findBySerial(serial: string): Promise<Activo | null>;
     countByResponsibleId(responsibleId: string): Promise<number>;
     findById(id: string): Promise<Activo | null>;
+    findByIds(ids: string[]): Promise<Activo[]>;
 }

@@ -1,6 +1,4 @@
 import { Request, Response } from "express";
-import { AppDataSource } from "../../../data-source";
-import { ActivoDocumentHistoryEntity } from "../../persistence/typeorm/entities/ActivoDocumentHistoryEntity";
 import { CreateActivo } from "../../../application/use-cases/activo/CreateActivo";
 import { GetAllActivo } from "../../../application/use-cases/activo/GetAllActivo";
 import { GetOneActivo } from "../../../application/use-cases/activo/GetOneActivo";
@@ -12,8 +10,8 @@ import { GetDashboardSummary } from "../../../application/use-cases/activo/GetDa
 import { CreateTipoActivo } from "../../../application/use-cases/tipoActivo/CreateTipoActivo";
 import { GetAllTipoActivo } from "../../../application/use-cases/tipoActivo/GetAllTipoActivo";
 import { UpdateTipoActivo } from "../../../application/use-cases/tipoActivo/UpdateTipoActivo";
-
 import { SearchActivos } from "../../../application/use-cases/activo/SearchActivos";
+import { IActivoDocumentHistoryRepository } from "../../../domain/repositories/IActivoDocumentHistoryRepository";
 
 export class ActivoController {
     constructor(
@@ -28,7 +26,8 @@ export class ActivoController {
         private createTipoActivoUC: CreateTipoActivo,
         private getAllTipoActivoUC: GetAllTipoActivo,
         private updateTipoActivoUC: UpdateTipoActivo,
-        private searchActivosUC: SearchActivos
+        private searchActivosUC: SearchActivos,
+        private documentHistoryRepo?: IActivoDocumentHistoryRepository
     ) { }
 
     /**
@@ -235,12 +234,11 @@ export class ActivoController {
     async getAuditHistory(req: Request, res: Response) {
         try {
             const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-            const historyRepo = AppDataSource.getRepository(ActivoDocumentHistoryEntity);
-            const history = await historyRepo.find({
-                where: { activoId: id },
-                order: { createdAt: 'DESC' }
-            });
-            res.json(history);
+            if (!this.documentHistoryRepo) {
+                return res.json([]);
+            }
+            const history = await this.documentHistoryRepo.findByActivoId(id);
+            res.json(history.map(h => h.toJSON ? h.toJSON() : h));
         } catch (error: any) {
             res.status(500).json({ message: error.message });
         }

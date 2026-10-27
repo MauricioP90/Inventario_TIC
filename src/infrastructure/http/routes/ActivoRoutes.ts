@@ -18,6 +18,8 @@ import { MovementEntity } from "../../persistence/typeorm/entities/MovementEntit
 import { TypeORMMovementRepository } from "../../persistence/typeorm/repositories/TypeORMMovementRepository";
 import { MaintenanceReportEntity } from "../../persistence/typeorm/entities/MaintenanceReportEntity";
 import { TypeORMMaintenanceReportRepository } from "../../persistence/typeorm/repositories/TypeORMMaintenanceReportRepository";
+import { ActivoDocumentHistoryEntity } from "../../persistence/typeorm/entities/ActivoDocumentHistoryEntity";
+import { TypeORMActivoDocumentHistoryRepository } from "../../persistence/typeorm/repositories/TypeORMActivoDocumentHistoryRepository";
 
 // Casos de Uso
 import { CreateActivo } from "../../../application/use-cases/activo/CreateActivo";
@@ -43,12 +45,13 @@ const activoRepo = new TypeORMActivoRepository(AppDataSource.getRepository(Activ
 const tipoActivoRepo = new TypeORMTipoActivoRepository(AppDataSource.getRepository(TipoActivoEntity));
 const movementRepo = new TypeORMMovementRepository(AppDataSource.getRepository(MovementEntity));
 const maintenanceRepo = new TypeORMMaintenanceReportRepository(AppDataSource.getRepository(MaintenanceReportEntity));
+const documentHistoryRepo = new TypeORMActivoDocumentHistoryRepository(AppDataSource.getRepository(ActivoDocumentHistoryEntity));
 
 // 2. Inicializamos Casos de Uso
 const createUC = new CreateActivo(activoRepo, locationRepo, responsibleRepo);
 const getAllUC = new GetAllActivo(activoRepo);
 const getOneUC = new GetOneActivo(activoRepo);
-const updateUC = new UpdateActivo(activoRepo, locationRepo, responsibleRepo, movementRepo, maintenanceRepo);
+const updateUC = new UpdateActivo(activoRepo, locationRepo, responsibleRepo, movementRepo, maintenanceRepo, documentHistoryRepo);
 const darDeBajaUC = new DarDeBajaActivo(activoRepo);
 const getMetadataUC = new GetActivoMetadata(tipoActivoRepo, locationRepo);
 const findByIdUC = new FindByIdActivo(activoRepo);
@@ -70,7 +73,8 @@ const controller = new ActivoController(
     createTipoActivoUC,
     getAllTipoActivoUC,
     updateTipoActivoUC,
-    searchUC
+    searchUC,
+    documentHistoryRepo
 );
 
 // 4. Definimos Rutas

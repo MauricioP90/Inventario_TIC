@@ -1,4 +1,4 @@
-import { Movement, MovementStatus } from "../../../domain/entities/Movement";
+import { Movement, MovementStatus, MovementTypeValue } from "../../../domain/entities/Movement";
 import { EstadoActivo } from "../../../domain/entities/Activo";
 import { TipoLocation } from "../../../domain/entities/Location";
 import { IMovementRepository } from "../../../domain/repositories/IMovementRepository";
@@ -11,7 +11,7 @@ import { IEmailService } from "../../../domain/services/IEmailService";
 import { IUnitOfWork } from "../../../domain/repositories/IUnitOfWork";
 
 export interface RegisterMovementDto {
-    type: string;
+    type: MovementTypeValue;
     originLocationId: string;
     destinationLocationId: string;
     responsibleId: string;
@@ -42,6 +42,9 @@ export class RegisterMovement {
     ) { }
 
     async execute(dto: RegisterMovementDto): Promise<Movement> {
+        const isTheftOrLoss = dto.type === 'HURTO_PERDIDA';
+        const isLocalSIM = ['SIM_ASIGNACION', 'SIM_CAMBIO', 'SIM_RETIRO', 'SIM_RETIRO_TOTAL', 'INGRESO_MANTENIMIENTO', 'SALIDA_MANTENIMIENTO', 'BAJA_ACTIVO', 'HURTO_PERDIDA'].includes(dto.type);
+        const isAreaTransfer = dto.type === 'TRASLADO_AREA';
 
         // Obtener ubicaciones de origen y destino
         const originLocation = await this.locationRepository.findById(dto.originLocationId);
@@ -60,10 +63,28 @@ export class RegisterMovement {
             throw new Error('No se permiten traslados directos entre Proveedores.');
         }
 
+        // Deduplicar identificadores de activos
+        dto.activoIds = Array.from(new Set(dto.activoIds || []));
+
+        // Validación estricta de límites de activos por formato documental
+        if (dto.type === 'HURTO_PERDIDA' && dto.activoIds.length > 1) {
+            throw new Error('El reporte de Hurto o Pérdida solo permite 1 activo por denuncio policial.');
+        }
+
+        const MAX_ACTIVOS_POR_ENVIO = 10;
+        if (dto.activoIds.length > MAX_ACTIVOS_POR_ENVIO) {
+            throw new Error(`Un envío no puede superar el límite estricto de ${MAX_ACTIVOS_POR_ENVIO} activos para garantizar el formato de 1 sola página del Acta Oficial (GF-FO-29 / FOR-TIC-004). Por favor genere una remesa adicional.`);
+        }
+
         // Validación de seguridad: no se pueden realizar traslados sobre equipos dados de baja, en tránsito o con traslados activos
         for (const activoId of dto.activoIds) {
             const activo = await this.activoRepository.findById(activoId);
             if (activo) {
+                // Validación de coherencia física: Todos los equipos deben encontrarse en la sede de origen
+                if (!isLocalSIM && activo.locationId && activo.locationId !== dto.originLocationId) {
+                    throw new Error(`El equipo con placa "${activo.placa}" no pertenece a la sede de origen seleccionada (${originLocation.nombre}).`);
+                }
+
                 if (activo.estado === 'BAJA') {
                     throw new Error(`El equipo con placa "${activo.placa}" se encuentra dado de BAJA (Inactivo). No está permitido realizar movimientos sobre él.`);
                 }
@@ -124,10 +145,6 @@ export class RegisterMovement {
                 throw new Error('El retorno de proveedor solo se puede realizar desde un Proveedor hacia un Punto TI / Soporte.');
             }
         }
-        
-        const isTheftOrLoss = dto.type === 'HURTO_PERDIDA';
-        const isLocalSIM = ['SIM_ASIGNACION', 'SIM_CAMBIO', 'SIM_RETIRO', 'SIM_RETIRO_TOTAL', 'INGRESO_MANTENIMIENTO', 'SALIDA_MANTENIMIENTO', 'BAJA_ACTIVO', 'HURTO_PERDIDA'].includes(dto.type);
-        const isAreaTransfer = dto.type === 'TRASLADO_AREA';
 
         // Validación de Hurto/Pérdida: Exigir denuncio policial
         if (isTheftOrLoss) {

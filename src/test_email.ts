@@ -2,7 +2,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 import { EmailServiceFactory } from './infrastructure/services/EmailServiceFactory';
-import { Movement } from './domain/entities/Movement';
+import { Movement, MovementType } from './domain/entities/Movement';
 
 async function main() {
     console.log('🚀 Probando servicio de correo...');
@@ -15,7 +15,7 @@ async function main() {
 
     const mockMovement = new Movement({
         id: 'test-movement-uuid-1234',
-        type: 'TRASLADO_REGIONAL',
+        type: MovementType.REGIONAL_TRANSFER,
         originLocationId: 'loc-1',
         destinationLocationId: 'loc-2',
         responsibleId: 'resp-1',

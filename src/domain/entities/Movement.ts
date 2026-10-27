@@ -16,6 +16,10 @@ export enum MovementType {
     PROVIDER_WARRANTY = 'ENVIO_PROVEEDOR',
     PROVIDER_RETURN = 'RETORNO_PROVEEDOR',
     DISPOSAL = 'BAJA_ACTIVO',
+    THEFT_LOSS = 'HURTO_PERDIDA',
+    COMMISSION_DELIVERY = 'ENTREGA_COMISION',
+    PARTICIPANT_LOAN = 'PRESTAMO_PARTICIPE',
+    PARTIAL_REINTEGRATION = 'REINTEGRO_PARCIAL',
     RETURN_BY_REJECTION = 'RETORNO_POR_RECHAZO',
     INGRESO_MANTENIMIENTO = 'INGRESO_MANTENIMIENTO',
     SALIDA_MANTENIMIENTO = 'SALIDA_MANTENIMIENTO',
@@ -28,10 +32,12 @@ export enum MovementType {
     SIM_TRANSFER = 'SIM_TRASLADO'
 }
 
+export type MovementTypeValue = MovementType | `${MovementType}`;
+
 export interface MovementProps {
     id?: string;
     parentMovementId?: string;
-    type: MovementType | string; // Permitimos string temporalmente para retrocompatibilidad
+    type: MovementTypeValue;
     originLocationId: string;
     destinationLocationId: string;
     destinationAreaId?: string; // Solo para TRASLADO_AREA: área destino dentro de la misma sede
@@ -111,11 +117,23 @@ export class Movement {
         if (!hasActivos && !hasSIMs) {
             throw new Error('Debe haber al menos un activo o una tarjeta SIM en el movimiento');
         }
+
+        // Validación estricta de límites por formato de documento oficial
+        if (isNew && this.props.activoIds && this.props.activoIds.length > 0) {
+            if (this.props.type === 'HURTO_PERDIDA' && this.props.activoIds.length > 1) {
+                throw new Error('El reporte de Hurto o Pérdida solo permite 1 activo por denuncio policial.');
+            }
+
+            const MAX_ACTIVOS_POR_ENVIO = 10;
+            if (this.props.activoIds.length > MAX_ACTIVOS_POR_ENVIO) {
+                throw new Error(`Un envío no puede superar el límite estricto de ${MAX_ACTIVOS_POR_ENVIO} activos para garantizar el formato de 1 sola página del Acta Oficial (GF-FO-29 / FOR-TIC-004). Por favor genere una remesa adicional.`);
+            }
+        }
     }
 
     get id(): string | undefined { return this.props.id; }
     get parentMovementId(): string | undefined { return this.props.parentMovementId; }
-    get type(): string { return this.props.type; }
+    get type(): MovementTypeValue { return this.props.type; }
     get originLocationId(): string { return this.props.originLocationId; }
     get destinationLocationId(): string { return this.props.destinationLocationId; }
     get responsibleId(): string { return this.props.responsibleId; }
@@ -154,7 +172,6 @@ export class Movement {
         if (documentUrl) this.props.documentUrl = documentUrl;
 
         // Generar magic link token
-        const { randomUUID } = require('node:crypto');
         this.props.magicLinkToken = randomUUID();
     }
 
@@ -177,6 +194,25 @@ export class Movement {
             throw new Error('No se puede cancelar un movimiento ya recibido');
         }
         this.props.status = MovementStatus.CANCELLED;
+    }
+
+    public appendNotes(text: string) {
+        if (!text || !text.trim()) return;
+        const current = this.props.notes ? `${this.props.notes}\n` : '';
+        this.props.notes = `${current}${text.trim()}`;
+    }
+
+    public recordRejection(reason: string, isMagicLink: boolean = false) {
+        this.cancel();
+        const tag = isMagicLink ? '[NOVEDAD / RECHAZO - MAGIC LINK]' : '[NOVEDAD / RECHAZO]';
+        this.appendNotes(`${tag} Motivo: ${reason.trim()}`);
+    }
+
+    public recordCancellation(reason: string, cancelledBy?: string) {
+        this.cancel();
+        const authorInfo = cancelledBy ? ` por ${cancelledBy}` : '';
+        const timestamp = new Date().toLocaleString('es-CO');
+        this.appendNotes(`[ANULADO${authorInfo} - ${timestamp}] Motivo: ${reason.trim()}`);
     }
 
     public changeDestinationLocation(locationId: string) {

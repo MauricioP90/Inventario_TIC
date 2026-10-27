@@ -6,6 +6,7 @@ import { MovementEntity } from "../../persistence/typeorm/entities/MovementEntit
 import { TypeORMMaintenanceReportRepository } from "../../persistence/typeorm/repositories/TypeORMMaintenanceReportRepository";
 import { TypeORMActivoRepository } from "../../persistence/typeorm/repositories/TypeORMActivoRepository";
 import { TypeORMMovementRepository } from "../../persistence/typeorm/repositories/TypeORMMovementRepository";
+import { TypeORMUnitOfWork } from "../../persistence/typeorm/TypeORMUnitOfWork";
 import { CreateMaintenanceReport } from "../../../application/use-cases/maintenance/CreateMaintenanceReport";
 import { UpdateMaintenanceReport } from "../../../application/use-cases/maintenance/UpdateMaintenanceReport";
 import { GetActiveMaintenance } from "../../../application/use-cases/maintenance/GetActiveMaintenance";
@@ -15,14 +16,17 @@ import { keycloak } from "../middleware/KeycloakConfig";
 
 const maintenanceRouter = Router();
 
+// Unit of Work (Gestión de Transacciones Atómicas ACID)
+const unitOfWork = new TypeORMUnitOfWork(AppDataSource);
+
 // Repositorios
 const maintenanceRepo = new TypeORMMaintenanceReportRepository(AppDataSource.getRepository(MaintenanceReportEntity));
 const activoRepo = new TypeORMActivoRepository(AppDataSource.getRepository(ActivoEntity));
 const movementRepo = new TypeORMMovementRepository(AppDataSource.getRepository(MovementEntity));
 
 // Casos de uso
-const createUC = new CreateMaintenanceReport(maintenanceRepo, activoRepo, movementRepo);
-const updateUC = new UpdateMaintenanceReport(maintenanceRepo, activoRepo, movementRepo);
+const createUC = new CreateMaintenanceReport(maintenanceRepo, activoRepo, movementRepo, unitOfWork);
+const updateUC = new UpdateMaintenanceReport(maintenanceRepo, activoRepo, movementRepo, unitOfWork);
 const getActiveUC = new GetActiveMaintenance(maintenanceRepo);
 const getHistoryUC = new GetMaintenanceHistory(maintenanceRepo);
 

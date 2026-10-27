@@ -1,4 +1,4 @@
-import { Movement, MovementStatus } from "../../../domain/entities/Movement";
+import { Movement, MovementStatus, MovementTypeValue } from "../../../domain/entities/Movement";
 import { MovementEntity } from "../typeorm/entities/MovementEntity";
 import { LocationMapper } from "./LocationMapper";
 import { ResponsibleMapper } from "./ResponsibleMapper";
@@ -10,7 +10,7 @@ export class MovementMapper {
         return new Movement({
             id: entity.id,
             parentMovementId: entity.parentMovementId,
-            type: entity.type,
+            type: entity.type as MovementTypeValue,
             originLocationId: entity.originLocationId,
             destinationLocationId: entity.destinationLocationId,
             destinationAreaId: entity.destinationAreaId,

@@ -4,6 +4,7 @@ import { IMovementRepository } from "../../../domain/repositories/IMovementRepos
 import { MaintenanceReport, ModalidadMantenimiento, TipoMantenimiento } from "../../../domain/entities/MaintenanceReport";
 import { EstadoActivo } from "../../../domain/entities/Activo";
 import { Movement, MovementStatus } from "../../../domain/entities/Movement";
+import { IUnitOfWork } from "../../../domain/repositories/IUnitOfWork";
 
 interface CreateMaintenanceReportInput {
     activoId: string;
@@ -19,7 +20,8 @@ export class CreateMaintenanceReport {
     constructor(
         private readonly maintenanceRepo: IMaintenanceReportRepository,
         private readonly activoRepo: IActivoRepository,
-        private readonly movementRepo: IMovementRepository
+        private readonly movementRepo: IMovementRepository,
+        private readonly unitOfWork?: IUnitOfWork
     ) { }
 
     async execute(input: CreateMaintenanceReportInput): Promise<MaintenanceReport> {
@@ -33,11 +35,6 @@ export class CreateMaintenanceReport {
         if (input.modalidad === ModalidadMantenimiento.EXTERNO && (!input.proveedorServicio || !input.proveedorServicio.trim())) {
             throw new Error('El Proveedor de Servicio es obligatorio para mantenimientos externos');
         }
-        
-        if (activo.estado !== 'MANTENIMIENTO') {
-            activo.setStatus(EstadoActivo.MANTENIMIENTO);
-            await this.activoRepo.update(activo);
-        }
 
         const report = new MaintenanceReport({
             activoId: input.activoId,
@@ -49,22 +46,41 @@ export class CreateMaintenanceReport {
             proveedorServicio: input.proveedorServicio,
         } as any);
 
-        const savedReport = await this.maintenanceRepo.save(report);
+        const executeMutations = async (repos: {
+            maintenanceReportRepository: IMaintenanceReportRepository;
+            activoRepository: IActivoRepository;
+            movementRepository: IMovementRepository;
+        }): Promise<MaintenanceReport> => {
+            if (activo.estado !== 'MANTENIMIENTO') {
+                activo.setStatus(EstadoActivo.MANTENIMIENTO);
+                await repos.activoRepository.update(activo);
+            }
 
-        // Registrar movimiento de ingreso a mantenimiento
-        const movement = new Movement({
-            type: 'INGRESO_MANTENIMIENTO',
-            originLocationId: activo.locationId!,
-            destinationLocationId: activo.locationId!,
-            responsibleId: activo.responsibleId!,
-            activoIds: [activo.id!],
-            status: MovementStatus.RECEIVED,
-            shippedAt: new Date(),
-            receivedAt: new Date(),
-            notes: `Ingreso a mantenimiento por apertura de ficha #${savedReport.id!.substring(0, 8)}. Modalidad: ${input.modalidad}. Tipo: ${input.tipoMantenimiento}.`
-        });
-        await this.movementRepo.create(movement);
+            const savedReport = await repos.maintenanceReportRepository.save(report);
 
-        return savedReport;
+            // Registrar movimiento de ingreso a mantenimiento
+            const movement = new Movement({
+                type: 'INGRESO_MANTENIMIENTO',
+                originLocationId: activo.locationId!,
+                destinationLocationId: activo.locationId!,
+                responsibleId: activo.responsibleId!,
+                activoIds: [activo.id!],
+                status: MovementStatus.RECEIVED,
+                shippedAt: new Date(),
+                receivedAt: new Date(),
+                notes: `Ingreso a mantenimiento por apertura de ficha #${savedReport.id!.substring(0, 8)}. Modalidad: ${input.modalidad}. Tipo: ${input.tipoMantenimiento}.`
+            });
+            await repos.movementRepository.create(movement);
+
+            return savedReport;
+        };
+
+        return this.unitOfWork
+            ? await this.unitOfWork.runInTransaction(async (repos) => executeMutations(repos))
+            : await executeMutations({
+                maintenanceReportRepository: this.maintenanceRepo,
+                activoRepository: this.activoRepo,
+                movementRepository: this.movementRepo
+            });
     }
 }

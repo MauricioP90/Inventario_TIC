@@ -18,18 +18,43 @@ export const swaggerSchemas = {
             estado: { type: 'string', enum: ['ACTIVO', 'INACTIVO'] }
         }
     },
+    TipoActivo: {
+        type: 'object',
+        required: ['nombre', 'estado'],
+        properties: {
+            id: { type: 'string', format: 'uuid' },
+            nombre: { type: 'string', example: 'Portátil' },
+            estado: { type: 'string', enum: ['ACTIVO', 'INACTIVO'], example: 'ACTIVO' }
+        }
+    },
+    ActivoDocumentHistory: {
+        type: 'object',
+        required: ['activoId'],
+        properties: {
+            id: { type: 'string', format: 'uuid' },
+            activoId: { type: 'string', format: 'uuid' },
+            previousFacturaUrl: { type: 'string', nullable: true },
+            newFacturaUrl: { type: 'string', nullable: true },
+            previousPrecioCompra: { type: 'number', nullable: true },
+            newPrecioCompra: { type: 'number', nullable: true },
+            changedByUser: { type: 'string', nullable: true },
+            justification: { type: 'string', nullable: true },
+            createdAt: { type: 'string', format: 'date-time' }
+        }
+    },
     Activo: {
         type: 'object',
-        required: ['placa', 'tipo', 'marca', 'modelo', 'serial', 'estado', 'fechaIngreso', 'locationId'],
+        required: ['placa', 'tipoActivoId', 'marca', 'modelo', 'serial', 'estado', 'fechaIngreso', 'locationId'],
         properties: {
             id: { type: 'string', format: 'uuid' },
             placa: { type: 'string' },
-            tipo: { type: 'string' },
+            tipoActivoId: { type: 'string', format: 'uuid' },
+            tipoActivo: { $ref: '#/components/schemas/TipoActivo', nullable: true },
             marca: { type: 'string' },
             modelo: { type: 'string' },
             serial: { type: 'string' },
             precioCompra: { type: 'number', nullable: true },
-            estado: { type: 'string', enum: ['BODEGA', 'OPERACION', 'MANTENIMIENTO', 'BAJA', 'EN_TRANSITO'] },
+            estado: { type: 'string', enum: ['DISPONIBLE', 'OPERACION', 'MANTENIMIENTO', 'BAJA', 'EN_TRANSITO', 'RECHAZADO'] },
             facturaUrl: { type: 'string', nullable: true },
             fechaIngreso: { type: 'string', format: 'date-time' },
             locationId: { type: 'string', format: 'uuid' },

@@ -4,6 +4,7 @@ import { IActivoRepository } from "../../../domain/repositories/IActivoRepositor
 import { IMovementRepository } from "../../../domain/repositories/IMovementRepository";
 import { EstadoActivo } from "../../../domain/entities/Activo";
 import { Movement, MovementStatus } from "../../../domain/entities/Movement";
+import { IUnitOfWork } from "../../../domain/repositories/IUnitOfWork";
 
 interface UpdateMaintenanceReportInput {
     id: string;
@@ -33,7 +34,8 @@ export class UpdateMaintenanceReport {
     constructor(
         private readonly maintenanceRepo: IMaintenanceReportRepository,
         private readonly activoRepo: IActivoRepository,
-        private readonly movementRepo: IMovementRepository
+        private readonly movementRepo: IMovementRepository,
+        private readonly unitOfWork?: IUnitOfWork
     ) { }
 
     async execute(input: UpdateMaintenanceReportInput): Promise<any> {
@@ -61,29 +63,6 @@ export class UpdateMaintenanceReport {
                 report.registrarRetornoDeProveedor(input.referenciaOrdenServicio, input.soporteProveedorUrl);
                 if (input.resultadoFinal && input.accionesRealizadas) {
                     report.cerrar(input.resultadoFinal, input.accionesRealizadas, input.costoFinal);
-                    const activo = await this.activoRepo.findById(report.activoId);
-                    if (activo) {
-                        if (input.resultadoFinal === ResultadoFinal.REPARADO || input.resultadoFinal === ResultadoFinal.SIN_FALLAS) {
-                            activo.setStatus(EstadoActivo.DISPONIBLE);
-                        } else if (input.resultadoFinal === ResultadoFinal.IRREPARABLE) {
-                            activo.darDeBaja();
-                        }
-                        await this.activoRepo.save(activo);
-
-                        // Registrar movimiento de salida de mantenimiento
-                        const movement = new Movement({
-                            type: 'SALIDA_MANTENIMIENTO',
-                            originLocationId: activo.locationId!,
-                            destinationLocationId: activo.locationId!,
-                            responsibleId: activo.responsibleId!,
-                            activoIds: [activo.id!],
-                            status: MovementStatus.RECEIVED,
-                            shippedAt: new Date(),
-                            receivedAt: new Date(),
-                            notes: `Salida de mantenimiento por retorno de proveedor en ficha #${report.id!.substring(0, 8)}. Resultado: ${input.resultadoFinal}.`
-                        });
-                        await this.movementRepo.create(movement);
-                    }
                 }
                 break;
 
@@ -99,31 +78,6 @@ export class UpdateMaintenanceReport {
                 if (!input.resultadoFinal) throw new Error('El resultado final es obligatorio para cerrar la ficha');
                 if (!input.accionesRealizadas) throw new Error('Las acciones realizadas son obligatorias para cerrar la ficha');
                 report.cerrar(input.resultadoFinal, input.accionesRealizadas, input.costoFinal, input.repuestosUsados);
-
-                // Actualizar el estado del activo en función del resultado
-                const activo = await this.activoRepo.findById(report.activoId);
-                if (activo) {
-                    if (input.resultadoFinal === ResultadoFinal.REPARADO || input.resultadoFinal === ResultadoFinal.SIN_FALLAS) {
-                        activo.setStatus(EstadoActivo.DISPONIBLE);
-                    } else if (input.resultadoFinal === ResultadoFinal.IRREPARABLE) {
-                        activo.darDeBaja();
-                    }
-                    await this.activoRepo.save(activo);
-
-                    // Registrar movimiento de salida de mantenimiento
-                    const movement = new Movement({
-                        type: 'SALIDA_MANTENIMIENTO',
-                        originLocationId: activo.locationId!,
-                        destinationLocationId: activo.locationId!,
-                        responsibleId: activo.responsibleId!,
-                        activoIds: [activo.id!],
-                        status: MovementStatus.RECEIVED,
-                        shippedAt: new Date(),
-                        receivedAt: new Date(),
-                        notes: `Salida de mantenimiento por cierre de ficha #${report.id!.substring(0, 8)}. Resultado: ${input.resultadoFinal}.`
-                    });
-                    await this.movementRepo.create(movement);
-                }
                 break;
 
             case 'actualizar':
@@ -136,7 +90,49 @@ export class UpdateMaintenanceReport {
                 break;
         }
 
-        const saved = await this.maintenanceRepo.save(report);
-        return saved.toJSON();
+        const executeMutations = async (repos: {
+            maintenanceReportRepository: IMaintenanceReportRepository;
+            activoRepository: IActivoRepository;
+            movementRepository: IMovementRepository;
+        }): Promise<any> => {
+            const isClosing = (input.accion === 'cerrar') || (input.accion === 'retorno_proveedor' && input.resultadoFinal && input.accionesRealizadas);
+
+            if (isClosing && input.resultadoFinal) {
+                const activo = await repos.activoRepository.findById(report.activoId);
+                if (activo) {
+                    if (input.resultadoFinal === ResultadoFinal.REPARADO || input.resultadoFinal === ResultadoFinal.SIN_FALLAS) {
+                        activo.setStatus(EstadoActivo.DISPONIBLE);
+                    } else if (input.resultadoFinal === ResultadoFinal.IRREPARABLE) {
+                        activo.darDeBaja();
+                    }
+                    await repos.activoRepository.update(activo);
+
+                    // Registrar movimiento de salida de mantenimiento
+                    const movement = new Movement({
+                        type: 'SALIDA_MANTENIMIENTO',
+                        originLocationId: activo.locationId!,
+                        destinationLocationId: activo.locationId!,
+                        responsibleId: activo.responsibleId!,
+                        activoIds: [activo.id!],
+                        status: MovementStatus.RECEIVED,
+                        shippedAt: new Date(),
+                        receivedAt: new Date(),
+                        notes: `Salida de mantenimiento por ${input.accion === 'cerrar' ? 'cierre de ficha' : 'retorno de proveedor'} #${report.id!.substring(0, 8)}. Resultado: ${input.resultadoFinal}.`
+                    });
+                    await repos.movementRepository.create(movement);
+                }
+            }
+
+            const saved = await repos.maintenanceReportRepository.save(report);
+            return saved.toJSON();
+        };
+
+        return this.unitOfWork
+            ? await this.unitOfWork.runInTransaction(async (repos) => executeMutations(repos))
+            : await executeMutations({
+                maintenanceReportRepository: this.maintenanceRepo,
+                activoRepository: this.activoRepo,
+                movementRepository: this.movementRepo
+            });
     }
 }

@@ -2,11 +2,13 @@ import { Movement, MovementStatus } from "../../../domain/entities/Movement";
 import { IMovementRepository } from "../../../domain/repositories/IMovementRepository";
 import { IActivoRepository } from "../../../domain/repositories/IActivoRepository";
 import { EstadoActivo } from "../../../domain/entities/Activo";
+import { IUnitOfWork } from "../../../domain/repositories/IUnitOfWork";
 
 export class RejectByMagicLink {
     constructor(
         private readonly movementRepository: IMovementRepository,
-        private readonly activoRepository: IActivoRepository
+        private readonly activoRepository: IActivoRepository,
+        private readonly unitOfWork?: IUnitOfWork
     ) { }
 
     async execute(token: string, rejectionReason: string): Promise<Movement> {
@@ -25,17 +27,18 @@ export class RejectByMagicLink {
             throw new Error('El motivo del rechazo es obligatorio.');
         }
 
-        // 2. Cancelar el movimiento original y registrar el motivo en notas
-        movement.cancel();
-        const currentNotes = movement.notes ? `${movement.notes}\n` : '';
-        (movement as any).props.notes = `${currentNotes}[NOVEDAD / RECHAZO - MAGIC LINK] Motivo: ${rejectionReason}`;
-
-        await this.movementRepository.update(movement);
+        // 2. Aplicar lógica de dominio para rechazar (encapsulado)
+        movement.recordRejection(rejectionReason, true);
 
         // Para TRASLADO_AREA no hay retorno físico: el equipo no se movió,
         // solo se cancela el acta y no se crea movimiento de retorno.
         if (movement.type === 'TRASLADO_AREA') {
-            return movement;
+            const executeAreaRejection = async (repos: { movementRepository: IMovementRepository }) => {
+                return await repos.movementRepository.update(movement);
+            };
+            return this.unitOfWork
+                ? await this.unitOfWork.runInTransaction(async (repos) => executeAreaRejection(repos))
+                : await executeAreaRejection({ movementRepository: this.movementRepository });
         }
 
         // 3. Crear el movimiento de retorno automático (misma lógica que RejectMovement)
@@ -48,20 +51,32 @@ export class RejectByMagicLink {
             status: MovementStatus.EN_TRANSIT, // Inicia viaje de vuelta inmediatamente
             activoIds: movement.activoIds,
             simCardIds: movement.simCardIds,
-            notes: `Retorno automático por rechazo (Magic Link) del traslado #${movement.id!.slice(-6).toUpperCase()}. Motivo: ${rejectionReason}`,
+            notes: `Retorno automático por rechazo (Magic Link) del traslado #${movement.id!.slice(-6).toUpperCase()}. Motivo: ${rejectionReason.trim()}`,
             shippedAt: new Date()
         });
 
-        // 4. Poner los activos en estado RECHAZADO (sin mover ubicación aún, viajan de vuelta)
-        const assets = await this.activoRepository.findAll();
-        const assetsInMovement = assets.filter(a => movement.activoIds.includes(a.id!));
+        // 4. Persistir mutaciones en transacción atómica (ACID)
+        const executeMutations = async (repos: {
+            movementRepository: IMovementRepository;
+            activoRepository: IActivoRepository;
+        }): Promise<Movement> => {
+            await repos.movementRepository.update(movement);
 
-        for (const activo of assetsInMovement) {
-            activo.setStatus(EstadoActivo.RECHAZADO);
-            await this.activoRepository.update(activo);
-        }
+            // Búsqueda directa por IDs para rendimiento O(1)
+            const assetsInMovement = await repos.activoRepository.findByIds(movement.activoIds);
+            for (const activo of assetsInMovement) {
+                activo.setStatus(EstadoActivo.RECHAZADO);
+                await repos.activoRepository.update(activo);
+            }
 
-        // 5. Persistir y retornar el movimiento de retorno
-        return await this.movementRepository.create(returnMovement);
+            return await repos.movementRepository.create(returnMovement);
+        };
+
+        return this.unitOfWork
+            ? await this.unitOfWork.runInTransaction(async (repos) => executeMutations(repos))
+            : await executeMutations({
+                movementRepository: this.movementRepository,
+                activoRepository: this.activoRepository
+            });
     }
 }

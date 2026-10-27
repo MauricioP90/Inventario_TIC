@@ -34,6 +34,7 @@ import { CreateTipoActivo } from "../../../application/use-cases/tipoActivo/Crea
 import { GetAllTipoActivo } from "../../../application/use-cases/tipoActivo/GetAllTipoActivo";
 import { UpdateTipoActivo } from "../../../application/use-cases/tipoActivo/UpdateTipoActivo";
 import { SearchActivos } from "../../../application/use-cases/activo/SearchActivos";
+import { GetActivoDocumentHistory } from "../../../application/use-cases/activo/GetActivoDocumentHistory";
 
 const activoRouter = Router();
 
@@ -60,6 +61,7 @@ const createTipoActivoUC = new CreateTipoActivo(tipoActivoRepo);
 const getAllTipoActivoUC = new GetAllTipoActivo(tipoActivoRepo);
 const updateTipoActivoUC = new UpdateTipoActivo(tipoActivoRepo);
 const searchUC = new SearchActivos(activoRepo);
+const getActivoDocumentHistoryUC = new GetActivoDocumentHistory(documentHistoryRepo);
 
 const controller = new ActivoController(
     createUC, 
@@ -74,7 +76,7 @@ const controller = new ActivoController(
     getAllTipoActivoUC,
     updateTipoActivoUC,
     searchUC,
-    documentHistoryRepo
+    getActivoDocumentHistoryUC
 );
 
 // 4. Definimos Rutas

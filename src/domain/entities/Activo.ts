@@ -4,6 +4,7 @@ import { Location, EstadoLocation } from './Location';
 import { Responsible } from './Responsible';
 import { TipoActivo } from './TipoActivo';
 import { Area } from './Area';
+import { Placa, Money } from '../value-objects';
 
 export enum EstadoActivo {
     DISPONIBLE = 'DISPONIBLE',
@@ -48,6 +49,10 @@ export class Activo {
 
     private validar() {
         if (!this.props.placa) throw new Error('La placa es obligatoria');
+        Placa.create(this.props.placa);
+        if (this.props.precioCompra !== undefined && this.props.precioCompra !== null) {
+            Money.fromNumber(this.props.precioCompra);
+        }
         if (!this.props.serial) throw new Error('El serial es obligatorio');
         if (!this.props.tipoActivoId) throw new Error('El tipo es obligatorio');
         if (!this.props.marca) throw new Error('La marca es obligatoria');
@@ -77,6 +82,12 @@ export class Activo {
     get areaId() { return this.props.areaId; }
     get area() { return this.props.area; }
     get precioCompra() { return this.props.precioCompra; }
+    get placaVO(): Placa { return Placa.create(this.props.placa); }
+    get precioCompraVO(): Money | undefined {
+        return this.props.precioCompra !== undefined && this.props.precioCompra !== null
+            ? Money.fromNumber(this.props.precioCompra)
+            : undefined;
+    }
 
     // Lógica de negocio: Cambiar estado
     public darDeBaja() {

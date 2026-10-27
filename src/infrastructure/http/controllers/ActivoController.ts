@@ -11,7 +11,7 @@ import { CreateTipoActivo } from "../../../application/use-cases/tipoActivo/Crea
 import { GetAllTipoActivo } from "../../../application/use-cases/tipoActivo/GetAllTipoActivo";
 import { UpdateTipoActivo } from "../../../application/use-cases/tipoActivo/UpdateTipoActivo";
 import { SearchActivos } from "../../../application/use-cases/activo/SearchActivos";
-import { IActivoDocumentHistoryRepository } from "../../../domain/repositories/IActivoDocumentHistoryRepository";
+import { GetActivoDocumentHistory } from "../../../application/use-cases/activo/GetActivoDocumentHistory";
 
 export class ActivoController {
     constructor(
@@ -27,7 +27,7 @@ export class ActivoController {
         private getAllTipoActivoUC: GetAllTipoActivo,
         private updateTipoActivoUC: UpdateTipoActivo,
         private searchActivosUC: SearchActivos,
-        private documentHistoryRepo?: IActivoDocumentHistoryRepository
+        private getActivoDocumentHistoryUC?: GetActivoDocumentHistory
     ) { }
 
     /**
@@ -234,10 +234,10 @@ export class ActivoController {
     async getAuditHistory(req: Request, res: Response) {
         try {
             const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
-            if (!this.documentHistoryRepo) {
+            if (!this.getActivoDocumentHistoryUC) {
                 return res.json([]);
             }
-            const history = await this.documentHistoryRepo.findByActivoId(id);
+            const history = await this.getActivoDocumentHistoryUC.execute({ activoId: id });
             res.json(history.map(h => h.toJSON ? h.toJSON() : h));
         } catch (error: any) {
             res.status(500).json({ message: error.message });

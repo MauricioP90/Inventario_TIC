@@ -1,4 +1,5 @@
 import { SIMCard, EstadoSIM } from "../../../domain/entities/SIMCard";
+import { ICCID } from "../../../domain/value-objects";
 import { ISIMCardRepository } from "../../../domain/repositories/ISIMCardRepository";
 
 // Definimos qué datos necesita este caso de uso para funcionar
@@ -15,6 +16,9 @@ export class CreateSIMCard {
     constructor(private readonly simCardRepository: ISIMCardRepository) { }
 
     async execute(input: CreateSIMCardInput): Promise<SIMCard> {
+        // Validar formato de ICCID mediante Value Object
+        const iccidVo = ICCID.create(input.iccid);
+
         // 1. Creamos la entidad de dominio
         const simCard = new SIMCard(input);
 

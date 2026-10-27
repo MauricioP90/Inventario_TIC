@@ -1,5 +1,6 @@
 import { IActivoRepository } from "../../../domain/repositories/IActivoRepository";
 import { Activo, EstadoActivo } from "../../../domain/entities/Activo";
+import { Placa, Money } from "../../../domain/value-objects";
 import { ILocationRepository } from "../../../domain/repositories/ILocationRepository";
 import { IResponsibleRepository } from "../../../domain/repositories/IResponsibleRepository";
 
@@ -35,11 +36,14 @@ export class CreateActivo {
             ? new Date(input.fechaIngreso) 
             : input.fechaIngreso;
 
+        // Validar formato de placa mediante Value Object
+        const placaVo = Placa.create(input.placa);
+
         let precioCompra: number | undefined = undefined;
         if (input.precioCompra !== undefined && input.precioCompra !== null && String(input.precioCompra).trim() !== '') {
             const parsed = Number(input.precioCompra);
             if (!isNaN(parsed)) {
-                precioCompra = parsed;
+                precioCompra = Money.fromNumber(parsed).amount;
             }
         }
 

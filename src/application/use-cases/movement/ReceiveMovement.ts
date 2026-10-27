@@ -6,8 +6,8 @@ import { IMaintenanceReportRepository } from "../../../domain/repositories/IMain
 import { IResponsibleRepository } from "../../../domain/repositories/IResponsibleRepository";
 import { ILocationRepository } from "../../../domain/repositories/ILocationRepository";
 import { MaintenanceReport, ModalidadMantenimiento, TipoMantenimiento, EstadoFicha } from "../../../domain/entities/MaintenanceReport";
-import { IEmailService } from "../../../domain/services/IEmailService";
 import { IUnitOfWork } from "../../../domain/repositories/IUnitOfWork";
+import { IEventBus, MovementReceivedDomainEvent } from "../../../domain/events";
 
 export class ReceiveMovement {
     constructor(
@@ -17,7 +17,7 @@ export class ReceiveMovement {
         private readonly maintenanceReportRepository: IMaintenanceReportRepository,
         private readonly responsibleRepository: IResponsibleRepository,
         private readonly locationRepository: ILocationRepository,
-        private readonly emailService?: IEmailService,
+        private readonly eventBus?: IEventBus,
         private readonly unitOfWork?: IUnitOfWork
     ) { }
 
@@ -130,35 +130,22 @@ export class ReceiveMovement {
                 maintenanceReportRepository: this.maintenanceReportRepository
             });
 
-        // 5. Notificación automática de recepción (con acta/foto adjunta) a los buzones suscritos
-        if (this.emailService) {
-            try {
-                const originLoc = await this.locationRepository.findById(movement.originLocationId);
-                const destLoc = await this.locationRepository.findById(movement.destinationLocationId);
-                const originResp = await this.responsibleRepository.findById(movement.responsibleId);
-                const receiverResp = await this.responsibleRepository.findById(receiverId);
-
-                const assetsDetails = assetsInMovement.map(act => ({
-                    placa: act.placa,
-                    marca: act.marca,
-                    modelo: act.modelo,
-                    serial: act.serial
-                }));
-
-                await this.emailService.sendMovementReceiptNotification(
+        // 5. Emitir evento de dominio para notificación de recepción desacoplada
+        if (this.eventBus) {
+            const assetsDetails = assetsInMovement.map(act => ({
+                placa: act.placa,
+                marca: act.marca,
+                modelo: act.modelo,
+                serial: act.serial
+            }));
+            await this.eventBus.publish(
+                new MovementReceivedDomainEvent(
                     updatedMovement,
-                    {
-                        activos: assetsDetails,
-                        originLocation: originLoc?.nombre ?? 'Sin sede origen',
-                        destinationLocation: destLoc?.nombre ?? 'Sin sede destino',
-                        responsibleName: originResp?.nombre ?? 'Sin custodio',
-                        receiverName: receiverResp?.nombre ?? movement.physicalReceiverName ?? 'Receptor Destino',
-                        receivedEvidenceUrl: receiverEvidenceUrl
-                    }
-                );
-            } catch (mailError) {
-                console.error("Error al despachar notificación de recepción:", mailError);
-            }
+                    receiverId,
+                    receiverEvidenceUrl,
+                    assetsDetails
+                )
+            );
         }
 
         return updatedMovement;

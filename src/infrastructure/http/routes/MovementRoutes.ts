@@ -29,6 +29,10 @@ import { StorageAdapterFactory } from "../../storage/StorageAdapterFactory";
 import { MovementController } from "../controllers/MovementController";
 import { TypeORMUnitOfWork } from "../../persistence/typeorm/TypeORMUnitOfWork";
 import { keycloak } from "../middleware/KeycloakConfig";
+import { InMemoryEventBus } from "../../events/InMemoryEventBus";
+import { MovementDispatchedDomainEvent, MovementReceivedDomainEvent } from "../../../domain/events";
+import { SendMovementDispatchedNotificationHandler } from "../../../application/handlers/SendMovementDispatchedNotificationHandler";
+import { SendMovementReceivedNotificationHandler } from "../../../application/handlers/SendMovementReceivedNotificationHandler";
 
 const movementRouter = Router();
 
@@ -46,10 +50,29 @@ const emailService = EmailServiceFactory.create();
 const whatsAppService = new WasapiNotificationService();
 const fileStorageService = StorageAdapterFactory.getAdapter();
 
-// 2. Inicializamos Casos de Uso (Blindados con Transaccionalidad Atómica)
+// 2. Inicializamos Bus de Eventos de Dominio y Suscriptores Desacoplados
+const eventBus = new InMemoryEventBus();
+
+const dispatchedNotificationHandler = new SendMovementDispatchedNotificationHandler(
+    emailService,
+    whatsAppService,
+    locationRepo,
+    responsibleRepo,
+    movementRepo
+);
+eventBus.subscribe<MovementDispatchedDomainEvent>('MovementDispatched', (event) => dispatchedNotificationHandler.handle(event));
+
+const receivedNotificationHandler = new SendMovementReceivedNotificationHandler(
+    emailService,
+    locationRepo,
+    responsibleRepo
+);
+eventBus.subscribe<MovementReceivedDomainEvent>('MovementReceived', (event) => receivedNotificationHandler.handle(event));
+
+// 3. Inicializamos Casos de Uso (Blindados con Transaccionalidad Atómica y Event-Driven)
 const registerUC = new RegisterMovement(movementRepo, activoRepo, locationRepo, responsibleRepo, emailService, simCardRepo, unitOfWork);
-const dispatchUC = new DispatchMovement(movementRepo, activoRepo, locationRepo, responsibleRepo, emailService, whatsAppService, unitOfWork);
-const receiveUC = new ReceiveMovement(movementRepo, activoRepo, simCardRepo, maintenanceReportRepo, responsibleRepo, locationRepo, emailService, unitOfWork);
+const dispatchUC = new DispatchMovement(movementRepo, activoRepo, eventBus, unitOfWork);
+const receiveUC = new ReceiveMovement(movementRepo, activoRepo, simCardRepo, maintenanceReportRepo, responsibleRepo, locationRepo, eventBus, unitOfWork);
 const getUC = new GetMovements(movementRepo);
 const rejectUC = new RejectMovement(movementRepo, activoRepo, unitOfWork);
 const receiveByMagicLinkUC = new ReceiveByMagicLink(movementRepo, activoRepo, simCardRepo, maintenanceReportRepo, responsibleRepo, locationRepo, fileStorageService, unitOfWork);

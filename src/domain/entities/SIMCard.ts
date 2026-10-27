@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { Activo } from './Activo';
 import { Location } from './Location';
 import { Responsible } from './Responsible';
+import { ICCID } from '../value-objects';
 
 export enum EstadoSIM {
     BODEGA = 'BODEGA',
@@ -31,10 +32,20 @@ export class SIMCard {
             ...props,
             id: props.id || randomUUID(),
         };
+        this.validar();
+    }
+
+    private validar() {
+        if (!this.props.iccid) throw new Error('El ICCID es obligatorio');
+        ICCID.create(this.props.iccid);
+        if (!this.props.numero) throw new Error('El número es obligatorio');
+        if (!this.props.operador) throw new Error('El operador es obligatorio');
+        if (!this.props.estado) throw new Error('El estado es obligatorio');
     }
 
     get id() { return this.props.id; }
     get iccid() { return this.props.iccid; }
+    get iccidVO(): ICCID { return ICCID.create(this.props.iccid); }
     get numero() { return this.props.numero; }
     get estado() { return this.props.estado; }
     get operador() { return this.props.operador; }

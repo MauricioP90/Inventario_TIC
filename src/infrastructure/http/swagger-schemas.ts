@@ -23,8 +23,81 @@ export const swaggerSchemas = {
         required: ['nombre', 'estado'],
         properties: {
             id: { type: 'string', format: 'uuid' },
-            nombre: { type: 'string', example: 'Portátil' },
-            estado: { type: 'string', enum: ['ACTIVO', 'INACTIVO'], example: 'ACTIVO' }
+            nombre: { type: 'string', example: 'Terminal POS' },
+            estado: { type: 'string', enum: ['ACTIVO', 'INACTIVO'], example: 'ACTIVO' },
+            admiteSoftware: { type: 'boolean', example: true }
+        }
+    },
+    ModeloActivo: {
+        type: 'object',
+        required: ['tipoActivoId', 'marca', 'modelo', 'estado'],
+        properties: {
+            id: { type: 'string', format: 'uuid' },
+            tipoActivoId: { type: 'string', format: 'uuid' },
+            marca: { type: 'string', example: 'Sunmi' },
+            modelo: { type: 'string', example: 'V2 Pro' },
+            estado: { type: 'string', enum: ['ACTIVO', 'INACTIVO'], example: 'ACTIVO' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' }
+        }
+    },
+    SoftwareApp: {
+        type: 'object',
+        required: ['nombre', 'estado'],
+        properties: {
+            id: { type: 'string', format: 'uuid' },
+            nombre: { type: 'string', example: 'Xone POS' },
+            descripcion: { type: 'string', nullable: true, example: 'Aplicativo de venta de tiquetes en terminales móviles' },
+            estado: { type: 'string', enum: ['ACTIVO', 'INACTIVO'], example: 'ACTIVO' },
+            createdAt: { type: 'string', format: 'date-time' },
+            updatedAt: { type: 'string', format: 'date-time' }
+        }
+    },
+    SoftwareVersion: {
+        type: 'object',
+        required: ['softwareAppId', 'version', 'esVigente'],
+        properties: {
+            id: { type: 'string', format: 'uuid' },
+            softwareAppId: { type: 'string', format: 'uuid' },
+            version: { type: 'string', example: '1.02' },
+            esVigente: { type: 'boolean', example: true },
+            notasLanzamiento: { type: 'string', nullable: true, example: 'Parche de estabilidad de impresión térmica' },
+            fechaLanzamiento: { type: 'string', format: 'date-time' },
+            createdAt: { type: 'string', format: 'date-time' }
+        }
+    },
+    ActivoSoftwareHistory: {
+        type: 'object',
+        required: ['activoId', 'softwareVersionId', 'estado', 'fechaInstalacion'],
+        properties: {
+            id: { type: 'string', format: 'uuid' },
+            activoId: { type: 'string', format: 'uuid' },
+            softwareVersionId: { type: 'string', format: 'uuid' },
+            licencia: { type: 'string', nullable: true, example: 'LIC-XONE-2026-001' },
+            estado: { type: 'string', enum: ['INSTALADO', 'ACTUALIZADO', 'RETIRADO'], example: 'INSTALADO' },
+            instaladoPor: { type: 'string', example: 'admin' },
+            fechaInstalacion: { type: 'string', format: 'date-time' },
+            fechaRetiro: { type: 'string', format: 'date-time', nullable: true },
+            retiradoPor: { type: 'string', nullable: true },
+            motivoRetiro: { type: 'string', nullable: true },
+            observaciones: { type: 'string', nullable: true }
+        }
+    },
+    InstalledSoftwareEvaluation: {
+        type: 'object',
+        properties: {
+            historyId: { type: 'string', format: 'uuid' },
+            activoId: { type: 'string', format: 'uuid' },
+            appId: { type: 'string', format: 'uuid' },
+            appNombre: { type: 'string', example: 'Xone POS' },
+            versionInstaladaId: { type: 'string', format: 'uuid' },
+            versionInstalada: { type: 'string', example: '0.01' },
+            versionVigenteOficial: { type: 'string', nullable: true, example: '1.02' },
+            semaforoVigencia: { type: 'string', enum: ['AL_DIA', 'DESACTUALIZADO', 'SUPERIOR_BETA', 'SIN_OFICIAL'], example: 'DESACTUALIZADO' },
+            licencia: { type: 'string', nullable: true },
+            fechaInstalacion: { type: 'string', format: 'date-time' },
+            instaladoPor: { type: 'string' },
+            observaciones: { type: 'string', nullable: true }
         }
     },
     ActivoDocumentHistory: {
@@ -80,7 +153,7 @@ export const swaggerSchemas = {
             id: { type: 'string', format: 'uuid' },
             code: { type: 'string' },
             nombre: { type: 'string' },
-            tipo: { type: 'string', enum: ['OFICINA', 'BODEGA', 'PROVEEDOR', 'REGIONAL'], example: 'OFICINA' },
+            tipo: { type: 'string', enum: ['PUNTO_TI', 'OFICINA_PROPIA', 'CONTRATISTA', 'PROVEEDOR', 'OFICINA', 'BODEGA', 'REGIONAL'], example: 'OFICINA_PROPIA' },
             ciudad: { type: 'string', nullable: true, example: 'Bogotá' },
             responsableId: { type: 'string', format: 'uuid', nullable: true },
             coordenadas: { type: 'string', nullable: true, example: '4.60971,-74.08175' },
@@ -249,10 +322,33 @@ export const swaggerSchemas = {
             eventos: {
                 type: 'array',
                 items: { type: 'string' },
-                example: ['DESPACHO_TRASLADO', 'RECEPCION_TRASLADO']
+                example: ['DESPACHO_TRASLADO', 'RECEPCION_TRASLADO', 'MOVIMIENTO_NO_AUTORIZADO']
             },
             createdAt: { type: 'string', format: 'date-time' },
             updatedAt: { type: 'string', format: 'date-time' }
+        }
+    },
+    ActivoTelemetryLog: {
+        type: 'object',
+        properties: {
+            id: { type: 'string', format: 'uuid' },
+            activoId: { type: 'string', format: 'uuid' },
+            placa: { type: 'string', example: 'POS-001' },
+            reportedCoords: { type: 'string', example: '4.142,-73.6266' },
+            reportedIp: { type: 'string', nullable: true, example: '10.10.25.44' },
+            expectedLocationId: { type: 'string', format: 'uuid', nullable: true },
+            expectedLocationName: { type: 'string', nullable: true, example: 'Terminal Salitre Bogotá' },
+            detectedLocationId: { type: 'string', format: 'uuid', nullable: true },
+            detectedLocationName: { type: 'string', nullable: true, example: 'Agencia Villavicencio (Villavicencio)' },
+            distanceKm: { type: 'number', nullable: true, example: 74.82 },
+            status: {
+                type: 'string',
+                enum: ['CONFORME', 'EN_TRANSITO_AUTORIZADO', 'CONTROVERSIA_UBICACION', 'SIN_COORDENADAS_SEDE']
+            },
+            alertSent: { type: 'boolean', example: true },
+            notificationUuid: { type: 'string', nullable: true },
+            observaciones: { type: 'string', nullable: true },
+            reportedAt: { type: 'string', format: 'date-time' }
         }
     }
 };

@@ -14,6 +14,11 @@ import { AreaEntity } from "./infrastructure/persistence/typeorm/entities/AreaEn
 import { ActivoDocumentHistoryEntity } from "./infrastructure/persistence/typeorm/entities/ActivoDocumentHistoryEntity";
 import { NotificationRecipientEntity } from "./infrastructure/persistence/typeorm/entities/NotificationRecipientEntity";
 import { CargoEntity } from "./infrastructure/persistence/typeorm/entities/CargoEntity";
+import { ModeloActivoEntity } from "./infrastructure/persistence/typeorm/entities/ModeloActivoEntity";
+import { SoftwareAppEntity } from "./infrastructure/persistence/typeorm/entities/SoftwareAppEntity";
+import { SoftwareVersionEntity } from "./infrastructure/persistence/typeorm/entities/SoftwareVersionEntity";
+import { ActivoSoftwareHistoryEntity } from "./infrastructure/persistence/typeorm/entities/ActivoSoftwareHistoryEntity";
+import { ActivoTelemetryLogEntity } from "./infrastructure/persistence/typeorm/entities/ActivoTelemetryLogEntity";
 
 export const AppDataSource = new DataSource({
     type: "postgres",
@@ -35,7 +40,12 @@ export const AppDataSource = new DataSource({
         AreaEntity,
         ActivoDocumentHistoryEntity,
         NotificationRecipientEntity,
-        CargoEntity
+        CargoEntity,
+        ModeloActivoEntity,
+        SoftwareAppEntity,
+        SoftwareVersionEntity,
+        ActivoSoftwareHistoryEntity,
+        ActivoTelemetryLogEntity
     ],
     migrations: [
         process.env.NODE_ENV === "production"

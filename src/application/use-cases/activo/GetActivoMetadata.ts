@@ -29,7 +29,9 @@ export class GetActivoMetadata {
             ],
             types: tiposActivos.map(t => ({
                 id: t.id,
-                label: t.nombre
+                label: t.nombre,
+                admiteSoftware: t.admiteSoftware,
+                admiteTelemetria: t.admiteTelemetria
             })),
             bodegas: bodegas.map(l => ({
                 id: l.id,

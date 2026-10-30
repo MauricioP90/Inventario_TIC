@@ -241,7 +241,7 @@ export class NotificationRecipientController {
 
     /**
      * @swagger
-     * /api/notification-recipients/{id}/toggle-status:
+     * /api/notification-recipients/{id}/toggle:
      *   patch:
      *     summary: Alternar estado activo/inactivo de un destinatario
      *     tags: [Notificaciones]

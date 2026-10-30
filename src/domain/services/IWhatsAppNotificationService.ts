@@ -8,4 +8,16 @@ export interface IWhatsAppNotificationService {
         originLocation?: string;
         destinationLocation?: string;
     }): Promise<{ success: boolean; messageId?: string; error?: string }>;
+
+    sendUnauthorizedLocationAlert(params: {
+        toPhone: string;
+        recipientName: string;
+        placa: string;
+        equipoDesc: string;
+        expectedLocationName: string;
+        detectedLocationName: string;
+        distanceKm: number;
+        reportedCoords: string;
+        detectedAt?: string;
+    }): Promise<{ success: boolean; messageId?: string; error?: string }>;
 }

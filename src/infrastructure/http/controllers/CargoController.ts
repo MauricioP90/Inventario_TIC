@@ -133,7 +133,7 @@ export class CargoController {
 
     /**
      * @swagger
-     * /api/cargos/{id}/toggle-status:
+     * /api/cargos/{id}/toggle:
      *   patch:
      *     summary: Alternar el estado (ACTIVO / INACTIVO) de un cargo
      *     tags: [Cargos]

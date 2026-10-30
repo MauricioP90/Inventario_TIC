@@ -1,26 +1,15 @@
 import { Request, Response } from "express";
 import { CreateSIMCard } from "../../../application/use-cases/sim-card/CreateSIMCard";
 import { GetAllSIMCards } from "../../../application/use-cases/sim-card/GetAllSiMCards";
-import { AssignSIMToActivo } from "../../../application/use-cases/sim-card/AssignSIMToActivo";
 import { UpdateSIMCard } from "../../../application/use-cases/sim-card/UpdateSIMCard";
-import { DarDeBajaSIM } from "../../../application/use-cases/sim-card/DarDeBajaSIM";
 import { GetOneSIMCard } from "../../../application/use-cases/sim-card/GetOneSIMCard";
-import { GetSIMByNumero } from "../../../application/use-cases/sim-card/GetSIMByNumero";
-import { GetSIMByIccid } from "../../../application/use-cases/sim-card/GetSimByIccid";
-import { GetSIMCountByResponsible } from "../../../application/use-cases/sim-card/GetSIMCountByResponsible";
 
 export class SIMCardController {
     constructor(
         private readonly createSIMCard: CreateSIMCard,
         private readonly getAllSIMCards: GetAllSIMCards,
-        private readonly assignSIMToActivo: AssignSIMToActivo,
         private readonly updateSIMCard: UpdateSIMCard,
-        private readonly darDeBajaSIM: DarDeBajaSIM,
-        private readonly getOneSIMCard: GetOneSIMCard,
-        private readonly getByNumero: GetSIMByNumero,
-        private readonly getByIccid: GetSIMByIccid,
-        private readonly getCountByResponsible: GetSIMCountByResponsible
-
+        private readonly getOneSIMCard: GetOneSIMCard
     ) { }
 
     /**
@@ -52,8 +41,21 @@ export class SIMCardController {
      * @swagger
      * /api/sim-cards:
      *   get:
-     *     summary: Listar todas las SIM Cards
+     *     summary: Listar SIM Cards (opcionalmente filtradas por número o ICCID)
      *     tags: [SIM Cards]
+     *     parameters:
+     *       - in: query
+     *         name: numero
+     *         required: false
+     *         schema:
+     *           type: string
+     *         description: Filtrar por número telefónico de la línea
+     *       - in: query
+     *         name: iccid
+     *         required: false
+     *         schema:
+     *           type: string
+     *         description: Filtrar por código ICCID único del chip
      *     responses:
      *       200:
      *         description: Lista de SIM Cards
@@ -66,7 +68,9 @@ export class SIMCardController {
      */
     async getAll(req: Request, res: Response) {
         try {
-            const sims = await this.getAllSIMCards.execute();
+            const numero = req.query.numero as string | undefined;
+            const iccid = req.query.iccid as string | undefined;
+            const sims = await this.getAllSIMCards.execute({ numero, iccid });
             res.json(sims);
         } catch (error: any) {
             res.status(500).json({ message: error.message });
@@ -75,79 +79,9 @@ export class SIMCardController {
 
     /**
      * @swagger
-     * /api/sim-cards/{simCardId}/assign:
-     *   put:
-     *     summary: Asignar una SIM Card a un activo (por placa)
-     *     tags: [SIM Cards]
-     *     parameters:
-     *       - in: path
-     *         name: simCardId
-     *         required: true
-     *         schema:
-     *           type: string
-     *           format: uuid
-     *     requestBody:
-     *       required: true
-     *       content:
-     *         application/json:
-     *           schema:
-     *             type: object
-     *             properties:
-     *               placaActivo:
-     *                 type: string
-     *     responses:
-     *       200:
-     *         description: SIM asignada correctamente
-     */
-    async assign(req: Request, res: Response) {
-        try {
-            // Recibimos simCardId de la URL o del body, y placaActivo del body
-            const simCardId = req.params.simCardId || req.body.simCardId;
-            const { placaActivo } = req.body;
-
-            await this.assignSIMToActivo.execute({
-                simCardId: simCardId as string,
-                placaActivo: placaActivo as string
-            });
-            await res.json({ message: "SIM asignada correctamente" });
-        } catch (error: any) {
-            res.status(400).json({ message: error.message });
-        }
-    }
-
-    /**
-     * @swagger
-     * /api/sim-cards/{id}/desactivate:
-     *   patch:
-     *     summary: Desactivar una SIM Card
-     *     tags: [SIM Cards]
-     *     parameters:
-     *       - in: path
-     *         name: id
-     *         required: true
-     *         schema:
-     *           type: string
-     *           format: uuid
-     *     responses:
-     *       200:
-     *         description: SIM desactivada
-     */
-    async desactivate(req: Request, res: Response) {
-        try {
-            const { id } = req.params;
-            await this.darDeBajaSIM.execute({ id: id as string });
-            res.json({ message: "SIM Inactivada correctamente" });
-        } catch (error: any) {
-            res.status(400).json({ message: error.message });
-        }
-    }
-
-
-    /**
-     * @swagger
      * /api/sim-cards/{id}:
      *   put:
-     *     summary: Actualizar una SIM Card
+     *     summary: Actualizar una SIM Card (datos de línea, asignación a activo o estado ACTIVO/BAJA)
      *     tags: [SIM Cards]
      *     parameters:
      *       - in: path
@@ -205,112 +139,6 @@ export class SIMCardController {
             const { id } = req.params;
             const simCard = await this.getOneSIMCard.execute({ id: id as string });
             res.json(simCard);
-        } catch (error: any) {
-            res.status(400).json({ message: error.message });
-        }
-    }
-
-    /**
- * @swagger
- * /api/sim-cards/numero/{numero}:
- *   get:
- *     summary: Obtener una SIM Card por su número de teléfono
- *     tags: [SIM Cards]
- *     parameters:
- *       - in: path
- *         name: numero
- *         required: true
- *         schema:
- *           type: string
- *         description: Número de teléfono de la SIM
- *     responses:
- *       200:
- *         description: SIM Card encontrada
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/SIMCard'
- *       404:
- *         description: SIM Card no encontrada
- */
-
-
-    async getSIMByNumero(req: Request, res: Response) {
-        try {
-            const { numero } = req.params;
-            const simCard = await this.getByNumero.execute({ numero: numero as string });
-            res.json(simCard);
-        } catch (error: any) {
-            res.status(400).json({ message: error.message });
-        }
-    }
-
-    /**
-     * @swagger
-     * /api/sim-cards/iccid/{iccid}:
-     *   get:
-     *     summary: Obtener una SIM Card por su ICCID
-     *     tags: [SIM Cards]
-     *     parameters:
-     *       - in: path
-     *         name: iccid
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: ICCID de la SIM
-     *     responses:
-     *       200:
-     *         description: SIM Card encontrada
-     *         content:
-     *           application/json:
-     *             schema:
-     *               $ref: '#/components/schemas/SIMCard'
-     *       404:
-     *         description: SIM Card no encontrada
-     */
-
-    async getSIMByIccid(req: Request, res: Response) {
-        try {
-            const { iccid } = req.params;
-            const simCard = await this.getByIccid.execute({ iccid: iccid as string });
-            res.json(simCard);
-        } catch (error: any) {
-            res.status(400).json({ message: error.message });
-        }
-    }
-
-    /**
-     * @swagger
-     * /api/sim-cards/count/responsible/{responsibleId}:
-     *   get:
-     *     summary: Obtener el conteo de SIM Cards por responsable
-     *     tags: [SIM Cards]
-     *     parameters:
-     *       - in: path
-     *         name: responsibleId
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: ID del responsable
-     *     responses:
-     *       200:
-     *         description: Conteo de SIM Cards encontrado
-     *         content:
-     *           application/json:
-     *             schema:
-     *               type: object
-     *               properties:
-     *                 count:
-     *                   type: number
-     *       404:
-     *         description: Conteo de SIM Cards no encontrado
-     */
-
-    async getSIMCountByResponsible(req: Request, res: Response) {
-        try {
-            const { responsibleId } = req.params;
-            const count = await this.getCountByResponsible.execute({ responsibleId: responsibleId as string });
-            res.json(count);
         } catch (error: any) {
             res.status(400).json({ message: error.message });
         }

@@ -34,9 +34,8 @@ const getHistoryUC = new GetMaintenanceHistory(maintenanceRepo);
 const controller = new MaintenanceController(createUC, updateUC, getActiveUC, getHistoryUC);
 
 // Rutas protegidas por Keycloak
+maintenanceRouter.get("/", keycloak.protect(), (req, res) => controller.getAll(req, res));
 maintenanceRouter.post("/", keycloak.protect(), (req, res) => controller.create(req, res));
 maintenanceRouter.patch("/:id", keycloak.protect(), (req, res) => controller.update(req, res));
-maintenanceRouter.get("/active", keycloak.protect(), (req, res) => controller.getActive(req, res));
-maintenanceRouter.get("/history", keycloak.protect(), (req, res) => controller.getHistory(req, res));
 
 export { maintenanceRouter };

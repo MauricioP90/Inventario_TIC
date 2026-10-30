@@ -3,9 +3,7 @@ import { CreateActivo } from "../../../application/use-cases/activo/CreateActivo
 import { GetAllActivo } from "../../../application/use-cases/activo/GetAllActivo";
 import { GetOneActivo } from "../../../application/use-cases/activo/GetOneActivo";
 import { UpdateActivo } from "../../../application/use-cases/activo/UpdateActivo";
-import { DarDeBajaActivo } from "../../../application/use-cases/activo/DarDeBajaActivo";
 import { GetActivoMetadata } from "../../../application/use-cases/activo/GetActivoMetadata";
-import { FindByIdActivo } from "../../../application/use-cases/activo/FindByActivo";
 import { GetDashboardSummary } from "../../../application/use-cases/activo/GetDashboardSummary";
 import { CreateTipoActivo } from "../../../application/use-cases/tipoActivo/CreateTipoActivo";
 import { GetAllTipoActivo } from "../../../application/use-cases/tipoActivo/GetAllTipoActivo";
@@ -19,9 +17,7 @@ export class ActivoController {
         private getAllActivo: GetAllActivo,
         private getOneActivo: GetOneActivo,
         private updateActivo: UpdateActivo,
-        private darDeBajaActivo: DarDeBajaActivo,
         private getMetadataUseCase: GetActivoMetadata,
-        private findByIdActivo: FindByIdActivo,
         private getDashboardSummaryUseCase: GetDashboardSummary,
         private createTipoActivoUC: CreateTipoActivo,
         private getAllTipoActivoUC: GetAllTipoActivo,
@@ -231,6 +227,30 @@ export class ActivoController {
         }
     }
 
+    /**
+     * @swagger
+     * /api/activos/{id}/audit-history:
+     *   get:
+     *     summary: Obtener el historial de auditoría forense de facturas y precios de compra de un activo
+     *     tags: [Activos]
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *           format: uuid
+     *         description: ID único del activo
+     *     responses:
+     *       200:
+     *         description: Historial de modificaciones contables y de factura
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: array
+     *               items:
+     *                 $ref: '#/components/schemas/ActivoDocumentHistory'
+     */
     async getAuditHistory(req: Request, res: Response) {
         try {
             const id = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
@@ -241,32 +261,6 @@ export class ActivoController {
             res.json(history.map(h => h.toJSON ? h.toJSON() : h));
         } catch (error: any) {
             res.status(500).json({ message: error.message });
-        }
-    }
-
-    /**
-     * @swagger
-     * /api/activos/{placa}/baja:
-     *   patch:
-     *     summary: Dar de baja un activo
-     *     tags: [Activos]
-     *     parameters:
-     *       - in: path
-     *         name: placa
-     *         required: true
-     *         schema:
-     *           type: string
-     *     responses:
-     *       200:
-     *         description: Activo dado de baja
-     */
-    async darDeBaja(req: Request, res: Response) {
-        try {
-            const { placa } = req.params;
-            const activo = await this.darDeBajaActivo.execute({ placa: placa as string });
-            res.json(activo);
-        } catch (error: any) {
-            res.status(400).json({ message: error.message });
         }
     }
 
@@ -358,47 +352,61 @@ export class ActivoController {
 
     /**
      * @swagger
-     * /api/activos/{id}:
-     *   get:
-     *     summary: Obtener un activo por su ID
-     *     tags: [Activos]
-     *     parameters:
-     *       - in: path
-     *         name: id
-     *         required: true
-     *         schema:
-     *           type: string
-     *         description: ID único del activo
+     * /api/activos/types:
+     *   post:
+     *     summary: Crear un nuevo Tipo de Activo
+     *     tags: [Tipos de Activo]
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required: [nombre]
+     *             properties:
+     *               nombre:
+     *                 type: string
+     *                 example: Terminal POS
+     *               estado:
+     *                 type: string
+     *                 enum: [ACTIVO, INACTIVO]
+     *               admiteSoftware:
+     *                 type: boolean
+     *                 example: true
      *     responses:
-     *       200:
-     *         description: Activo encontrado
+     *       201:
+     *         description: Tipo de activo creado
      *         content:
      *           application/json:
      *             schema:
-     *               $ref: '#/components/schemas/Activo'
-     *       404:
-     *         description: Activo no encontrado
+     *               $ref: '#/components/schemas/TipoActivo'
      */
-    async findByActivo(req: Request, res: Response) {
-        try {
-            const { id } = req.params;
-            const activo = await this.findByIdActivo.execute({ id: id as string });
-            res.json(activo);
-        } catch (error: any) {
-            res.status(404).json({ message: error.message });
-        }
-    }
-
     async createTipoActivo(req: Request, res: Response) {
         try {
-            const { nombre, estado } = req.body;
-            const newType = await this.createTipoActivoUC.execute({ nombre, estado });
+            const { nombre, estado, admiteSoftware, admiteTelemetria } = req.body;
+            const newType = await this.createTipoActivoUC.execute({ nombre, estado, admiteSoftware, admiteTelemetria });
             res.status(201).json(newType.toJSON());
         } catch (error: any) {
             res.status(400).json({ message: error.message });
         }
     }
 
+    /**
+     * @swagger
+     * /api/activos/types:
+     *   get:
+     *     summary: Listar todos los Tipos de Activo
+     *     tags: [Tipos de Activo]
+     *     responses:
+     *       200:
+     *         description: Lista de tipos de activo
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: array
+     *               items:
+     *                 $ref: '#/components/schemas/TipoActivo'
+     */
     async getAllTipoActivo(req: Request, res: Response) {
         try {
             const tipos = await this.getAllTipoActivoUC.execute();
@@ -408,6 +416,41 @@ export class ActivoController {
         }
     }
 
+    /**
+     * @swagger
+     * /api/activos/types/{id}:
+     *   put:
+     *     summary: Actualizar un Tipo de Activo (nombre, estado o soporte de software)
+     *     tags: [Tipos de Activo]
+     *     parameters:
+     *       - in: path
+     *         name: id
+     *         required: true
+     *         schema:
+     *           type: string
+     *           format: uuid
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             properties:
+     *               nombre:
+     *                 type: string
+     *               estado:
+     *                 type: string
+     *                 enum: [ACTIVO, INACTIVO]
+     *               admiteSoftware:
+     *                 type: boolean
+     *     responses:
+     *       200:
+     *         description: Tipo de activo actualizado
+     *         content:
+     *           application/json:
+     *             schema:
+     *               $ref: '#/components/schemas/TipoActivo'
+     */
     async updateTipoActivo(req: Request, res: Response) {
         try {
             const { id } = req.params;

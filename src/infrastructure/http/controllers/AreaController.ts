@@ -3,7 +3,6 @@ import { CreateArea } from "../../../application/use-cases/area/CreateArea";
 import { GetAllAreas } from "../../../application/use-cases/area/GetAllAreas";
 import { UpdateArea } from "../../../application/use-cases/area/UpdateArea";
 import { GetOneArea } from "../../../application/use-cases/area/GetOneArea";
-import { InactiveArea } from "../../../application/use-cases/area/InactiveArea";
 import { Area, EstadoArea } from "../../../domain/entities/Area";
 
 export class AreaController {
@@ -11,8 +10,7 @@ export class AreaController {
         private readonly createArea: CreateArea,
         private readonly getAllAreas: GetAllAreas,
         private readonly updateArea: UpdateArea,
-        private readonly getOneArea: GetOneArea,
-        private readonly inactiveArea: InactiveArea
+        private readonly getOneArea: GetOneArea
     ) { }
 
     /**
@@ -115,7 +113,7 @@ export class AreaController {
      * @swagger
      * /api/areas/{id}:
      *   put:
-     *     summary: Actualizar una área
+     *     summary: Actualizar una área (código, nombre o estado ACTIVO/INACTIVO)
      *     tags: [Áreas]
      *     parameters:
      *       - in: path
@@ -147,42 +145,6 @@ export class AreaController {
                 estado: req.body.estado
             });
             const result = await this.updateArea.execute(area);
-            res.status(200).json(result);
-        } catch (error: any) {
-            res.status(400).json({ message: error.message });
-        }
-    }
-
-    /**
-     * @swagger
-     * /api/areas/{id}/inactive:
-     *   patch:
-     *     summary: Activar o Inactivar una área
-     *     tags: [Áreas]
-     *     parameters:
-     *       - in: path
-     *         name: id
-     *         required: true
-     *         schema:
-     *           type: string
-     *           format: uuid
-     *     requestBody:
-     *       content:
-     *         application/json:
-     *           schema:
-     *             type: object
-     *             properties:
-     *               action:
-     *                 type: string
-     *                 enum: [ACTIVATE, INACTIVATE]
-     *     responses:
-     *       200:
-     *         description: Estado de área actualizado con éxito
-     */
-    async inactive(req: Request, res: Response) {
-        try {
-            const action = req.body.action || 'INACTIVATE';
-            const result = await this.inactiveArea.execute(req.params.id as string, action);
             res.status(200).json(result);
         } catch (error: any) {
             res.status(400).json({ message: error.message });

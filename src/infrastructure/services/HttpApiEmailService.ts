@@ -644,4 +644,163 @@ export class HttpApiEmailService implements IEmailService {
             // Silencioso
         }
     }
+
+    async sendUnauthorizedLocationAlert(details: {
+        placa: string;
+        serial: string;
+        marca: string;
+        modelo: string;
+        tipoNombre: string;
+        responsibleName: string;
+        responsibleEmail?: string;
+        expectedLocationName: string;
+        expectedLocationCoords?: string | null;
+        detectedLocationName: string;
+        reportedCoords: string;
+        reportedIp?: string | null;
+        distanceKm: number;
+    }): Promise<string | null> {
+        let dbActiveCc: string[] = [];
+        let dbActiveBcc: string[] = [];
+        try {
+            const { recipientRepo } = await import('../http/routes/NotificationRecipientRoutes');
+            let dbRecipients = await recipientRepo.findActiveByEvent('MOVIMIENTO_NO_AUTORIZADO');
+            if (dbRecipients.length === 0) {
+                // Fallback a destinatarios activos generales si aún no han marcado el check específico de MOVIMIENTO_NO_AUTORIZADO
+                dbRecipients = await recipientRepo.findActive();
+            }
+            dbActiveCc = dbRecipients.filter(r => r.tipoCopia === 'CC').map(r => r.email);
+            dbActiveBcc = dbRecipients.filter(r => r.tipoCopia === 'BCC').map(r => r.email);
+        } catch (e) {
+            // Silencioso
+        }
+
+        const envDefaultCc = (process.env.MAIL_DEFAULT_CC || '')
+            .split(',')
+            .map(e => e.trim())
+            .filter(Boolean);
+
+        const envDefaultBcc = (process.env.MAIL_DEFAULT_BCC || '')
+            .split(',')
+            .map(e => e.trim())
+            .filter(Boolean);
+
+        const to = dbActiveCc[0] || dbActiveBcc[0] || envDefaultCc[0] || details.responsibleEmail || process.env.SMTP_USER || 'inventario@flotalamacarena.com';
+        const allCcRaw = [...dbActiveCc, ...envDefaultCc, ...(details.responsibleEmail ? [details.responsibleEmail] : [])];
+        const cc = Array.from(new Set(allCcRaw)).filter(e => e && e.toLowerCase() !== to.toLowerCase());
+        const allBccRaw = [...dbActiveBcc, ...envDefaultBcc];
+        const bcc = Array.from(new Set(allBccRaw)).filter(e => e && e.toLowerCase() !== to.toLowerCase() && !cc.includes(e));
+
+        const subject = `🚨 [Alerta Telemetría] Posible Movimiento No Autorizado - Placa [${details.placa}] (${details.distanceKm} km fuera de sede)`;
+        const timestamp = new Date().toLocaleString('es-CO', {
+            dateStyle: 'medium',
+            timeStyle: 'short'
+        });
+        const mapsUrl = `https://www.google.com/maps?q=${encodeURIComponent(details.reportedCoords)}`;
+
+        const bodyHtml = `
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8" /></head>
+<body style="margin:0;padding:24px;background:#f1f5f9;font-family:'Segoe UI',Roboto,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="max-width:640px;margin:0 auto;background:#ffffff;border-radius:16px;overflow:hidden;border:1px solid #fecaca;">
+    <tr>
+      <td style="background:linear-gradient(135deg,#991b1b 0%,#dc2626 100%);padding:26px 30px;color:#ffffff;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:#fecaca;margin-bottom:4px;">
+          Flota La Macarena · Monitoreo Automático de Activos
+        </div>
+        <h1 style="margin:0;font-size:20px;font-weight:800;">
+          🚨 Controversia de Ubicación Detectada (Sin Traslado Autorizado)
+        </h1>
+      </td>
+    </tr>
+    <tr>
+      <td style="padding:26px 30px;color:#1e293b;">
+        <p style="margin:0 0 16px 0;font-size:14px;line-height:1.6;">
+          El servicio de arranque automático del dispositivo ha reportado una ubicación física que <strong>no coincide con su sede asignada en el inventario</strong> y no registra ninguna orden de traslado ni mantenimiento externo activo.
+        </p>
+        <table width="100%" cellpadding="0" cellspacing="0" style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:16px;margin-bottom:18px;">
+          <tr>
+            <td width="48%" style="vertical-align:top;padding:6px;">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#64748b;">📍 Sede Oficial en Inventario</div>
+              <div style="font-size:15px;font-weight:800;color:#0f172a;margin-top:4px;">${details.expectedLocationName}</div>
+              <div style="font-size:11px;color:#64748b;margin-top:2px;">Coords: ${details.expectedLocationCoords || 'N/A'}</div>
+            </td>
+            <td width="4%" style="text-align:center;font-size:20px;color:#dc2626;font-weight:bold;">➔</td>
+            <td width="48%" style="vertical-align:top;padding:6px;">
+              <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#dc2626;">📡 Ubicación Detectada al Encender</div>
+              <div style="font-size:15px;font-weight:800;color:#b91c1c;margin-top:4px;">${details.detectedLocationName}</div>
+              <div style="font-size:11px;color:#7f1d1d;margin-top:2px;">Coords: ${details.reportedCoords} (${details.distanceKm} km de desviación)</div>
+            </td>
+          </tr>
+        </table>
+        <table width="100%" cellpadding="8" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:10px;font-size:13px;margin-bottom:18px;">
+          <tr style="background:#f8fafc;">
+            <td><strong>Placa:</strong> ${details.placa}</td>
+            <td><strong>Tipo:</strong> ${details.tipoNombre}</td>
+          </tr>
+          <tr>
+            <td><strong>Equipo:</strong> ${details.marca} ${details.modelo}</td>
+            <td><strong>Serial:</strong> ${details.serial || 'N/A'}</td>
+          </tr>
+          <tr style="background:#f8fafc;">
+            <td><strong>Custodio Actual:</strong> ${details.responsibleName}</td>
+            <td><strong>IP Reportada:</strong> ${details.reportedIp || 'N/D'}</td>
+          </tr>
+        </table>
+        <div style="text-align:center;margin:20px 0;">
+          <a href="${mapsUrl}" target="_blank" style="display:inline-block;background:#dc2626;color:#ffffff;text-decoration:none;padding:11px 22px;border-radius:8px;font-size:13px;font-weight:700;">
+            🗺️ Ver Coordenada Exacta en Google Maps
+          </a>
+        </div>
+        <p style="margin:0;font-size:11px;color:#64748b;text-align:center;">
+          Fecha de detección: ${timestamp} | Sistema de Inventario y Telemetría Flota La Macarena
+        </p>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+        this.saveDebugPreview(bodyHtml);
+        const generatedUuid = randomUUID();
+        const payload = {
+            concepto: this.concepto,
+            uuid: generatedUuid,
+            to,
+            cc,
+            bcc,
+            subject,
+            body: bodyHtml,
+            attachments: [{ filename: "", mimetype: "", content: "" }]
+        };
+
+        console.log(`📡 [HttpApiEmailService] Enviando alerta de telemetría vía API a ${this.apiUrl}...`);
+        console.log(`   -> Para (to): ${to}`);
+        console.log(`   -> Copia (cc): [${cc.join(', ')}]`);
+        console.log(`   -> Copia oculta (bcc): [${bcc.join(', ')}]`);
+        console.log(`   -> UUID de Notificación: ${generatedUuid}`);
+
+        try {
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 30000);
+            const response = await fetch(this.apiUrl, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+                signal: controller.signal
+            });
+            clearTimeout(timeout);
+            if (!response.ok) {
+                const errText = await response.text().catch(() => '');
+                console.warn(`⚠️ [HttpApiEmailService] Alerta de telemetría respondida con HTTP ${response.status}: ${errText}`);
+            } else {
+                console.log(`✅ [HttpApiEmailService] Alerta de telemetría despachada exitosamente. UUID: ${generatedUuid}`);
+            }
+            return generatedUuid;
+        } catch (err: any) {
+            console.warn('⚠️ [HttpApiEmailService] No se pudo conectar al servidor de correo para alerta de telemetría:', err?.message || err);
+            return generatedUuid;
+        }
+    }
 }

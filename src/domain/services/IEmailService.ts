@@ -23,4 +23,20 @@ export interface IEmailService {
             receivedEvidenceUrl?: string;
         }
     ): Promise<string | null>;
+
+    sendUnauthorizedLocationAlert?(details: {
+        placa: string;
+        serial: string;
+        marca: string;
+        modelo: string;
+        tipoNombre: string;
+        responsibleName: string;
+        responsibleEmail?: string;
+        expectedLocationName: string;
+        expectedLocationCoords?: string | null;
+        detectedLocationName: string;
+        reportedCoords: string;
+        reportedIp?: string | null;
+        distanceKm: number;
+    }): Promise<string | null>;
 }

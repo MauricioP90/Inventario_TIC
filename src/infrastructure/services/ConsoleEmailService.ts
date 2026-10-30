@@ -68,4 +68,30 @@ Soporte Firma   : ${details.receivedEvidenceUrl || 'Adjunto'}
         `);
         return `mock-console-receipt-${Date.now()}`;
     }
+
+    async sendUnauthorizedLocationAlert(details: {
+        placa: string;
+        serial: string;
+        marca: string;
+        modelo: string;
+        tipoNombre: string;
+        responsibleName: string;
+        expectedLocationName: string;
+        detectedLocationName: string;
+        reportedCoords: string;
+        distanceKm: number;
+    }): Promise<string | null> {
+        console.log(`
+================================================================================
+🚨 [ALERTA DE TELEMETRÍA - MOVIMIENTO NO AUTORIZADO (CONSOLE)]
+================================================================================
+Placa Activo    : [${details.placa}] ${details.marca} ${details.modelo}
+Custodio Actual : ${details.responsibleName}
+Sede Oficial    : ${details.expectedLocationName}
+Ubicación Real  : ${details.detectedLocationName} (${details.reportedCoords})
+Desviación      : ${details.distanceKm} km
+================================================================================
+        `);
+        return `mock-console-telemetry-${Date.now()}`;
+    }
 }

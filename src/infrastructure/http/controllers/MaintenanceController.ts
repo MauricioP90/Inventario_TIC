@@ -125,45 +125,29 @@ export class MaintenanceController {
 
     /**
      * @swagger
-     * /api/maintenance/active:
+     * /api/maintenance:
      *   get:
-     *     summary: Listar todas las fichas de mantenimiento activas (no cerradas)
-     *     tags: [Mantenimientos]
-     *     responses:
-     *       200:
-     *         description: Lista de fichas activas
-     *         content:
-     *           application/json:
-     *             schema:
-     *               type: array
-     *               items:
-     *                 $ref: '#/components/schemas/MaintenanceReport'
-     */
-    async getActive(req: Request, res: Response) {
-        try {
-            const reports = await this.getActiveUC.execute();
-            res.json(reports);
-        } catch (error: any) {
-            res.status(500).json({ message: error.message });
-        }
-    }
-
-    /**
-     * @swagger
-     * /api/maintenance/history:
-     *   get:
-     *     summary: Obtener el historial de fichas de mantenimiento cerradas, opcionalmente filtrado por activo
+     *     summary: Listar fichas de mantenimiento (activas o historial cerrado)
      *     tags: [Mantenimientos]
      *     parameters:
      *       - in: query
+     *         name: scope
+     *         required: false
+     *         schema:
+     *           type: string
+     *           enum: [active, history]
+     *           default: active
+     *         description: 'Alcance de la consulta: active (fichas abiertas en taller) o history (fichas cerradas)'
+     *       - in: query
      *         name: activoId
+     *         required: false
      *         schema:
      *           type: string
      *           format: uuid
-     *         description: ID del activo para filtrar su historial
+     *         description: ID del activo para filtrar su historial de mantenimientos
      *     responses:
      *       200:
-     *         description: Historial de mantenimientos
+     *         description: Lista de fichas de mantenimiento
      *         content:
      *           application/json:
      *             schema:
@@ -171,10 +155,15 @@ export class MaintenanceController {
      *               items:
      *                 $ref: '#/components/schemas/MaintenanceReport'
      */
-    async getHistory(req: Request, res: Response) {
+    async getAll(req: Request, res: Response) {
         try {
-            const { activoId } = req.query;
-            const reports = await this.getHistoryUC.execute(activoId as string | undefined);
+            const scope = (req.query.scope as string)?.toLowerCase() || 'active';
+            const activoId = req.query.activoId as string | undefined;
+            if (scope === 'history' || activoId) {
+                const reports = await this.getHistoryUC.execute(activoId);
+                return res.json(reports);
+            }
+            const reports = await this.getActiveUC.execute();
             res.json(reports);
         } catch (error: any) {
             res.status(500).json({ message: error.message });

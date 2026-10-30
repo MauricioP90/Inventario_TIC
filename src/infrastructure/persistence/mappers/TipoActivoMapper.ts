@@ -7,7 +7,9 @@ export class TipoActivoMapper {
         return new TipoActivo({
             id: entity.id,
             nombre: entity.nombre,
-            estado: entity.estado as EstadoTipoActivo
+            estado: entity.estado as EstadoTipoActivo,
+            admiteSoftware: entity.admiteSoftware ?? false,
+            admiteTelemetria: entity.admiteTelemetria ?? entity.admiteSoftware ?? false
         });
     }
 
@@ -16,6 +18,8 @@ export class TipoActivoMapper {
         entity.id = domain.id!;
         entity.nombre = domain.nombre;
         entity.estado = domain.estado;
+        entity.admiteSoftware = domain.admiteSoftware;
+        entity.admiteTelemetria = domain.admiteTelemetria;
         return entity;
     }
 }

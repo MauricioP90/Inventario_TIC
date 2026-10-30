@@ -320,4 +320,33 @@ ${movement.notes || 'Sin observaciones.'}
             // Silencioso si no puede escribir preview local
         }
     }
+
+    async sendUnauthorizedLocationAlert(details: {
+        placa: string;
+        serial: string;
+        marca: string;
+        modelo: string;
+        tipoNombre: string;
+        responsibleName: string;
+        responsibleEmail?: string;
+        expectedLocationName: string;
+        detectedLocationName: string;
+        reportedCoords: string;
+        distanceKm: number;
+    }): Promise<string | null> {
+        const to = details.responsibleEmail || process.env.SMTP_USER || 'inventario@flotalamacarena.com';
+        const from = process.env.SMTP_FROM || `"Inventario Flota La Macarena" <${process.env.SMTP_USER || 'notificaciones@flotalamacarena.com'}>`;
+        const subject = `🚨 [Alerta Telemetría] Movimiento No Autorizado - Placa [${details.placa}] (${details.distanceKm} km)`;
+        try {
+            const info = await this.transporter.sendMail({
+                from,
+                to,
+                subject,
+                text: `Alerta de ubicación no autorizada para el activo [${details.placa}] (${details.marca} ${details.modelo}). Sede esperada: ${details.expectedLocationName}. Ubicación reportada: ${details.detectedLocationName} (${details.reportedCoords}) a ${details.distanceKm} km.`
+            });
+            return info.messageId || `smtp-telemetry-${Date.now()}`;
+        } catch (err) {
+            return null;
+        }
+    }
 }

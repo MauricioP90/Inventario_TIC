@@ -7,6 +7,8 @@ export interface TipoActivoProps {
     id?: string;
     nombre: string;
     estado: EstadoTipoActivo;
+    admiteSoftware?: boolean;
+    admiteTelemetria?: boolean;
 }
 
 import { randomUUID } from 'node:crypto';
@@ -19,6 +21,8 @@ export class TipoActivo {
             ...props,
             id: props.id || randomUUID(),
             estado: props.estado || EstadoTipoActivo.ACTIVO,
+            admiteSoftware: props.admiteSoftware ?? false,
+            admiteTelemetria: props.admiteTelemetria ?? props.admiteSoftware ?? false,
         };
         this.validar();
     }
@@ -33,6 +37,8 @@ export class TipoActivo {
     get id() { return this.props.id; }
     get estado() { return this.props.estado; }
     get nombre() { return this.props.nombre; }
+    get admiteSoftware(): boolean { return this.props.admiteSoftware ?? false; }
+    get admiteTelemetria(): boolean { return this.props.admiteTelemetria ?? false; }
 
     public update(props: Partial<TipoActivoProps>) {
         this.props = {
@@ -46,7 +52,9 @@ export class TipoActivo {
     public toJSON() {
         return {
             ...this.props,
-            id: this.id
+            id: this.id,
+            admiteSoftware: this.admiteSoftware,
+            admiteTelemetria: this.admiteTelemetria
         };
     }
 }

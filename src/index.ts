@@ -16,6 +16,9 @@ import { maintenanceRouter } from "./infrastructure/http/routes/MaintenanceRoute
 import { AreaRouter } from "./infrastructure/http/routes/AreaRoutes";
 import { notificationRecipientRouter } from "./infrastructure/http/routes/NotificationRecipientRoutes";
 import { cargoRouter } from "./infrastructure/http/routes/CargoRoutes";
+import { modeloActivoRouter } from "./infrastructure/http/routes/ModeloActivoRoutes";
+import { softwareRouter } from "./infrastructure/http/routes/SoftwareRoutes";
+import { telemetryRouter } from "./infrastructure/http/routes/TelemetryRoutes";
 import { setupSwagger } from "./infrastructure/http/swagger";
 import { keycloak, memoryStore } from "./infrastructure/http/middleware/KeycloakConfig";
 import * as path from 'path';
@@ -80,6 +83,9 @@ app.use("/api/maintenance", maintenanceRouter);
 app.use("/api/areas", AreaRouter);
 app.use("/api/notification-recipients", notificationRecipientRouter);
 app.use("/api/cargos", cargoRouter);
+app.use("/api/modelos-activos", modeloActivoRouter);
+app.use("/api/software", softwareRouter);
+app.use("/api/telemetry", telemetryRouter);
 
 
 /**

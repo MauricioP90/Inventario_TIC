@@ -29,12 +29,6 @@ export class LocationController {
      *     responses:
      *       201:
      *         description: Ubicación creada
-     *   get:
-     *     summary: Listar todas las ubicaciones
-     *     tags: [Ubicaciones]
-     *     responses:
-     *       200:
-     *         description: Lista de ubicaciones
      */
     async create(req: Request, res: Response) {
         try {
@@ -135,6 +129,40 @@ export class LocationController {
         }
     }
 
+    /**
+     * @swagger
+     * /api/locations/reverse-geocode:
+     *   get:
+     *     summary: Obtener dirección y ciudad a partir de coordenadas GPS (Geocodificación inversa)
+     *     tags: [Ubicaciones]
+     *     parameters:
+     *       - in: query
+     *         name: lat
+     *         required: true
+     *         schema:
+     *           type: number
+     *         description: Latitud geográfica
+     *       - in: query
+     *         name: lon
+     *         required: true
+     *         schema:
+     *           type: number
+     *         description: Longitud geográfica
+     *     responses:
+     *       200:
+     *         description: Dirección y ciudad identificadas
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 address:
+     *                   type: string
+     *                 city:
+     *                   type: string
+     *       400:
+     *         description: Coordenadas inválidas
+     */
     async reverseGeocode(req: Request, res: Response) {
         try {
             const { lat, lon } = req.query;

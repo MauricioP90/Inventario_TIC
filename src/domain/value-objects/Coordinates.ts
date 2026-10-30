@@ -45,4 +45,32 @@ export class Coordinates {
     public toString(): string {
         return `${this.lat},${this.lon}`;
     }
+
+    /**
+     * Calcula la distancia geodésica en kilómetros hacia otra coordenada
+     * utilizando la fórmula de Haversine.
+     */
+    public distanceInKmTo(other: Coordinates): number {
+        const R = 6371; // Radio medio de la Tierra en kilómetros
+        const dLat = this.toRadians(other.lat - this.lat);
+        const dLon = this.toRadians(other.lon - this.lon);
+
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(this.toRadians(this.lat)) *
+            Math.cos(this.toRadians(other.lat)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = R * c;
+        return Math.round(distance * 100) / 100;
+    }
+
+    public isWithinRadiusKm(other: Coordinates, radiusKm: number): boolean {
+        return this.distanceInKmTo(other) <= radiusKm;
+    }
+
+    private toRadians(degrees: number): number {
+        return degrees * (Math.PI / 180);
+    }
 }

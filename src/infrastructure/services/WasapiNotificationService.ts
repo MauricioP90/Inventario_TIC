@@ -151,4 +151,88 @@ export class WasapiNotificationService implements IWhatsAppNotificationService {
             };
         }
     }
+
+    async sendUnauthorizedLocationAlert(params: {
+        toPhone: string;
+        recipientName: string;
+        placa: string;
+        equipoDesc: string;
+        expectedLocationName: string;
+        detectedLocationName: string;
+        distanceKm: number;
+        reportedCoords: string;
+        detectedAt?: string;
+    }): Promise<{ success: boolean; messageId?: string; error?: string }> {
+        const normalizedPhone = this.normalizePhone(params.toPhone);
+        const templateId = (process.env.WASAPI_TELEMETRY_TEMPLATE_ID || '').trim();
+
+        // Si no está configurada la plantilla o la clave API, simular en consola de forma limpia
+        if (!this.apiKey || this.apiKey === 'PENDIENTE' || !templateId) {
+            console.log(`[Wasapi] ℹ️ SIMULACIÓN ALERTA GPS (WASAPI_TELEMETRY_TEMPLATE_ID no configurada):`);
+            console.log(`[Wasapi] -> Destinatario: +${normalizedPhone} (${params.recipientName})`);
+            console.log(`[Wasapi] -> Equipo: ${params.equipoDesc} [${params.placa}] a ${params.distanceKm} km fuera de ${params.expectedLocationName}`);
+            return {
+                success: true,
+                messageId: `simulated-geo-${Date.now()}`
+            };
+        }
+
+        try {
+            const fromId = await this.resolveFromId();
+            const dateStr = params.detectedAt || new Date().toLocaleString('es-CO', {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+                timeZone: 'America/Bogota'
+            });
+
+            const payload: Record<string, any> = {
+                template_id: templateId,
+                from_id: fromId || 3701,
+                recipients: normalizedPhone,
+                contact_type: 'phone',
+                body_vars: [
+                    { text: '{{1}}', val: params.recipientName },
+                    { text: '{{2}}', val: `Placa ${params.placa} (${params.equipoDesc})` },
+                    { text: '{{3}}', val: params.expectedLocationName },
+                    { text: '{{4}}', val: `${params.detectedLocationName} (a ${params.distanceKm} km)` },
+                    { text: '{{5}}', val: dateStr }
+                ],
+                cta_var: [
+                    { text: '{{1}}', val: params.reportedCoords }
+                ]
+            };
+
+            const sendTemplateUrl = 'https://api-ws.wasapi.io/api/v1/whatsapp-messages/send-template';
+            const response = await fetch(sendTemplateUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.apiKey}`
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (!response.ok) {
+                const errorBody = await response.text();
+                console.error(`[Wasapi] Error HTTP ${response.status} al enviar alerta GPS a ${normalizedPhone}:`, errorBody);
+                return { success: false, error: `HTTP ${response.status}: ${errorBody}` };
+            }
+
+            const data = (await response.json().catch(() => ({}))) as any;
+            const logEntry = Array.isArray(data?.logs) && data.logs.length > 0 ? data.logs[0] : null;
+            const messageId = logEntry?.id?.toString() || logEntry?.wam_id || (data as any)?.id;
+
+            if (data?.success && data?.sent > 0) {
+                console.log(`[Wasapi] ✅ Alerta GPS enviada con éxito a +${normalizedPhone} (ID: ${messageId || 'OK'})`);
+                return { success: true, messageId };
+            } else {
+                const errorMsg = logEntry?.error || data?.error || 'No se pudo enviar la plantilla';
+                console.warn(`[Wasapi] ⚠️ Envío GPS no completado a +${normalizedPhone}:`, errorMsg);
+                return { success: false, error: errorMsg };
+            }
+        } catch (error: any) {
+            console.error(`[Wasapi] Excepción al enviar alerta GPS a ${normalizedPhone}:`, error.message);
+            return { success: false, error: error.message };
+        }
+    }
 }

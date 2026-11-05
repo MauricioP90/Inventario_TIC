@@ -84,7 +84,7 @@ export class WasapiNotificationService implements IWhatsAppNotificationService {
             const token = urlParts[urlParts.length - 1] || 'token';
 
             const templateId = (process.env.WASAPI_TEMPLATE_ID || '7ccd82bc-84a5-4e17-a2db-ae089e9ace9a').trim();
-            const headerImageUrl = (process.env.WASAPI_HEADER_IMAGE_URL || 'https://www.flotalamacarena.com/wp-content/uploads/2024/05/Logo_FlotaLaMacarena.png').trim();
+            const headerImageUrl = (process.env.WASAPI_HEADER_IMAGE_URL || 'https://www.flotalamacarena.com/wp-content/uploads/2026/11/Logo_FLM.png').trim();
             const fromId = await this.resolveFromId();
 
             const payload: Record<string, any> = {
@@ -179,6 +179,7 @@ export class WasapiNotificationService implements IWhatsAppNotificationService {
 
         try {
             const fromId = await this.resolveFromId();
+            const headerImageUrl = (process.env.WASAPI_TELEMETRY_HEADER_IMAGE_URL || process.env.WASAPI_HEADER_IMAGE_URL || 'https://www.flotalamacarena.com/wp-content/uploads/2026/11/monitoreo.jpeg').trim();
             const dateStr = params.detectedAt || new Date().toLocaleString('es-CO', {
                 dateStyle: 'medium',
                 timeStyle: 'short',
@@ -190,6 +191,8 @@ export class WasapiNotificationService implements IWhatsAppNotificationService {
                 from_id: fromId || 3701,
                 recipients: normalizedPhone,
                 contact_type: 'phone',
+                file: 'image',
+                url_file: headerImageUrl,
                 body_vars: [
                     { text: '{{1}}', val: params.recipientName },
                     { text: '{{2}}', val: `Placa ${params.placa} (${params.equipoDesc})` },

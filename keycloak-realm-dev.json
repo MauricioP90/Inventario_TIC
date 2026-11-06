@@ -1,0 +1,83 @@
+{
+  "realm": "Inventory-realm",
+  "enabled": true,
+  "displayName": "Sistema de Inventario y Traslados",
+  "loginTheme": "flota-macarena",
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "duplicateEmailsAllowed": false,
+  "resetPasswordAllowed": true,
+  "editUsernameAllowed": false,
+  "bruteForceProtected": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "admin",
+        "description": "Administrador general con acceso completo a todos los módulos, catálogos, bajas y auditoría"
+      },
+      {
+        "name": "coordinador",
+        "description": "Coordinador con permisos de gestión de activos, ubicaciones, responsables y traslados"
+      },
+      {
+        "name": "tecnico",
+        "description": "Técnico de soporte con permisos en activos, traslados y fichas de mantenimiento"
+      },
+      {
+        "name": "consultor",
+        "description": "Perfil de consulta y auditoría de inventario y reportes"
+      },
+      {
+        "name": "auxiliar_inventario",
+        "description": "Auxiliar operativo para registro de traslados, responsables y consulta de inventario"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "inventory-backend",
+      "name": "Cross Inventory SPA & API",
+      "description": "Cliente OIDC compartido para el frontend Angular y validación Bearer en el backend Node.js",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "implicitFlowEnabled": false,
+      "directAccessGrantsEnabled": true,
+      "serviceAccountsEnabled": false,
+      "rootUrl": "http://localhost:4200",
+      "baseUrl": "http://localhost:4200",
+      "redirectUris": [
+        "http://localhost:4200/*"
+      ],
+      "webOrigins": [
+        "http://localhost:4200",
+        "+"
+      ],
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:4200/*"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "testuser",
+      "enabled": true,
+      "emailVerified": true,
+      "firstName": "Administrador",
+      "lastName": "Local",
+      "email": "testuser@local.dev",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "123456",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "admin"
+      ]
+    }
+  ]
+}

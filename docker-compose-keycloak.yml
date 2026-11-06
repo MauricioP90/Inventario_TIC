@@ -10,10 +10,11 @@ services:
       KC_HEALTH_ENABLED: 'true'
     ports:
       - "8180:8080"
-    command: start-dev
+    command: start-dev --import-realm
     volumes:
       - keycloak_data:/opt/keycloak/data
       - ./themes:/opt/keycloak/themes
+      - ./keycloak-realm-dev.json:/opt/keycloak/data/import/keycloak-realm-dev.json:ro
 
   minio:
     image: minio/minio:latest

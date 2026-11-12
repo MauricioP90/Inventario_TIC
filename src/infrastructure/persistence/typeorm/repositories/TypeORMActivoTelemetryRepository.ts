@@ -53,7 +53,7 @@ export class TypeORMActivoTelemetryRepository implements IActivoTelemetryReposit
     async getSettings(): Promise<TelemetrySettings> {
         try {
             const rows = await this.ormRepo.manager.query(
-                `SELECT tolerance_km, cooldown_hours, alerts_enabled, whatsapp_enabled, whatsapp_notify_custodian, whatsapp_cargo_ids, updated_at FROM telemetry_settings WHERE id = 'default' LIMIT 1`
+                `SELECT tolerance_km, cooldown_hours, alerts_enabled, whatsapp_enabled, whatsapp_notify_custodian, whatsapp_cargo_ids, admin_password, updated_at FROM telemetry_settings WHERE id = 'default' LIMIT 1`
             );
             if (rows && rows.length > 0) {
                 let cargoIds: string[] = [];
@@ -74,6 +74,7 @@ export class TypeORMActivoTelemetryRepository implements IActivoTelemetryReposit
                     whatsappEnabled: rows[0].whatsapp_enabled !== undefined ? Boolean(rows[0].whatsapp_enabled) : true,
                     whatsappNotifyCustodian: rows[0].whatsapp_notify_custodian !== undefined ? Boolean(rows[0].whatsapp_notify_custodian) : true,
                     whatsappCargoIds: cargoIds,
+                    adminPassword: rows[0].admin_password || process.env.TELEMETRY_ADMIN_PASSWORD || 'FLM#Admin2026',
                     updatedAt: rows[0].updated_at
                 };
             }
@@ -87,6 +88,7 @@ export class TypeORMActivoTelemetryRepository implements IActivoTelemetryReposit
             whatsappEnabled: true,
             whatsappNotifyCustodian: true,
             whatsappCargoIds: [],
+            adminPassword: process.env.TELEMETRY_ADMIN_PASSWORD || 'FLM#Admin2026',
             updatedAt: new Date()
         };
     }
@@ -99,10 +101,11 @@ export class TypeORMActivoTelemetryRepository implements IActivoTelemetryReposit
         const whatsappEnabled = settings.whatsappEnabled !== undefined ? Boolean(settings.whatsappEnabled) : (current.whatsappEnabled ?? true);
         const whatsappNotifyCustodian = settings.whatsappNotifyCustodian !== undefined ? Boolean(settings.whatsappNotifyCustodian) : (current.whatsappNotifyCustodian ?? true);
         const whatsappCargoIds = settings.whatsappCargoIds !== undefined ? settings.whatsappCargoIds : (current.whatsappCargoIds ?? []);
+        const adminPassword = (settings.adminPassword !== undefined && settings.adminPassword.trim() !== '') ? settings.adminPassword.trim() : (current.adminPassword || 'FLM#Admin2026');
 
         await this.ormRepo.manager.query(
-            `INSERT INTO telemetry_settings (id, tolerance_km, cooldown_hours, alerts_enabled, whatsapp_enabled, whatsapp_notify_custodian, whatsapp_cargo_ids, updated_at)
-             VALUES ('default', $1, $2, $3, $4, $5, $6, now())
+            `INSERT INTO telemetry_settings (id, tolerance_km, cooldown_hours, alerts_enabled, whatsapp_enabled, whatsapp_notify_custodian, whatsapp_cargo_ids, admin_password, updated_at)
+             VALUES ('default', $1, $2, $3, $4, $5, $6, $7, now())
              ON CONFLICT (id) DO UPDATE SET
                tolerance_km = EXCLUDED.tolerance_km,
                cooldown_hours = EXCLUDED.cooldown_hours,
@@ -110,8 +113,9 @@ export class TypeORMActivoTelemetryRepository implements IActivoTelemetryReposit
                whatsapp_enabled = EXCLUDED.whatsapp_enabled,
                whatsapp_notify_custodian = EXCLUDED.whatsapp_notify_custodian,
                whatsapp_cargo_ids = EXCLUDED.whatsapp_cargo_ids,
+               admin_password = EXCLUDED.admin_password,
                updated_at = now()`,
-            [toleranceKm, cooldownHours, alertsEnabled, whatsappEnabled, whatsappNotifyCustodian, JSON.stringify(whatsappCargoIds)]
+            [toleranceKm, cooldownHours, alertsEnabled, whatsappEnabled, whatsappNotifyCustodian, JSON.stringify(whatsappCargoIds), adminPassword]
         );
 
         return await this.getSettings();

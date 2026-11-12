@@ -52,7 +52,7 @@ const registerHeartbeatUC = new RegisterDeviceHeartbeat(
     eventBus
 );
 const getActivoTelemetryUC = new GetActivoTelemetry(telemetryRepo);
-const verifyAdminAuthUC = new VerifyTelemetryAdminAuth();
+const verifyAdminAuthUC = new VerifyTelemetryAdminAuth(telemetryRepo);
 
 const controller = new TelemetryController(
     registerHeartbeatUC,

@@ -12,6 +12,7 @@ import { TypeORMActivoTelemetryRepository } from '../../persistence/typeorm/repo
 import { TypeORMResponsibleRepository } from '../../persistence/typeorm/repositories/TypeORMResponsibleRepository';
 import { RegisterDeviceHeartbeat } from '../../../application/use-cases/telemetry/RegisterDeviceHeartbeat';
 import { GetActivoTelemetry } from '../../../application/use-cases/telemetry/GetActivoTelemetry';
+import { VerifyTelemetryAdminAuth } from '../../../application/use-cases/telemetry/VerifyTelemetryAdminAuth';
 import { SendUnauthorizedLocationAlertHandler } from '../../../application/handlers/SendUnauthorizedLocationAlertHandler';
 import { InMemoryEventBus } from '../../events/InMemoryEventBus';
 import { UnauthorizedLocationDetectedDomainEvent } from '../../../domain/events/UnauthorizedLocationDetectedDomainEvent';
@@ -51,8 +52,16 @@ const registerHeartbeatUC = new RegisterDeviceHeartbeat(
     eventBus
 );
 const getActivoTelemetryUC = new GetActivoTelemetry(telemetryRepo);
+const verifyAdminAuthUC = new VerifyTelemetryAdminAuth();
 
-const controller = new TelemetryController(registerHeartbeatUC, getActivoTelemetryUC, emailService, whatsAppService, responsibleRepo);
+const controller = new TelemetryController(
+    registerHeartbeatUC,
+    getActivoTelemetryUC,
+    emailService,
+    whatsAppService,
+    responsibleRepo,
+    verifyAdminAuthUC
+);
 
 /**
  * Middleware híbrido para el agente de arranque:
@@ -71,6 +80,7 @@ const deviceOrKeycloakAuth = (req: Request, res: Response, next: NextFunction) =
 };
 
 telemetryRouter.post('/heartbeat', deviceOrKeycloakAuth, (req, res) => controller.registerHeartbeat(req, res));
+telemetryRouter.post('/admin-auth', deviceOrKeycloakAuth, (req, res) => controller.verifyAdminAuth(req, res));
 telemetryRouter.post('/test-alert', keycloak.protect(), (req, res) => controller.sendTestAlert(req, res));
 telemetryRouter.get('/overview', keycloak.protect(), (req, res) => controller.getOverview(req, res));
 telemetryRouter.get('/settings', keycloak.protect(), (req, res) => controller.getSettings(req, res));

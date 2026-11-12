@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { RegisterDeviceHeartbeat } from '../../../application/use-cases/telemetry/RegisterDeviceHeartbeat';
 import { GetActivoTelemetry } from '../../../application/use-cases/telemetry/GetActivoTelemetry';
+import { VerifyTelemetryAdminAuth } from '../../../application/use-cases/telemetry/VerifyTelemetryAdminAuth';
 import { IEmailService } from '../../../domain/services/IEmailService';
 import { IWhatsAppNotificationService } from '../../../domain/services/IWhatsAppNotificationService';
 import { IResponsibleRepository } from '../../../domain/repositories/IResponsibleRepository';
@@ -12,7 +13,8 @@ export class TelemetryController {
         private readonly getActivoTelemetryUC: GetActivoTelemetry,
         private readonly emailService?: IEmailService,
         private readonly whatsAppService?: IWhatsAppNotificationService,
-        private readonly responsibleRepository?: IResponsibleRepository
+        private readonly responsibleRepository?: IResponsibleRepository,
+        private readonly verifyAdminAuthUC: VerifyTelemetryAdminAuth = new VerifyTelemetryAdminAuth()
     ) {}
 
     /**
@@ -272,6 +274,93 @@ export class TelemetryController {
             });
         } catch (error: any) {
             res.status(500).json({ message: error.message || 'Error al despachar correo de prueba.' });
+        }
+    }
+
+    /**
+     * @swagger
+     * /api/telemetry/admin-auth:
+     *   post:
+     *     summary: Verificar credencial administrativa de TI para desbloqueo del agente móvil
+     *     description: >
+     *       Valida la clave técnica centralizada para permitir a los técnicos de soporte
+     *       acceder al panel de configuración del dispositivo móvil (enrolamiento de placa, servidor, reintentos).
+     *     tags: [Telemetría y Geocercas]
+     *     parameters:
+     *       - in: header
+     *         name: X-Device-Api-Key
+     *         required: false
+     *         schema:
+     *           type: string
+     *         description: Clave de autenticación del agente de arranque en el dispositivo (opcional si se autentica con Bearer JWT de Keycloak)
+     *     requestBody:
+     *       required: true
+     *       content:
+     *         application/json:
+     *           schema:
+     *             type: object
+     *             required: [password]
+     *             properties:
+     *               placa:
+     *                 type: string
+     *                 example: '1528-007885'
+     *               password:
+     *                 type: string
+     *                 example: 'FLM#Admin2026'
+     *     responses:
+     *       200:
+     *         description: Autenticación administrativa autorizada
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 authorized:
+     *                   type: boolean
+     *                   example: true
+     *                 message:
+     *                   type: string
+     *                   example: 'Autenticación administrativa autorizada.'
+     *       401:
+     *         description: Credencial administrativa inválida
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 authorized:
+     *                   type: boolean
+     *                   example: false
+     *                 message:
+     *                   type: string
+     *                   example: 'Credencial administrativa inválida.'
+     *       400:
+     *         description: Datos de entrada incompletos o inválidos
+     *         content:
+     *           application/json:
+     *             schema:
+     *               type: object
+     *               properties:
+     *                 authorized:
+     *                   type: boolean
+     *                   example: false
+     *                 message:
+     *                   type: string
+     *                   example: 'El campo password es requerido.'
+     */
+    async verifyAdminAuth(req: Request, res: Response) {
+        try {
+            const { password, placa } = req.body;
+            const result = await this.verifyAdminAuthUC.execute({ password, placa });
+            if (result.authorized) {
+                return res.status(200).json(result);
+            }
+            return res.status(401).json(result);
+        } catch (error: any) {
+            return res.status(400).json({
+                authorized: false,
+                message: error.message || 'Error validando credencial administrativa.'
+            });
         }
     }
 }

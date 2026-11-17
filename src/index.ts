@@ -75,8 +75,12 @@ app.use(cors({
 
 // Configuración de Sesión endurecida (Requerido por Keycloak-connect)
 const sessionSecret = process.env.SESSION_SECRET || 'a_very_secret_key_123';
-if (process.env.NODE_ENV === 'production' && sessionSecret === 'a_very_secret_key_123') {
-    console.warn('⚠️ [Seguridad] SESSION_SECRET por defecto detectado. Se recomienda definir un secreto robusto en el archivo .env');
+if (process.env.NODE_ENV === 'production') {
+    if (!process.env.SESSION_SECRET || sessionSecret === 'a_very_secret_key_123') {
+        throw new Error('❌ [Seguridad Crítica] SESSION_SECRET no configurado o inseguro en entorno de producción. Defina un secreto criptográfico en .env.');
+    }
+} else if (sessionSecret === 'a_very_secret_key_123') {
+    console.warn('⚠️ [Seguridad] SESSION_SECRET por defecto detectado en modo desarrollo. Configure una clave segura antes de pasar a producción.');
 }
 
 app.use(

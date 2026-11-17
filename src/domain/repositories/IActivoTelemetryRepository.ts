@@ -7,7 +7,8 @@ export interface TelemetrySettings {
     whatsappEnabled?: boolean;
     whatsappNotifyCustodian?: boolean;
     whatsappCargoIds?: string[];
-    adminPassword?: string;
+    hasAdminPassword?: boolean;
+    adminPassword?: string; // Usado únicamente en mutaciones de entrada (nunca expuesto en GET)
     updatedAt?: Date;
 }
 
@@ -18,6 +19,6 @@ export interface IActivoTelemetryRepository {
     findLatestForAllActivos(): Promise<ActivoTelemetryLog[]>;
     findRecentControversies(limit?: number): Promise<ActivoTelemetryLog[]>;
     getSettings(): Promise<TelemetrySettings>;
+    getAdminPasswordHash(): Promise<string | null>;
     updateSettings(settings: Partial<TelemetrySettings>): Promise<TelemetrySettings>;
 }
-

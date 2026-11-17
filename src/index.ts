@@ -21,17 +21,35 @@ import { softwareRouter } from "./infrastructure/http/routes/SoftwareRoutes";
 import { telemetryRouter } from "./infrastructure/http/routes/TelemetryRoutes";
 import { setupSwagger } from "./infrastructure/http/swagger";
 import { keycloak, memoryStore } from "./infrastructure/http/middleware/KeycloakConfig";
+import { securityHeadersMiddleware } from "./infrastructure/http/middleware/SecurityHeadersMiddleware";
+import { apiGeneralRateLimiter } from "./infrastructure/http/middleware/RateLimitMiddleware";
 import * as path from 'path';
-
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware para leer JSON con límite extendido para carga de archivos Base64 (hasta 50MB)
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
+// Ocultar cabecera X-Powered-By y habilitar confianza en reverse proxy Nginx
+app.disable('x-powered-by');
+app.set('trust proxy', 1);
 
-// Habilitar CORS configurable (soporta múltiples orígenes separados por comas)
+// Cabeceras HTTP de Seguridad
+app.use(securityHeadersMiddleware);
+
+// Middleware para leer JSON con límite estricto de 2MB global y 15MB en rutas de subida de archivos (hasta 10MB binarios)
+app.use((req, res, next) => {
+    if (req.path.startsWith('/api/files/upload') || req.path.includes('/receive')) {
+        return express.json({ limit: '15mb' })(req, res, (err) => {
+            if (err) return next(err);
+            express.urlencoded({ limit: '15mb', extended: true })(req, res, next);
+        });
+    }
+    return express.json({ limit: '2mb' })(req, res, (err) => {
+        if (err) return next(err);
+        express.urlencoded({ limit: '2mb', extended: true })(req, res, next);
+    });
+});
+
+// Habilitar CORS configurable restringido a lista blanca
 const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:4200')
     .split(',')
     .map(origin => origin.trim())
@@ -39,16 +57,23 @@ const allowedOrigins = (process.env.CORS_ORIGIN || 'http://localhost:4200')
 
 app.use(cors({
     origin: (requestOrigin, callback) => {
-        if (!requestOrigin || allowedOrigins.includes('*') || allowedOrigins.includes(requestOrigin)) {
-            callback(null, true);
-        } else {
-            callback(new Error(`Bloqueado por política CORS: Origen ${requestOrigin} no autorizado`));
+        if (!requestOrigin) {
+            return callback(null, true);
         }
+        if (allowedOrigins.includes(requestOrigin)) {
+            return callback(null, true);
+        }
+        if (process.env.NODE_ENV !== 'production' && (requestOrigin.startsWith('http://localhost:') || requestOrigin.startsWith('http://127.0.0.1:'))) {
+            return callback(null, true);
+        }
+        callback(new Error(`Bloqueado por política CORS: Origen ${requestOrigin} no autorizado`));
     },
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Device-Api-Key', 'Accept'],
     credentials: true
 }));
 
-// Configuración de Sesión (Requerido por Keycloak-connect)
+// Configuración de Sesión endurecida (Requerido por Keycloak-connect)
 const sessionSecret = process.env.SESSION_SECRET || 'a_very_secret_key_123';
 if (process.env.NODE_ENV === 'production' && sessionSecret === 'a_very_secret_key_123') {
     console.warn('⚠️ [Seguridad] SESSION_SECRET por defecto detectado. Se recomienda definir un secreto robusto en el archivo .env');
@@ -56,21 +81,35 @@ if (process.env.NODE_ENV === 'production' && sessionSecret === 'a_very_secret_ke
 
 app.use(
     session({
+        name: 'flm.sid',
         secret: sessionSecret,
         resave: false,
-        saveUninitialized: true,
-        store: memoryStore
+        saveUninitialized: false,
+        store: memoryStore,
+        cookie: {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 8 * 60 * 60 * 1000
+        }
     })
 );
 
 // Inicialización de Keycloak
 app.use(keycloak.middleware());
 
-// Registro de Swagger
+// Registro de Swagger (protegido exclusivamente para rol admin)
 setupSwagger(app);
 
-// Servir archivos estáticos (facturas, soportes)
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+// Servir archivos estáticos locales de forma segura (sin ejecución de scripts)
+app.use('/uploads', (req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Content-Security-Policy', "default-src 'none'");
+    next();
+}, express.static(path.join(process.cwd(), 'uploads')));
+
+// Rate Limiter general para la API
+app.use('/api', apiGeneralRateLimiter);
 
 // Registro de Rutas
 app.use("/api/sim-cards", simCardRouter);

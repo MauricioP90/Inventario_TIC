@@ -3,6 +3,7 @@ import { ActivoTelemetryLog } from '../../../../domain/entities/ActivoTelemetryL
 import { IActivoTelemetryRepository, TelemetrySettings } from '../../../../domain/repositories/IActivoTelemetryRepository';
 import { ActivoTelemetryLogEntity } from '../entities/ActivoTelemetryLogEntity';
 import { ActivoTelemetryLogMapper } from '../mappers/ActivoTelemetryLogMapper';
+import { PasswordHasher } from '../../../security/PasswordHasher';
 
 export class TypeORMActivoTelemetryRepository implements IActivoTelemetryRepository {
     constructor(private readonly ormRepo: Repository<ActivoTelemetryLogEntity>) {}
@@ -50,6 +51,20 @@ export class TypeORMActivoTelemetryRepository implements IActivoTelemetryReposit
         return entities.map(e => ActivoTelemetryLogMapper.toDomain(e));
     }
 
+    async getAdminPasswordHash(): Promise<string | null> {
+        try {
+            const rows = await this.ormRepo.manager.query(
+                `SELECT admin_password FROM telemetry_settings WHERE id = 'default' LIMIT 1`
+            );
+            if (rows && rows.length > 0 && rows[0].admin_password) {
+                return rows[0].admin_password;
+            }
+        } catch {
+            // Silencioso si la columna o tabla aún no existen
+        }
+        return process.env.TELEMETRY_ADMIN_PASSWORD || 'FLM#Admin2026';
+    }
+
     async getSettings(): Promise<TelemetrySettings> {
         try {
             const rows = await this.ormRepo.manager.query(
@@ -74,7 +89,8 @@ export class TypeORMActivoTelemetryRepository implements IActivoTelemetryReposit
                     whatsappEnabled: rows[0].whatsapp_enabled !== undefined ? Boolean(rows[0].whatsapp_enabled) : true,
                     whatsappNotifyCustodian: rows[0].whatsapp_notify_custodian !== undefined ? Boolean(rows[0].whatsapp_notify_custodian) : true,
                     whatsappCargoIds: cargoIds,
-                    adminPassword: rows[0].admin_password || process.env.TELEMETRY_ADMIN_PASSWORD || 'FLM#Admin2026',
+                    hasAdminPassword: Boolean(rows[0].admin_password || process.env.TELEMETRY_ADMIN_PASSWORD),
+                    // adminPassword se omite intencionalmente para no exponer hashes ni claves al navegador
                     updatedAt: rows[0].updated_at
                 };
             }
@@ -88,7 +104,7 @@ export class TypeORMActivoTelemetryRepository implements IActivoTelemetryReposit
             whatsappEnabled: true,
             whatsappNotifyCustodian: true,
             whatsappCargoIds: [],
-            adminPassword: process.env.TELEMETRY_ADMIN_PASSWORD || 'FLM#Admin2026',
+            hasAdminPassword: true,
             updatedAt: new Date()
         };
     }
@@ -101,7 +117,17 @@ export class TypeORMActivoTelemetryRepository implements IActivoTelemetryReposit
         const whatsappEnabled = settings.whatsappEnabled !== undefined ? Boolean(settings.whatsappEnabled) : (current.whatsappEnabled ?? true);
         const whatsappNotifyCustodian = settings.whatsappNotifyCustodian !== undefined ? Boolean(settings.whatsappNotifyCustodian) : (current.whatsappNotifyCustodian ?? true);
         const whatsappCargoIds = settings.whatsappCargoIds !== undefined ? settings.whatsappCargoIds : (current.whatsappCargoIds ?? []);
-        const adminPassword = (settings.adminPassword !== undefined && settings.adminPassword.trim() !== '') ? settings.adminPassword.trim() : (current.adminPassword || 'FLM#Admin2026');
+
+        // Obtener la clave actual para conservarla si el usuario no ingresó una nueva
+        const currentStoredPassword = await this.getAdminPasswordHash();
+        let targetPasswordHash = currentStoredPassword || PasswordHasher.hash(process.env.TELEMETRY_ADMIN_PASSWORD || 'FLM#Admin2026');
+
+        if (settings.adminPassword && settings.adminPassword.trim() !== '') {
+            const rawPassword = settings.adminPassword.trim();
+            targetPasswordHash = PasswordHasher.isHashed(rawPassword) 
+                ? rawPassword 
+                : PasswordHasher.hash(rawPassword);
+        }
 
         await this.ormRepo.manager.query(
             `INSERT INTO telemetry_settings (id, tolerance_km, cooldown_hours, alerts_enabled, whatsapp_enabled, whatsapp_notify_custodian, whatsapp_cargo_ids, admin_password, updated_at)
@@ -115,7 +141,7 @@ export class TypeORMActivoTelemetryRepository implements IActivoTelemetryReposit
                whatsapp_cargo_ids = EXCLUDED.whatsapp_cargo_ids,
                admin_password = EXCLUDED.admin_password,
                updated_at = now()`,
-            [toleranceKm, cooldownHours, alertsEnabled, whatsappEnabled, whatsappNotifyCustodian, JSON.stringify(whatsappCargoIds), adminPassword]
+            [toleranceKm, cooldownHours, alertsEnabled, whatsappEnabled, whatsappNotifyCustodian, JSON.stringify(whatsappCargoIds), targetPasswordHash]
         );
 
         return await this.getSettings();

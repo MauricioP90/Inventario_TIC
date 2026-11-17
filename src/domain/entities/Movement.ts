@@ -189,6 +189,20 @@ export class Movement {
         this.props.magicLinkToken = undefined;
     }
 
+    /**
+     * Valida si el enlace de recepción Magic Link ha caducado por superar el tiempo de vida permitido (TTL).
+     * Por defecto: 7 días (168 horas).
+     */
+    public isMagicLinkExpired(ttlHours: number = 168): boolean {
+        const referenceDate = this.props.shippedAt || this.props.createdAt;
+        if (!referenceDate) {
+            return false;
+        }
+        const maxAgeMs = ttlHours * 60 * 60 * 1000;
+        const ageMs = Date.now() - new Date(referenceDate).getTime();
+        return ageMs > maxAgeMs;
+    }
+
     public cancel() {
         if (this.props.status === MovementStatus.RECEIVED) {
             throw new Error('No se puede cancelar un movimiento ya recibido');

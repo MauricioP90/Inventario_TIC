@@ -17,7 +17,7 @@ import { RetireActivoSoftware } from "../../../application/use-cases/software/Re
 import { GetActivoInstalledSoftware } from "../../../application/use-cases/software/GetActivoInstalledSoftware";
 import { GetActivoSoftwareHistory } from "../../../application/use-cases/software/GetActivoSoftwareHistory";
 import { SoftwareController } from "../controllers/SoftwareController";
-import { keycloak } from "../middleware/KeycloakConfig";
+import { requireRoles } from "../middleware/RoleMiddleware";
 
 const softwareRouter = Router();
 
@@ -50,19 +50,19 @@ const softwareController = new SoftwareController(
 );
 
 // Apps
-softwareRouter.get("/apps", keycloak.protect(), (req, res) => softwareController.getAllApps(req, res));
-softwareRouter.post("/apps", keycloak.protect(), (req, res) => softwareController.createApp(req, res));
+softwareRouter.get("/apps", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => softwareController.getAllApps(req, res));
+softwareRouter.post("/apps", requireRoles('admin'), (req, res) => softwareController.createApp(req, res));
 
 // Versions
-softwareRouter.get("/apps/:appId/versions", keycloak.protect(), (req, res) => softwareController.getAppVersions(req, res));
-softwareRouter.post("/apps/:appId/versions", keycloak.protect(), (req, res) => softwareController.addVersion(req, res));
-softwareRouter.put("/versions/:versionId/vigente", keycloak.protect(), (req, res) => softwareController.setVigenteVersion(req, res));
+softwareRouter.get("/apps/:appId/versions", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => softwareController.getAppVersions(req, res));
+softwareRouter.post("/apps/:appId/versions", requireRoles('admin'), (req, res) => softwareController.addVersion(req, res));
+softwareRouter.put("/versions/:versionId/vigente", requireRoles('admin'), (req, res) => softwareController.setVigenteVersion(req, res));
 
 // Activos (Software vinculations)
-softwareRouter.get("/activos/:activoId/installed", keycloak.protect(), (req, res) => softwareController.getInstalledSoftware(req, res));
-softwareRouter.get("/activos/:activoId/history", keycloak.protect(), (req, res) => softwareController.getHistory(req, res));
-softwareRouter.post("/activos/:activoId/install", keycloak.protect(), (req, res) => softwareController.installSoftware(req, res));
-softwareRouter.put("/activos/:activoId/upgrade", keycloak.protect(), (req, res) => softwareController.upgradeSoftware(req, res));
-softwareRouter.put("/history/:historyId/retire", keycloak.protect(), (req, res) => softwareController.retireSoftware(req, res));
+softwareRouter.get("/activos/:activoId/installed", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => softwareController.getInstalledSoftware(req, res));
+softwareRouter.get("/activos/:activoId/history", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => softwareController.getHistory(req, res));
+softwareRouter.post("/activos/:activoId/install", requireRoles('admin', 'tecnico'), (req, res) => softwareController.installSoftware(req, res));
+softwareRouter.put("/activos/:activoId/upgrade", requireRoles('admin', 'tecnico'), (req, res) => softwareController.upgradeSoftware(req, res));
+softwareRouter.put("/history/:historyId/retire", requireRoles('admin', 'tecnico'), (req, res) => softwareController.retireSoftware(req, res));
 
 export { softwareRouter };

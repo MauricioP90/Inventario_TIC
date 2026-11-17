@@ -7,7 +7,7 @@ import { UpdateSIMCard } from "../../../application/use-cases/sim-card/UpdateSIM
 import { GetOneSIMCard } from "../../../application/use-cases/sim-card/GetOneSIMCard";
 import { CreateSIMCard } from "../../../application/use-cases/sim-card/CreateSIMCard";
 import { SIMCardController } from "../controllers/SIMCardController";
-import { keycloak } from "../middleware/KeycloakConfig";
+import { requireRoles } from "../middleware/RoleMiddleware";
 
 const simCardRouter = Router();
 
@@ -24,10 +24,10 @@ const updateUC = new UpdateSIMCard(simRepo);
 // 3. Inicializamos el controlador
 const controller = new SIMCardController(createUC, getAllUC, updateUC, getOneUC);
 
-// 4. Definimos las rutas
-simCardRouter.post("/", keycloak.protect(), (req, res) => controller.create(req, res));
-simCardRouter.get("/", keycloak.protect(), (req, res) => controller.getAll(req, res));
-simCardRouter.get("/:id", keycloak.protect(), (req, res) => controller.getOne(req, res));
-simCardRouter.put("/:id", keycloak.protect(), (req, res) => controller.update(req, res));
+// 4. Definimos las rutas con RBAC
+simCardRouter.post("/", requireRoles('admin', 'coordinador', 'auxiliar_inventario'), (req, res) => controller.create(req, res));
+simCardRouter.get("/", requireRoles('admin', 'coordinador', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getAll(req, res));
+simCardRouter.get("/:id", requireRoles('admin', 'coordinador', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getOne(req, res));
+simCardRouter.put("/:id", requireRoles('admin', 'coordinador', 'auxiliar_inventario'), (req, res) => controller.update(req, res));
 
 export { simCardRouter };

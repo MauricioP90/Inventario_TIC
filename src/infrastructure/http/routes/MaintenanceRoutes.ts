@@ -12,7 +12,7 @@ import { UpdateMaintenanceReport } from "../../../application/use-cases/maintena
 import { GetActiveMaintenance } from "../../../application/use-cases/maintenance/GetActiveMaintenance";
 import { GetMaintenanceHistory } from "../../../application/use-cases/maintenance/GetMaintenanceHistory";
 import { MaintenanceController } from "../controllers/MaintenanceController";
-import { keycloak } from "../middleware/KeycloakConfig";
+import { requireRoles } from "../middleware/RoleMiddleware";
 
 const maintenanceRouter = Router();
 
@@ -33,9 +33,9 @@ const getHistoryUC = new GetMaintenanceHistory(maintenanceRepo);
 // Controlador
 const controller = new MaintenanceController(createUC, updateUC, getActiveUC, getHistoryUC);
 
-// Rutas protegidas por Keycloak
-maintenanceRouter.get("/", keycloak.protect(), (req, res) => controller.getAll(req, res));
-maintenanceRouter.post("/", keycloak.protect(), (req, res) => controller.create(req, res));
-maintenanceRouter.patch("/:id", keycloak.protect(), (req, res) => controller.update(req, res));
+// Rutas protegidas por Roles (RBAC)
+maintenanceRouter.get("/", requireRoles('admin', 'coordinador', 'tecnico'), (req, res) => controller.getAll(req, res));
+maintenanceRouter.post("/", requireRoles('admin', 'coordinador', 'tecnico'), (req, res) => controller.create(req, res));
+maintenanceRouter.patch("/:id", requireRoles('admin', 'coordinador', 'tecnico'), (req, res) => controller.update(req, res));
 
 export { maintenanceRouter };

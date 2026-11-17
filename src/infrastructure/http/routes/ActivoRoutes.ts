@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { AppDataSource } from "../../../data-source";
 import { ActivoController } from "../controllers/ActivoController";
-import { keycloak } from "../middleware/KeycloakConfig";
+import { requireRoles } from "../middleware/RoleMiddleware";
 
 // Entidades y Repositorios
 import { ActivoEntity } from "../../persistence/typeorm/entities/ActivoEntity";
@@ -72,16 +72,16 @@ const controller = new ActivoController(
     getActivoDocumentHistoryUC
 );
 
-// 4. Definimos Rutas
-activoRouter.post("/", keycloak.protect(), (req, res) => controller.create(req, res));
-activoRouter.post("/types", keycloak.protect(), (req, res) => controller.createTipoActivo(req, res));
-activoRouter.get("/types", keycloak.protect(), (req, res) => controller.getAllTipoActivo(req, res));
-activoRouter.put("/types/:id", keycloak.protect(), (req, res) => controller.updateTipoActivo(req, res));
-activoRouter.get("/", keycloak.protect(), (req, res) => controller.getAll(req, res));
-activoRouter.get("/metadata", keycloak.protect(), (req, res) => controller.getActivoMetadata(req, res));
-activoRouter.get("/dashboard", keycloak.protect(), (req, res) => controller.getDashboardSummary(req, res));
-activoRouter.get("/:id/audit-history", keycloak.protect(), (req, res) => controller.getAuditHistory(req, res));
-activoRouter.get("/:placa", keycloak.protect(), (req, res) => controller.getOne(req, res));
-activoRouter.put("/:placa", keycloak.protect(), (req, res) => controller.update(req, res));
+// 4. Definimos Rutas con Control de Acceso Basado en Roles (RBAC)
+activoRouter.post("/", requireRoles('admin'), (req, res) => controller.create(req, res));
+activoRouter.post("/types", requireRoles('admin'), (req, res) => controller.createTipoActivo(req, res));
+activoRouter.get("/types", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getAllTipoActivo(req, res));
+activoRouter.put("/types/:id", requireRoles('admin'), (req, res) => controller.updateTipoActivo(req, res));
+activoRouter.get("/", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getAll(req, res));
+activoRouter.get("/metadata", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getActivoMetadata(req, res));
+activoRouter.get("/dashboard", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getDashboardSummary(req, res));
+activoRouter.get("/:id/audit-history", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getAuditHistory(req, res));
+activoRouter.get("/:placa", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getOne(req, res));
+activoRouter.put("/:placa", requireRoles('admin', 'coordinador', 'tecnico'), (req, res) => controller.update(req, res));
 
 export { activoRouter };

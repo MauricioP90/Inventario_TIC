@@ -19,7 +19,8 @@ import { UnauthorizedLocationDetectedDomainEvent } from '../../../domain/events/
 import { EmailServiceFactory } from '../../services/EmailServiceFactory';
 import { WasapiNotificationService } from '../../services/WasapiNotificationService';
 import { TelemetryController } from '../controllers/TelemetryController';
-import { keycloak } from '../middleware/KeycloakConfig';
+import { requireRoles, deviceOrKeycloakAuth } from '../middleware/RoleMiddleware';
+import { adminAuthRateLimiter } from '../middleware/RateLimitMiddleware';
 
 const telemetryRouter = Router();
 
@@ -63,29 +64,13 @@ const controller = new TelemetryController(
     verifyAdminAuthUC
 );
 
-/**
- * Middleware híbrido para el agente de arranque:
- * Permite la autenticación por cabecera X-Device-Api-Key (para el demonio de arranque en POS/PC sin sesión humana)
- * o mediante sesión/token JWT de Keycloak (para simulaciones y pruebas de auditoría desde la UI).
- */
-const deviceOrKeycloakAuth = (req: Request, res: Response, next: NextFunction) => {
-    const expectedDeviceKey = process.env.DEVICE_TELEMETRY_API_KEY || 'flm-telemetry-secret-key-2026';
-    const providedDeviceKey = req.headers['x-device-api-key'];
-
-    if (providedDeviceKey && providedDeviceKey === expectedDeviceKey) {
-        return next();
-    }
-
-    return keycloak.protect()(req, res, next);
-};
-
 telemetryRouter.post('/heartbeat', deviceOrKeycloakAuth, (req, res) => controller.registerHeartbeat(req, res));
-telemetryRouter.post('/admin-auth', deviceOrKeycloakAuth, (req, res) => controller.verifyAdminAuth(req, res));
-telemetryRouter.post('/test-alert', keycloak.protect(), (req, res) => controller.sendTestAlert(req, res));
-telemetryRouter.get('/overview', keycloak.protect(), (req, res) => controller.getOverview(req, res));
-telemetryRouter.get('/settings', keycloak.protect(), (req, res) => controller.getSettings(req, res));
-telemetryRouter.put('/settings', keycloak.protect(), (req, res) => controller.updateSettings(req, res));
-telemetryRouter.get('/activos/:activoId', keycloak.protect(), (req, res) => controller.getActivoHistory(req, res));
+telemetryRouter.post('/admin-auth', adminAuthRateLimiter, deviceOrKeycloakAuth, (req, res) => controller.verifyAdminAuth(req, res));
+telemetryRouter.post('/test-alert', requireRoles('admin'), (req, res) => controller.sendTestAlert(req, res));
+telemetryRouter.get('/overview', requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getOverview(req, res));
+telemetryRouter.get('/settings', requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getSettings(req, res));
+telemetryRouter.put('/settings', requireRoles('admin'), (req, res) => controller.updateSettings(req, res));
+telemetryRouter.get('/activos/:activoId', requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getActivoHistory(req, res));
 
 export { telemetryRouter };
 

@@ -28,7 +28,8 @@ import { WasapiNotificationService } from "../../services/WasapiNotificationServ
 import { StorageAdapterFactory } from "../../storage/StorageAdapterFactory";
 import { MovementController } from "../controllers/MovementController";
 import { TypeORMUnitOfWork } from "../../persistence/typeorm/TypeORMUnitOfWork";
-import { keycloak } from "../middleware/KeycloakConfig";
+import { requireRoles } from "../middleware/RoleMiddleware";
+import { magicLinkRateLimiter } from "../middleware/RateLimitMiddleware";
 import { InMemoryEventBus } from "../../events/InMemoryEventBus";
 import { MovementDispatchedDomainEvent, MovementReceivedDomainEvent } from "../../../domain/events";
 import { SendMovementDispatchedNotificationHandler } from "../../../application/handlers/SendMovementDispatchedNotificationHandler";
@@ -97,19 +98,19 @@ const controller = new MovementController(
     attachMovementDocumentUC
 );
 
-// 4. Definimos Rutas
-movementRouter.post("/", keycloak.protect(), (req, res) => controller.register(req, res));
-movementRouter.get("/", keycloak.protect(), (req, res) => controller.getAll(req, res));
-movementRouter.patch("/:id/dispatch", keycloak.protect(), (req, res) => controller.dispatch(req, res));
-movementRouter.patch("/:id/receive", keycloak.protect(), (req, res) => controller.receive(req, res));
-movementRouter.patch("/:id/reject", keycloak.protect(), (req, res) => controller.reject(req, res));
-movementRouter.patch("/:id/notes", keycloak.protect(), (req, res) => controller.updateNotes(req, res));
-movementRouter.patch("/:id/cancel", keycloak.protect(), (req, res) => controller.cancel(req, res));
-movementRouter.patch("/:id/documents", keycloak.protect(), (req, res) => controller.attachDocuments(req, res));
+// 4. Definimos Rutas con RBAC
+movementRouter.post("/", requireRoles('admin', 'coordinador', 'tecnico', 'auxiliar_inventario'), (req, res) => controller.register(req, res));
+movementRouter.get("/", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getAll(req, res));
+movementRouter.patch("/:id/dispatch", requireRoles('admin', 'coordinador', 'tecnico', 'auxiliar_inventario'), (req, res) => controller.dispatch(req, res));
+movementRouter.patch("/:id/receive", requireRoles('admin', 'coordinador', 'tecnico', 'auxiliar_inventario'), (req, res) => controller.receive(req, res));
+movementRouter.patch("/:id/reject", requireRoles('admin', 'coordinador', 'tecnico', 'auxiliar_inventario'), (req, res) => controller.reject(req, res));
+movementRouter.patch("/:id/notes", requireRoles('admin', 'coordinador', 'tecnico', 'auxiliar_inventario'), (req, res) => controller.updateNotes(req, res));
+movementRouter.patch("/:id/cancel", requireRoles('admin', 'coordinador', 'tecnico', 'auxiliar_inventario'), (req, res) => controller.cancel(req, res));
+movementRouter.patch("/:id/documents", requireRoles('admin', 'coordinador', 'tecnico', 'auxiliar_inventario'), (req, res) => controller.attachDocuments(req, res));
 
-// Rutas Públicas (Magic Links) - No requieren Keycloak
-movementRouter.get("/public/magic-link/:token", (req, res) => controller.getPublicMovement(req, res));
-movementRouter.post("/public/magic-link/:token/receive", (req, res) => controller.publicReceive(req, res));
-movementRouter.post("/public/magic-link/:token/reject", (req, res) => controller.publicReject(req, res));
+// Rutas Públicas (Magic Links) protegidas por Rate Limiter estricto
+movementRouter.get("/public/magic-link/:token", magicLinkRateLimiter, (req, res) => controller.getPublicMovement(req, res));
+movementRouter.post("/public/magic-link/:token/receive", magicLinkRateLimiter, (req, res) => controller.publicReceive(req, res));
+movementRouter.post("/public/magic-link/:token/reject", magicLinkRateLimiter, (req, res) => controller.publicReject(req, res));
 
 export { movementRouter };

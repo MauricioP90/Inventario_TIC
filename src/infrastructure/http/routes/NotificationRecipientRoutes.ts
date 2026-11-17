@@ -8,7 +8,7 @@ import { UpdateNotificationRecipient } from "../../../application/use-cases/noti
 import { DeleteNotificationRecipient } from "../../../application/use-cases/notification-recipient/DeleteNotificationRecipient";
 import { ToggleNotificationRecipientStatus } from "../../../application/use-cases/notification-recipient/ToggleNotificationRecipientStatus";
 import { NotificationRecipientController } from "../controllers/NotificationRecipientController";
-import { keycloak } from "../middleware/KeycloakConfig";
+import { requireRoles } from "../middleware/RoleMiddleware";
 
 const notificationRecipientRouter = Router();
 
@@ -31,10 +31,10 @@ const controller = new NotificationRecipientController(
 );
 
 // Endpoints
-notificationRecipientRouter.get("/", keycloak.protect(), (req, res) => controller.getAll(req, res));
-notificationRecipientRouter.post("/", keycloak.protect(), (req, res) => controller.create(req, res));
-notificationRecipientRouter.put("/:id", keycloak.protect(), (req, res) => controller.update(req, res));
-notificationRecipientRouter.delete("/:id", keycloak.protect(), (req, res) => controller.delete(req, res));
-notificationRecipientRouter.patch("/:id/toggle", keycloak.protect(), (req, res) => controller.toggleStatus(req, res));
+notificationRecipientRouter.get("/", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getAll(req, res));
+notificationRecipientRouter.post("/", requireRoles('admin'), (req, res) => controller.create(req, res));
+notificationRecipientRouter.put("/:id", requireRoles('admin'), (req, res) => controller.update(req, res));
+notificationRecipientRouter.delete("/:id", requireRoles('admin'), (req, res) => controller.delete(req, res));
+notificationRecipientRouter.patch("/:id/toggle", requireRoles('admin'), (req, res) => controller.toggleStatus(req, res));
 
 export { notificationRecipientRouter, recipientRepo };

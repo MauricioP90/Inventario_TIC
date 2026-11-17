@@ -38,17 +38,17 @@ const updateUC = new UpdateResponsible(repo, areaRepo, cargoRepo);
 const inactiveUC = new InactiveResponsible(repo, activoRepo, locationRepo);
 const getResponsibleStatsUC = new GetResponsibleStats(activoRepo, simCardRepo);
 
-import { keycloak } from "../middleware/KeycloakConfig";
+import { requireRoles } from "../middleware/RoleMiddleware";
 
 // 3. Inicializamos Controlador
 const controller = new ResponsibleController(createUC, getAllUC, getOneUC, updateUC, inactiveUC, getResponsibleStatsUC);
 
-// 4. Definimos Rutas
-responsibleRouter.post("/", keycloak.protect(), (req, res) => controller.create(req, res));
-responsibleRouter.get("/", keycloak.protect(), (req, res) => controller.getAll(req, res));
-responsibleRouter.get("/:id", keycloak.protect(), (req, res) => controller.getOne(req, res));
-responsibleRouter.put("/:id", keycloak.protect(), (req, res) => controller.update(req, res));
-responsibleRouter.patch("/:id/inactive", keycloak.protect(), (req, res) => controller.inactive(req, res));
-responsibleRouter.get("/:id/stats", keycloak.protect(), (req, res) => controller.getStats(req, res));
+// 4. Definimos Rutas con RBAC
+responsibleRouter.post("/", requireRoles('admin', 'coordinador', 'auxiliar_inventario'), (req, res) => controller.create(req, res));
+responsibleRouter.get("/", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getAll(req, res));
+responsibleRouter.get("/:id", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getOne(req, res));
+responsibleRouter.put("/:id", requireRoles('admin', 'coordinador', 'auxiliar_inventario'), (req, res) => controller.update(req, res));
+responsibleRouter.patch("/:id/inactive", requireRoles('admin', 'coordinador', 'auxiliar_inventario'), (req, res) => controller.inactive(req, res));
+responsibleRouter.get("/:id/stats", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getStats(req, res));
 
 export { responsibleRouter };

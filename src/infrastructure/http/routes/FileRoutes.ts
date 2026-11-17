@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { keycloak } from '../middleware/KeycloakConfig';
+import { requireRoles } from '../middleware/RoleMiddleware';
 import { FileController } from '../controllers/FileController';
 import { StorageAdapterFactory } from '../../storage/StorageAdapterFactory';
 
@@ -35,6 +35,6 @@ const fileController = new FileController(storageAdapter);
  *       201:
  *         description: Archivo guardado, devuelve la URL
  */
-fileRouter.post('/upload', keycloak.protect(), (req, res) => fileController.upload(req, res));
+fileRouter.post('/upload', requireRoles('admin', 'coordinador', 'tecnico', 'auxiliar_inventario'), (req, res) => fileController.upload(req, res));
 
 export { fileRouter };

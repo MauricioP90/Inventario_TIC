@@ -20,6 +20,10 @@ import { SoftwareVersionEntity } from "./infrastructure/persistence/typeorm/enti
 import { ActivoSoftwareHistoryEntity } from "./infrastructure/persistence/typeorm/entities/ActivoSoftwareHistoryEntity";
 import { ActivoTelemetryLogEntity } from "./infrastructure/persistence/typeorm/entities/ActivoTelemetryLogEntity";
 
+if (process.env.NODE_ENV === "production" && (!process.env.DB_PASSWORD || process.env.DB_PASSWORD === "admin123")) {
+    console.warn("⚠️ [SECURITY WARNING] La base de datos está configurada con credenciales por defecto o vacías en producción. Configure DB_PASSWORD en el archivo .env.");
+}
+
 export const AppDataSource = new DataSource({
     type: "postgres",
     host: process.env.DB_HOST || "127.0.0.1",
@@ -27,6 +31,7 @@ export const AppDataSource = new DataSource({
     username: process.env.DB_USER || "admin",
     password: process.env.DB_PASSWORD || "admin123",
     database: process.env.DB_NAME || "inventario",
+    ssl: process.env.DB_SSL === "true" ? { rejectUnauthorized: false } : false,
     synchronize: false,
     logging: process.env.NODE_ENV === "production" ? (process.env.DB_LOGGING === "true") : true,
     entities: [

@@ -4,6 +4,16 @@ import { IEmailService } from '../../domain/services/IEmailService';
 import * as fs from 'fs';
 import * as path from 'path';
 
+function escapeHtml(value: any): string {
+    if (value === null || value === undefined) return '';
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 export class NodemailerEmailService implements IEmailService {
     private transporter: Transporter;
 
@@ -109,10 +119,10 @@ export class NodemailerEmailService implements IEmailService {
 
         const activosRows = details.activos.map(act => `
             <tr style="border-bottom: 1px solid #e2e8f0;">
-                <td style="padding: 12px 16px; font-weight: bold; color: #1e293b; font-family: monospace; font-size: 14px;">${act.placa}</td>
-                <td style="padding: 12px 16px; color: #475569;">${act.marca}</td>
-                <td style="padding: 12px 16px; color: #475569;">${act.modelo}</td>
-                <td style="padding: 12px 16px; color: #64748b; font-family: monospace; font-size: 12px;">${act.serial || 'N/A'}</td>
+                <td style="padding: 12px 16px; font-weight: bold; color: #1e293b; font-family: monospace; font-size: 14px;">${escapeHtml(act.placa)}</td>
+                <td style="padding: 12px 16px; color: #475569;">${escapeHtml(act.marca)}</td>
+                <td style="padding: 12px 16px; color: #475569;">${escapeHtml(act.modelo)}</td>
+                <td style="padding: 12px 16px; color: #64748b; font-family: monospace; font-size: 12px;">${escapeHtml(act.serial || 'N/A')}</td>
             </tr>
         `).join('');
 
@@ -121,13 +131,13 @@ export class NodemailerEmailService implements IEmailService {
         if (movement.documentUrl || movement.evidenceUrl || movement.receivedEvidenceUrl) {
             const links = [];
             if (movement.documentUrl) {
-                links.push(`<a href="${movement.documentUrl}" target="_blank" style="display: inline-block; background-color: #f1f5f9; color: #0f172a; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid #cbd5e1; margin-right: 8px; margin-bottom: 8px;">📋 Ver Comodato/Acta ↗</a>`);
+                links.push(`<a href="${escapeHtml(movement.documentUrl)}" target="_blank" style="display: inline-block; background-color: #f1f5f9; color: #0f172a; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid #cbd5e1; margin-right: 8px; margin-bottom: 8px;">📋 Ver Comodato/Acta ↗</a>`);
             }
             if (movement.evidenceUrl) {
-                links.push(`<a href="${movement.evidenceUrl}" target="_blank" style="display: inline-block; background-color: #e0e7ff; color: #3730a3; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid #c7d2fe; margin-right: 8px; margin-bottom: 8px;">🚚 Ver Guía de Envío ↗</a>`);
+                links.push(`<a href="${escapeHtml(movement.evidenceUrl)}" target="_blank" style="display: inline-block; background-color: #e0e7ff; color: #3730a3; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid #c7d2fe; margin-right: 8px; margin-bottom: 8px;">🚚 Ver Guía de Envío ↗</a>`);
             }
             if (movement.receivedEvidenceUrl) {
-                links.push(`<a href="${movement.receivedEvidenceUrl}" target="_blank" style="display: inline-block; background-color: #dcfce7; color: #166534; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid #bbf7d0; margin-right: 8px; margin-bottom: 8px;">📦 Ver Soporte Recepción ↗</a>`);
+                links.push(`<a href="${escapeHtml(movement.receivedEvidenceUrl)}" target="_blank" style="display: inline-block; background-color: #dcfce7; color: #166534; text-decoration: none; padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: bold; border: 1px solid #bbf7d0; margin-right: 8px; margin-bottom: 8px;">📦 Ver Soporte Recepción ↗</a>`);
             }
             soportesHtml = `
                 <div style="margin-top: 24px; padding: 16px; background-color: #f8fafc; border-radius: 10px; border: 1px solid #e2e8f0;">
@@ -181,12 +191,12 @@ export class NodemailerEmailService implements IEmailService {
                                             <tr>
                                                 <td width="48%">
                                                     <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: bold; color: #64748b; display: block;">📍 Sede Origen</span>
-                                                    <strong style="font-size: 15px; color: #0f172a; margin-top: 2px; display: block;">${details.originLocation}</strong>
+                                                    <strong style="font-size: 15px; color: #0f172a; margin-top: 2px; display: block;">${escapeHtml(details.originLocation)}</strong>
                                                 </td>
                                                 <td width="4%" align="center" style="color: #6366f1; font-size: 18px; font-weight: bold;">➔</td>
                                                 <td width="48%" align="right">
                                                     <span style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: bold; color: #64748b; display: block;">📍 Sede Destino</span>
-                                                    <strong style="font-size: 15px; color: #0f172a; margin-top: 2px; display: block;">${details.destinationLocation}</strong>
+                                                    <strong style="font-size: 15px; color: #0f172a; margin-top: 2px; display: block;">${escapeHtml(details.destinationLocation)}</strong>
                                                 </td>
                                             </tr>
                                         </table>
@@ -198,11 +208,11 @@ export class NodemailerEmailService implements IEmailService {
                                             <tr>
                                                 <td>
                                                     <span style="font-size: 11px; color: #64748b; font-weight: 600;">👤 Responsable Receptor:</span>
-                                                    <strong style="font-size: 13px; color: #1e293b; margin-left: 6px;">${details.responsibleName}</strong>
+                                                    <strong style="font-size: 13px; color: #1e293b; margin-left: 6px;">${escapeHtml(details.responsibleName)}</strong>
                                                 </td>
                                                 <td align="right">
                                                     <span style="font-size: 11px; color: #64748b; font-weight: 600;">Tipo:</span>
-                                                    <span style="font-size: 11px; font-weight: bold; background-color: #ede9fe; color: #6d28d9; padding: 3px 8px; border-radius: 6px; margin-left: 6px;">${movement.type}</span>
+                                                    <span style="font-size: 11px; font-weight: bold; background-color: #ede9fe; color: #6d28d9; padding: 3px 8px; border-radius: 6px; margin-left: 6px;">${escapeHtml(movement.type)}</span>
                                                 </td>
                                             </tr>
                                         </table>
@@ -235,7 +245,7 @@ export class NodemailerEmailService implements IEmailService {
                             <div style="background-color: #f8fafc; border-left: 4px solid #6366f1; padding: 14px 16px; border-radius: 4px; margin-bottom: 20px;">
                                 <strong style="color: #334155; font-size: 12px; display: block; margin-bottom: 4px;">📝 Observaciones del Despacho:</strong>
                                 <p style="margin: 0; color: #475569; font-size: 13px; line-height: 1.5; font-style: italic;">
-                                    "${movement.notes}"
+                                    "${escapeHtml(movement.notes)}"
                                 </p>
                             </div>
                             ` : ''}
@@ -257,7 +267,7 @@ export class NodemailerEmailService implements IEmailService {
                     <tr>
                         <td style="background-color: #f8fafc; border-top: 1px solid #e2e8f0; padding: 24px 30px; text-align: center;">
                             <p style="margin: 0 0 6px 0; font-size: 11px; color: #64748b; font-weight: 600;">
-                                ID de Transacción: <span style="font-family: monospace; color: #334155;">${movement.id}</span>
+                                ID de Transacción: <span style="font-family: monospace; color: #334155;">${escapeHtml(movement.id)}</span>
                             </p>
                             <p style="margin: 0 0 10px 0; font-size: 11px; color: #94a3b8;">
                                 Fecha de Emisión: ${timestamp}

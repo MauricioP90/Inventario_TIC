@@ -8,6 +8,7 @@ import { ILocationRepository } from "../../../domain/repositories/ILocationRepos
 import { IFileStorageService } from "../../../domain/services/IFileStorageService";
 import { MaintenanceReport, ModalidadMantenimiento, TipoMantenimiento, EstadoFicha } from "../../../domain/entities/MaintenanceReport";
 import { IUnitOfWork } from "../../../domain/repositories/IUnitOfWork";
+import { FileSecurityValidator } from "../../../infrastructure/storage/FileSecurityValidator";
 
 export class ReceiveByMagicLink {
     constructor(
@@ -33,6 +34,11 @@ export class ReceiveByMagicLink {
             throw new Error('Enlace de autenticación única inválido o expirado.');
         }
 
+        const ttlHours = Number(process.env.MAGIC_LINK_TTL_HOURS) || 168; // 7 días
+        if (movement.isMagicLinkExpired(ttlHours)) {
+            throw new Error(`Este enlace de autenticación única ha caducado por superar la vigencia permitida (${Math.round(ttlHours / 24)} días).`);
+        }
+
         if (movement.status !== 'EN_TRANSIT') {
             throw new Error('Este movimiento no está en tránsito.');
         }
@@ -41,28 +47,19 @@ export class ReceiveByMagicLink {
             throw new Error('El nombre de quien recibe es obligatorio.');
         }
 
-        // 2. Procesar archivo de evidencia opcional (subida por link mágico)
+        // 2. Procesar archivo de evidencia opcional (subida por link mágico con validación de 10MB y Magic Bytes)
         let uploadedEvidenceUrl: string | null = null;
         if (evidenceFile && evidenceFile.base64 && this.fileStorageService) {
-            const ext = (evidenceFile.fileName.split('.').pop() || '').toLowerCase();
-            const allowedExts = ['pdf', 'png', 'jpg', 'jpeg', 'webp'];
-            if (!allowedExts.includes(ext)) {
-                throw new Error('Formato de archivo no permitido. Solo se aceptan PDF, PNG, JPG o WEBP.');
-            }
-
-            // Validar tamaño aproximado (máximo 7.5MB base64 ≈ 5.5MB binario)
-            if (evidenceFile.base64.length > 7.5 * 1024 * 1024) {
-                throw new Error('El archivo supera el tamaño máximo permitido de 5 MB.');
-            }
-
-            const cleanBase64 = evidenceFile.base64.includes('base64,')
-                ? evidenceFile.base64.split('base64,')[1]
-                : evidenceFile.base64;
-
-            uploadedEvidenceUrl = await this.fileStorageService.uploadBase64(
-                cleanBase64,
+            const validated = FileSecurityValidator.validateBase64(
+                evidenceFile.base64,
                 evidenceFile.fileName,
                 'soportes'
+            );
+
+            uploadedEvidenceUrl = await this.fileStorageService.uploadBase64(
+                validated.buffer.toString('base64'),
+                evidenceFile.fileName,
+                validated.sanitizedFolder
             );
         }
 

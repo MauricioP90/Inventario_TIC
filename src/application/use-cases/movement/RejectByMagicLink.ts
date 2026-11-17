@@ -19,6 +19,11 @@ export class RejectByMagicLink {
             throw new Error('Enlace de autenticación única inválido o expirado.');
         }
 
+        const ttlHours = Number(process.env.MAGIC_LINK_TTL_HOURS) || 168;
+        if (movement.isMagicLinkExpired(ttlHours)) {
+            throw new Error(`Este enlace de autenticación única ha caducado por superar la vigencia permitida (${Math.round(ttlHours / 24)} días).`);
+        }
+
         if (movement.status !== 'EN_TRANSIT') {
             throw new Error('Este movimiento no está en tránsito y no puede ser rechazado.');
         }

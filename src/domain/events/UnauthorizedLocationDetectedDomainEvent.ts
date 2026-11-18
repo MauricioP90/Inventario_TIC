@@ -23,6 +23,7 @@ export class UnauthorizedLocationDetectedDomainEvent implements IDomainEvent {
             reportedCoords: string;
             reportedIp?: string | null;
             distanceKm: number;
+            tamperingType?: string | null;
         }
     ) {
         this.occurredOn = new Date();

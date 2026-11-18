@@ -343,16 +343,22 @@ ${movement.notes || 'Sin observaciones.'}
         detectedLocationName: string;
         reportedCoords: string;
         distanceKm: number;
+        tamperingType?: string | null;
     }): Promise<string | null> {
         const to = details.responsibleEmail || process.env.SMTP_USER || 'inventario@flotalamacarena.com';
         const from = process.env.SMTP_FROM || `"Inventario Flota La Macarena" <${process.env.SMTP_USER || 'notificaciones@flotalamacarena.com'}>`;
-        const subject = `🚨 [Alerta Telemetría] Movimiento No Autorizado - Placa [${details.placa}] (${details.distanceKm} km)`;
+        const subject = details.tamperingType
+            ? `🚨 [ALERTA ANTI-SABOTAJE] ${details.tamperingType} - Placa [${details.placa}]`
+            : `🚨 [Alerta Telemetría] Movimiento No Autorizado - Placa [${details.placa}] (${details.distanceKm} km)`;
+        const textMsg = details.tamperingType
+            ? `Alerta ANTI-SABOTAJE (${details.tamperingType}) para el activo [${details.placa}] (${details.marca} ${details.modelo}). Sede esperada: ${details.expectedLocationName}. Últimas coordenadas conocidas: ${details.reportedCoords}.`
+            : `Alerta de ubicación no autorizada para el activo [${details.placa}] (${details.marca} ${details.modelo}). Sede esperada: ${details.expectedLocationName}. Ubicación reportada: ${details.detectedLocationName} (${details.reportedCoords}) a ${details.distanceKm} km.`;
         try {
             const info = await this.transporter.sendMail({
                 from,
                 to,
                 subject,
-                text: `Alerta de ubicación no autorizada para el activo [${details.placa}] (${details.marca} ${details.modelo}). Sede esperada: ${details.expectedLocationName}. Ubicación reportada: ${details.detectedLocationName} (${details.reportedCoords}) a ${details.distanceKm} km.`
+                text: textMsg
             });
             return info.messageId || `smtp-telemetry-${Date.now()}`;
         } catch (err) {

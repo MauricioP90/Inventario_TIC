@@ -11,11 +11,13 @@ import { UnauthorizedLocationDetectedDomainEvent } from '../../../domain/events/
 
 export interface RegisterDeviceHeartbeatInput {
     placa: string;
-    latitud: number;
-    longitud: number;
+    latitud?: number | null;
+    longitud?: number | null;
     ipAddress?: string | null;
     toleranceKm?: number;
     forceAlert?: boolean;
+    isMock?: boolean;
+    tamperingAlert?: string | null;
 }
 
 export class RegisterDeviceHeartbeat {
@@ -45,8 +47,20 @@ export class RegisterDeviceHeartbeat {
             );
         }
 
+        const rawTampering = input.tamperingAlert?.trim();
+        const tamperingType: string | null = rawTampering
+            ? rawTampering.toUpperCase()
+            : input.isMock
+            ? 'MOCK_LOCATION_DETECTED'
+            : null;
+        const isTampered = Boolean(tamperingType);
+
         const settings = await this.telemetryRepository.getSettings();
-        const reportedCoords = Coordinates.create(Number(input.latitud), Number(input.longitud));
+        const rawLat =
+            input.latitud !== undefined && input.latitud !== null ? Number(input.latitud) : isTampered ? 0 : NaN;
+        const rawLon =
+            input.longitud !== undefined && input.longitud !== null ? Number(input.longitud) : isTampered ? 0 : NaN;
+        const reportedCoords = Coordinates.create(rawLat, rawLon);
         const toleranceKm = input.toleranceKm ?? settings.toleranceKm;
 
         // 1. Identificar la sede oficial asignada al activo
@@ -120,8 +134,23 @@ export class RegisterDeviceHeartbeat {
             }
         }
 
+        // 3.1 Evaluación prioritaria de Detección Activa de Sabotaje (Anti-Tampering / Mock GPS)
+        if (isTampered && tamperingType) {
+            status = 'CONTROVERSIA_UBICACION';
+            const motivoLabel =
+                tamperingType === 'PERMISOS_UBICACION_REVOCADOS'
+                    ? 'PERMISOS DE UBICACIÓN REVOCADOS'
+                    : tamperingType === 'GPS_DESACTIVADO'
+                    ? 'SENSOR GPS DESACTIVADO'
+                    : tamperingType === 'MOCK_LOCATION_DETECTED'
+                    ? 'UBICACIÓN SIMULADA (MOCK GPS)'
+                    : tamperingType;
+
+            observaciones = `🚨 ALERTA DE SEGURIDAD (ANTI-SABOTAJE): ${motivoLabel} [${tamperingType}] reportado por el dispositivo. IP: ${input.ipAddress || 'Desconocida'}.`;
+        }
+
         // 4. Control Anti-Spam (Cooldown configurable desde el centro de telemetría)
-        let shouldSendAlert = status === 'CONTROVERSIA_UBICACION' && (settings.alertsEnabled || Boolean(input.forceAlert));
+        let shouldSendAlert = status === 'CONTROVERSIA_UBICACION' && (settings.alertsEnabled || Boolean(input.forceAlert) || isTampered);
         if (shouldSendAlert && settings.cooldownHours > 0 && !input.forceAlert) {
             const previousLog = await this.telemetryRepository.findLatestByActivoId(activo.id!);
             if (
@@ -132,14 +161,21 @@ export class RegisterDeviceHeartbeat {
                 const hoursSinceLast =
                     (Date.now() - new Date(previousLog.reportedAt).getTime()) / (1000 * 60 * 60);
                 if (hoursSinceLast < settings.cooldownHours) {
-                    try {
-                        const prevCoords = Coordinates.fromString(previousLog.reportedCoords);
-                        if (reportedCoords.distanceInKmTo(prevCoords) <= 1.0) {
+                    if (isTampered) {
+                        if (tamperingType && previousLog.observaciones?.includes(tamperingType)) {
                             shouldSendAlert = false;
-                            observaciones += ` (Alerta por correo omitida por ventana anti-spam de ${settings.cooldownHours}h).`;
+                            observaciones += ` (Alerta anti-sabotaje omitida por ventana anti-spam de ${settings.cooldownHours}h).`;
                         }
-                    } catch {
-                        // Continuar con envío normal
+                    } else {
+                        try {
+                            const prevCoords = Coordinates.fromString(previousLog.reportedCoords);
+                            if (reportedCoords.distanceInKmTo(prevCoords) <= 1.0) {
+                                shouldSendAlert = false;
+                                observaciones += ` (Alerta omitida por ventana anti-spam de ${settings.cooldownHours}h).`;
+                            }
+                        } catch {
+                            // Continuar con envío normal
+                        }
                     }
                 }
             }
@@ -162,8 +198,8 @@ export class RegisterDeviceHeartbeat {
 
         const savedLog = await this.telemetryRepository.save(log);
 
-        // 5. Publicar Evento de Dominio si aplica alerta por controversia
-        if (shouldSendAlert && this.eventBus && distanceKm !== null) {
+        // 5. Publicar Evento de Dominio si aplica alerta por controversia o sabotaje
+        if (shouldSendAlert && this.eventBus && (distanceKm !== null || isTampered)) {
             await this.eventBus.publish(
                 new UnauthorizedLocationDetectedDomainEvent(savedLog, {
                     id: activo.id!,
@@ -180,7 +216,8 @@ export class RegisterDeviceHeartbeat {
                     detectedLocationName: closestLocationName,
                     reportedCoords: reportedCoords.toString(),
                     reportedIp: input.ipAddress ?? null,
-                    distanceKm
+                    distanceKm: distanceKm ?? 0,
+                    tamperingType
                 })
             );
         }

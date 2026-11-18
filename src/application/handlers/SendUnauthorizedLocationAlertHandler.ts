@@ -64,7 +64,9 @@ export class SendUnauthorizedLocationAlertHandler {
                             expectedLocationName: event.activoDetails.expectedLocationName,
                             detectedLocationName: event.activoDetails.detectedLocationName,
                             distanceKm: event.activoDetails.distanceKm,
-                            reportedCoords: event.activoDetails.reportedCoords
+                            reportedCoords: event.activoDetails.reportedCoords,
+                            tamperingType: event.activoDetails.tamperingType,
+                            reportedIp: event.activoDetails.reportedIp
                         })
                     );
 

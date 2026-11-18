@@ -57,6 +57,12 @@ export class TelemetryController {
      *               toleranceKm:
      *                 type: number
      *                 example: 1.5
+     *               isMock:
+     *                 type: boolean
+     *                 example: false
+     *               tamperingAlert:
+     *                 type: string
+     *                 example: 'PERMISOS_UBICACION_REVOCADOS'
      *     responses:
      *       201:
      *         description: Reporte de telemetría procesado y evaluado
@@ -69,7 +75,7 @@ export class TelemetryController {
      */
     async registerHeartbeat(req: Request, res: Response) {
         try {
-            const { placa, latitud, longitud, ipAddress, toleranceKm, forceAlert } = req.body;
+            const { placa, latitud, longitud, ipAddress, toleranceKm, forceAlert, isMock, tamperingAlert } = req.body;
             const clientIp =
                 ipAddress ||
                 (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
@@ -78,11 +84,13 @@ export class TelemetryController {
 
             const log = await this.registerHeartbeatUC.execute({
                 placa,
-                latitud: Number(latitud),
-                longitud: Number(longitud),
+                latitud: latitud !== undefined && latitud !== null ? Number(latitud) : null,
+                longitud: longitud !== undefined && longitud !== null ? Number(longitud) : null,
                 ipAddress: clientIp,
                 toleranceKm: toleranceKm !== undefined ? Number(toleranceKm) : undefined,
-                forceAlert: Boolean(forceAlert)
+                forceAlert: Boolean(forceAlert),
+                isMock: Boolean(isMock),
+                tamperingAlert: typeof tamperingAlert === 'string' ? tamperingAlert : null
             });
             res.status(201).json(log.toJSON());
         } catch (error: any) {
@@ -225,7 +233,8 @@ export class TelemetryController {
                 detectedLocationName: req.body?.detectedLocationName || 'Terminal Villavicencio (Meta)',
                 reportedCoords: '4.1420, -73.6266',
                 reportedIp: req.socket.remoteAddress || '181.54.112.90',
-                distanceKm: 75.4
+                distanceKm: 75.4,
+                tamperingType: req.body?.tamperingType || null
             };
 
             const uuid = await this.emailService.sendUnauthorizedLocationAlert(sampleDetails);
@@ -256,7 +265,9 @@ export class TelemetryController {
                                 expectedLocationName: sampleDetails.expectedLocationName,
                                 detectedLocationName: sampleDetails.detectedLocationName,
                                 distanceKm: sampleDetails.distanceKm,
-                                reportedCoords: sampleDetails.reportedCoords
+                                reportedCoords: sampleDetails.reportedCoords,
+                                tamperingType: sampleDetails.tamperingType,
+                                reportedIp: sampleDetails.reportedIp
                             });
                             whatsappSentCount++;
                         }

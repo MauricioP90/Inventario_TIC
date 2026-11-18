@@ -685,6 +685,7 @@ export class HttpApiEmailService implements IEmailService {
         reportedCoords: string;
         reportedIp?: string | null;
         distanceKm: number;
+        tamperingType?: string | null;
     }): Promise<string | null> {
         let dbActiveCc: string[] = [];
         let dbActiveBcc: string[] = [];
@@ -717,7 +718,19 @@ export class HttpApiEmailService implements IEmailService {
         const allBccRaw = [...dbActiveBcc, ...envDefaultBcc];
         const bcc = Array.from(new Set(allBccRaw)).filter(e => e && e.toLowerCase() !== to.toLowerCase() && !cc.includes(e));
 
-        const subject = `🚨 [Alerta Telemetría] Posible Movimiento No Autorizado - Placa [${details.placa}] (${details.distanceKm} km fuera de sede)`;
+        const isTampering = Boolean(details.tamperingType);
+        const subject = isTampering
+            ? `🚨 [ALERTA ANTI-SABOTAJE] ${details.tamperingType} - Placa [${details.placa}]`
+            : `🚨 [Alerta Telemetría] Posible Movimiento No Autorizado - Placa [${details.placa}] (${details.distanceKm} km fuera de sede)`;
+
+        const alertTitle = isTampering
+            ? `🚨 Intento de Sabotaje Detectado en Dispositivo (${escapeHtml(details.tamperingType)})`
+            : `🚨 Controversia de Ubicación Detectada (Sin Traslado Autorizado)`;
+
+        const alertIntro = isTampering
+            ? `El agente de monitoreo ha detectado una <strong>alteración crítica en la seguridad del dispositivo (${escapeHtml(details.tamperingType)})</strong>. Esto ocurre cuando un operario revoca los permisos de ubicación, apaga el sensor GPS o utiliza simulación de coordenadas.`
+            : `El servicio de arranque automático del dispositivo ha reportado una ubicación física que <strong>no coincide con su sede asignada en el inventario</strong> y no registra ninguna orden de traslado ni mantenimiento externo activo.`;
+
         const timestamp = new Date().toLocaleString('es-CO', {
             dateStyle: 'medium',
             timeStyle: 'short'
@@ -736,14 +749,14 @@ export class HttpApiEmailService implements IEmailService {
           Flota La Macarena · Monitoreo Automático de Activos
         </div>
         <h1 style="margin:0;font-size:20px;font-weight:800;">
-          🚨 Controversia de Ubicación Detectada (Sin Traslado Autorizado)
+          ${alertTitle}
         </h1>
       </td>
     </tr>
     <tr>
       <td style="padding:26px 30px;color:#1e293b;">
         <p style="margin:0 0 16px 0;font-size:14px;line-height:1.6;">
-          El servicio de arranque automático del dispositivo ha reportado una ubicación física que <strong>no coincide con su sede asignada en el inventario</strong> y no registra ninguna orden de traslado ni mantenimiento externo activo.
+          ${alertIntro}
         </p>
         <table width="100%" cellpadding="0" cellspacing="0" style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:16px;margin-bottom:18px;">
           <tr>

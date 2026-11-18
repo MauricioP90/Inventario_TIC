@@ -19,5 +19,7 @@ export interface IWhatsAppNotificationService {
         distanceKm: number;
         reportedCoords: string;
         detectedAt?: string;
+        tamperingType?: string | null;
+        reportedIp?: string | null;
     }): Promise<{ success: boolean; messageId?: string; error?: string }>;
 }

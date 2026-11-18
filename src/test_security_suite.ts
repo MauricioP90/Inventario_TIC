@@ -1,6 +1,8 @@
 import { PasswordHasher } from './infrastructure/security/PasswordHasher';
 import { FileSecurityValidator } from './infrastructure/storage/FileSecurityValidator';
 import { Movement, MovementStatus, MovementType } from './domain/entities/Movement';
+import { RegisterDeviceHeartbeat } from './application/use-cases/telemetry/RegisterDeviceHeartbeat';
+import { EstadoActivo } from './domain/entities/Activo';
 
 let passed = 0;
 let failed = 0;
@@ -140,6 +142,72 @@ async function runSecuritySuite() {
         magicLinkToken: 'token-789'
     });
     assert(movEightDays.isMagicLinkExpired(168), 'Enlace de 8 días (192h) está CADUCADO');
+
+    // 4. PRUEBAS DE DETECCIÓN ACTIVA DE SABOTAJE EN TELEMETRÍA (Anti-Tampering)
+    console.log('\n--- 4. RegisterDeviceHeartbeat (Anti-Sabotaje & Mock GPS) ---');
+
+    const mockActivo: any = {
+        id: 'act-1528',
+        placa: '1528-003000',
+        serial: 'SN-CS30-100',
+        marca: 'Ciontek',
+        modelo: 'CS30',
+        estado: EstadoActivo.OPERACION,
+        tipoActivo: { nombre: 'POS Móvil', admiteTelemetria: true },
+        location: { id: 'loc-bog', nombre: 'Terminal Sur Bogotá', coordenadas: '4.5964, -74.1628' },
+        responsible: { nombre: 'Operario Test', email: 'op@flm.com', telefono: '3001234567' }
+    };
+
+    const publishedEvents: any[] = [];
+    const mockEventBus: any = {
+        publish: async (ev: any) => { publishedEvents.push(ev); }
+    };
+    const mockActivoRepo: any = { findByPlaca: async () => mockActivo };
+    const mockLocationRepo: any = { findAll: async () => [mockActivo.location] };
+    const mockMovementRepo: any = { findAll: async () => [] };
+    const mockTelemetryRepo: any = {
+        getSettings: async () => ({ toleranceKm: 1.5, cooldownHours: 12, alertsEnabled: true }),
+        findLatestByActivoId: async () => null,
+        save: async (log: any) => log
+    };
+
+    const heartbeatUC = new RegisterDeviceHeartbeat(
+        mockActivoRepo,
+        mockLocationRepo,
+        mockMovementRepo,
+        mockTelemetryRepo,
+        mockEventBus
+    );
+
+    // 4.1 Latido con permisos revocados INCLUSO estando dentro de la sede
+    const revokeLog = await heartbeatUC.execute({
+        placa: '1528-003000',
+        latitud: 4.5964,
+        longitud: -74.1628,
+        ipAddress: '192.168.1.155',
+        tamperingAlert: 'PERMISOS_UBICACION_REVOCADOS'
+    });
+    assert(revokeLog.status === 'CONTROVERSIA_UBICACION', 'Permisos revocados fuerza estado CONTROVERSIA_UBICACION incluso en sede');
+    assert(revokeLog.alertSent === true, 'Permisos revocados activa disparo inmediato de alerta');
+    assert(publishedEvents.length === 1 && publishedEvents[0].activoDetails.tamperingType === 'PERMISOS_UBICACION_REVOCADOS', 'Evento de dominio incluye tamperingType=PERMISOS_UBICACION_REVOCADOS');
+
+    // 4.2 Latido con Mock GPS simulado
+    const mockGpsLog = await heartbeatUC.execute({
+        placa: '1528-003000',
+        latitud: 4.5964,
+        longitud: -74.1628,
+        isMock: true
+    });
+    assert(mockGpsLog.status === 'CONTROVERSIA_UBICACION', 'Mock GPS fuerza estado CONTROVERSIA_UBICACION');
+    assert(publishedEvents.length === 2 && publishedEvents[1].activoDetails.tamperingType === 'MOCK_LOCATION_DETECTED', 'Evento de dominio incluye tamperingType=MOCK_LOCATION_DETECTED');
+
+    // 4.3 Latido normal legítimo en sede (sin sabotaje)
+    const normalLog = await heartbeatUC.execute({
+        placa: '1528-003000',
+        latitud: 4.5964,
+        longitud: -74.1628
+    });
+    assert(normalLog.status === 'CONFORME' && normalLog.alertSent === false, 'Latido legítimo en sede retorna CONFORME sin emitir alerta');
 
     console.log('\n================================================================');
     console.log(`RESUMEN DE PRUEBAS: ${passed} Exitosas | ${failed} Fallidas`);

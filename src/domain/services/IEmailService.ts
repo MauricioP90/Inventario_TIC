@@ -38,5 +38,6 @@ export interface IEmailService {
         reportedCoords: string;
         reportedIp?: string | null;
         distanceKm: number;
+        tamperingType?: string | null;
     }): Promise<string | null>;
 }

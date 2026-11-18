@@ -162,15 +162,37 @@ export class WasapiNotificationService implements IWhatsAppNotificationService {
         distanceKm: number;
         reportedCoords: string;
         detectedAt?: string;
+        tamperingType?: string | null;
+        reportedIp?: string | null;
     }): Promise<{ success: boolean; messageId?: string; error?: string }> {
         const normalizedPhone = this.normalizePhone(params.toPhone);
         const templateId = (process.env.WASAPI_TELEMETRY_TEMPLATE_ID || '').trim();
+
+        let equipoFormatted = `Placa ${params.placa} (${params.equipoDesc})`;
+        let ubicacionDetectadaFormatted = `${params.detectedLocationName} (a ${params.distanceKm} km)`;
+        const ipDisplay = params.reportedIp || 'N/D';
+
+        if (params.tamperingType === 'PERMISOS_UBICACION_REVOCADOS') {
+            equipoFormatted += ' ⚠️ [SABOTAJE: PERMISOS REVOCADOS]';
+            ubicacionDetectadaFormatted = `🚨 PERMISOS REVOCADOS EN DISPOSITIVO (Última IP: ${ipDisplay})`;
+        } else if (params.tamperingType === 'GPS_DESACTIVADO') {
+            equipoFormatted += ' ⚠️ [SENSOR GPS APAGADO]';
+            ubicacionDetectadaFormatted = `🚨 SENSOR GPS DESACTIVADO MANUALMENTE (Última IP: ${ipDisplay})`;
+        } else if (params.tamperingType === 'MOCK_LOCATION_DETECTED') {
+            equipoFormatted += ' ⚠️ [GPS SIMULADO]';
+            ubicacionDetectadaFormatted = `🚨 SIMULACIÓN MOCK GPS DETECTADA: ${params.reportedCoords}`;
+        } else if (params.tamperingType) {
+            equipoFormatted += ` ⚠️ [SABOTAJE: ${params.tamperingType}]`;
+            ubicacionDetectadaFormatted = `🚨 ANOMALÍA ANTI-SABOTAJE DETECTADA (Última IP: ${ipDisplay})`;
+        }
 
         // Si no está configurada la plantilla o la clave API, simular en consola de forma limpia
         if (!this.apiKey || this.apiKey === 'PENDIENTE' || !templateId) {
             console.log(`[Wasapi] ℹ️ SIMULACIÓN ALERTA GPS (WASAPI_TELEMETRY_TEMPLATE_ID no configurada):`);
             console.log(`[Wasapi] -> Destinatario: +${normalizedPhone} (${params.recipientName})`);
-            console.log(`[Wasapi] -> Equipo: ${params.equipoDesc} [${params.placa}] a ${params.distanceKm} km fuera de ${params.expectedLocationName}`);
+            console.log(`[Wasapi] -> Equipo ({{2}}): ${equipoFormatted}`);
+            console.log(`[Wasapi] -> Sede ({{3}}): ${params.expectedLocationName}`);
+            console.log(`[Wasapi] -> Ubicación ({{4}}): ${ubicacionDetectadaFormatted}`);
             return {
                 success: true,
                 messageId: `simulated-geo-${Date.now()}`
@@ -195,9 +217,9 @@ export class WasapiNotificationService implements IWhatsAppNotificationService {
                 url_file: headerImageUrl,
                 body_vars: [
                     { text: '{{1}}', val: params.recipientName },
-                    { text: '{{2}}', val: `Placa ${params.placa} (${params.equipoDesc})` },
+                    { text: '{{2}}', val: equipoFormatted },
                     { text: '{{3}}', val: params.expectedLocationName },
-                    { text: '{{4}}', val: `${params.detectedLocationName} (a ${params.distanceKm} km)` },
+                    { text: '{{4}}', val: ubicacionDetectadaFormatted },
                     { text: '{{5}}', val: dateStr }
                 ],
                 cta_var: [

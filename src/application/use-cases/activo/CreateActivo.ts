@@ -3,6 +3,8 @@ import { Activo, EstadoActivo } from "../../../domain/entities/Activo";
 import { Placa, Money } from "../../../domain/value-objects";
 import { ILocationRepository } from "../../../domain/repositories/ILocationRepository";
 import { IResponsibleRepository } from "../../../domain/repositories/IResponsibleRepository";
+import { ITipoActivoRepository } from "../../../domain/repositories/ITipoActivoRepository";
+import { EstadoTipoActivo } from "../../../domain/entities/TipoActivo";
 
 // definimos la interface de entrada
 interface createActivoInput {
@@ -27,10 +29,24 @@ export class CreateActivo {
     constructor(
         private readonly activoRepository: IActivoRepository,
         private readonly locationRepository: ILocationRepository,
-        private readonly responsibleRepository: IResponsibleRepository
+        private readonly responsibleRepository: IResponsibleRepository,
+        private readonly tipoActivoRepository?: ITipoActivoRepository
     ) { }
 
     async execute(input: createActivoInput): Promise<Activo> {
+        // Regla de negocio: Validar que el Tipo de Activo exista y no esté INACTIVO (descontinuado)
+        if (this.tipoActivoRepository) {
+            const tipoActivo = await this.tipoActivoRepository.findById(input.tipoActivoId);
+            if (!tipoActivo) {
+                throw new Error('El tipo de activo seleccionado no existe.');
+            }
+            if (tipoActivo.estado !== EstadoTipoActivo.ACTIVO) {
+                throw new Error(
+                    `El tipo de activo "${tipoActivo.nombre}" se encuentra INACTIVO (descontinuado) y no admite el registro de nuevos equipos.`
+                );
+            }
+        }
+
         // Aseguramos que la fecha sea un objeto Date
         const fechaParseada = typeof input.fechaIngreso === 'string' 
             ? new Date(input.fechaIngreso) 

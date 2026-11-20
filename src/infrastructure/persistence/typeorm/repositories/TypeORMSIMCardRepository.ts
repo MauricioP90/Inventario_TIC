@@ -46,6 +46,12 @@ export class TypeORMSIMCardRepository implements ISIMCardRepository {
             .where("activo.responsibleId = :responsibleId", { responsibleId })
             .getCount();
     }
+    async countActiveByTipoActivoId(tipoActivoId: string): Promise<number> {
+        return await this.repository.createQueryBuilder("sim")
+            .innerJoin("sim.activo", "activo")
+            .where("activo.tipoActivoId = :tipoActivoId", { tipoActivoId })
+            .getCount();
+    }
     async assignSimCard(simCard: SIMCard): Promise<void> {
         const entity = SIMCardMapper.toPersistence(simCard);
         await this.repository.save(entity);

@@ -61,10 +61,14 @@ export class ReceiveMovement {
         const assets = await this.activoRepository.findAll();
         const assetsInMovement = assets.filter(a => movement.activoIds.includes(a.id!));
 
-        let simsInMovement: any[] = [];
-        if (movement.simCardIds && movement.simCardIds.length > 0) {
+        // Cargar SIMs directas del movimiento (ej. SIM_TRASLADO) y SIMs adheridas a los activos trasladados (modelo partícula-molécula)
+        let simsToSyncLocation: any[] = [];
+        if ((movement.simCardIds && movement.simCardIds.length > 0) || movement.activoIds.length > 0) {
             const sims = await this.simCardRepository.findAll();
-            simsInMovement = sims.filter(s => movement.simCardIds.includes(s.id!));
+            simsToSyncLocation = sims.filter(s =>
+                (s.id && movement.simCardIds.includes(s.id)) ||
+                (s.activoId && movement.activoIds.includes(s.activoId))
+            );
         }
 
         // 4. Ejecutar todas las mutaciones en una transacción atómica (ACID)
@@ -111,8 +115,8 @@ export class ReceiveMovement {
                 }
             }
 
-            // Actualizar la ubicación de todas las SIM Cards involucradas
-            for (const sim of simsInMovement) {
+            // Actualizar la ubicación de todas las SIM Cards involucradas y las adheridas a los activos recibidos
+            for (const sim of simsToSyncLocation) {
                 sim.update({ locationId: movement.destinationLocationId });
                 await repos.simCardRepository.save(sim);
             }

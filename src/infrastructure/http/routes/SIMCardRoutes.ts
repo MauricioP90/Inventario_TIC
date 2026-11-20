@@ -2,6 +2,8 @@ import { Router } from "express";
 import { AppDataSource } from "../../../data-source";
 import { SIMCardEntity } from "../../persistence/typeorm/entities/SIMCardEntity";
 import { TypeORMSIMCardRepository } from "../../persistence/typeorm/repositories/TypeORMSIMCardRepository";
+import { MovementEntity } from "../../persistence/typeorm/entities/MovementEntity";
+import { TypeORMMovementRepository } from "../../persistence/typeorm/repositories/TypeORMMovementRepository";
 import { GetAllSIMCards } from "../../../application/use-cases/sim-card/GetAllSiMCards";
 import { UpdateSIMCard } from "../../../application/use-cases/sim-card/UpdateSIMCard";
 import { GetOneSIMCard } from "../../../application/use-cases/sim-card/GetOneSIMCard";
@@ -14,12 +16,13 @@ const simCardRouter = Router();
 // 1. Inicializamos el repositorio de TypeORM
 const typeormRepo = AppDataSource.getRepository(SIMCardEntity);
 const simRepo = new TypeORMSIMCardRepository(typeormRepo);
+const movementRepo = new TypeORMMovementRepository(AppDataSource.getRepository(MovementEntity));
 
 // 2. Inicializamos los casos de uso
 const createUC = new CreateSIMCard(simRepo);
 const getAllUC = new GetAllSIMCards(simRepo);
 const getOneUC = new GetOneSIMCard(simRepo);
-const updateUC = new UpdateSIMCard(simRepo);
+const updateUC = new UpdateSIMCard(simRepo, movementRepo);
 
 // 3. Inicializamos el controlador
 const controller = new SIMCardController(createUC, getAllUC, updateUC, getOneUC);

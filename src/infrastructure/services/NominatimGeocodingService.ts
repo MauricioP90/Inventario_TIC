@@ -6,13 +6,15 @@ export class NominatimGeocodingService implements IGeocodingService {
             const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=es`;
             const response = await fetch(url, {
                 method: "GET",
+                signal: AbortSignal.timeout(4000),
                 headers: {
                     "User-Agent": "CrossInventoryApp/1.0 (contacto-soporte@flotalamacarena.com)"
                 }
             });
 
             if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+                console.warn(`Geocodificación externa respondió status ${response.status}; degradando sin ciudad automática.`);
+                return { address: "", city: "" };
             }
 
             const data = await response.json() as any;
@@ -34,8 +36,8 @@ export class NominatimGeocodingService implements IGeocodingService {
                 city: cleanCity
             };
         } catch (error: any) {
-            console.error("Error en geocodificación externa:", error.message || error);
-            throw new Error("Error al geolocalizar");
+            console.warn("Error en geocodificación externa (degradación controlada):", error.message || error);
+            return { address: "", city: "" };
         }
     }
 }

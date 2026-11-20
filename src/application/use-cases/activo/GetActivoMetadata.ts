@@ -31,7 +31,8 @@ export class GetActivoMetadata {
                 id: t.id,
                 label: t.nombre,
                 admiteSoftware: t.admiteSoftware,
-                admiteTelemetria: t.admiteTelemetria
+                admiteTelemetria: t.admiteTelemetria,
+                admiteSim: t.admiteSim
             })),
             bodegas: bodegas.map(l => ({
                 id: l.id,

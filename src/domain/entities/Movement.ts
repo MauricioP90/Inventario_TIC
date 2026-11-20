@@ -17,9 +17,6 @@ export enum MovementType {
     PROVIDER_RETURN = 'RETORNO_PROVEEDOR',
     DISPOSAL = 'BAJA_ACTIVO',
     THEFT_LOSS = 'HURTO_PERDIDA',
-    COMMISSION_DELIVERY = 'ENTREGA_COMISION',
-    PARTICIPANT_LOAN = 'PRESTAMO_PARTICIPE',
-    PARTIAL_REINTEGRATION = 'REINTEGRO_PARCIAL',
     RETURN_BY_REJECTION = 'RETORNO_POR_RECHAZO',
     INGRESO_MANTENIMIENTO = 'INGRESO_MANTENIMIENTO',
     SALIDA_MANTENIMIENTO = 'SALIDA_MANTENIMIENTO',
@@ -82,6 +79,9 @@ export class Movement {
 
     private validar(isNew: boolean) {
         if (!this.props.type) throw new Error('El tipo de movimiento es obligatorio');
+        if (isNew && !Object.values(MovementType).includes(this.props.type as MovementType)) {
+            throw new Error(`El tipo de movimiento "${this.props.type}" no es válido o fue retirado del catálogo.`);
+        }
         if (!this.props.originLocationId) throw new Error('La sede de origen es obligatoria');
         if (!this.props.destinationLocationId) throw new Error('La sede de destino es obligatoria');
 

@@ -383,8 +383,8 @@ export class ActivoController {
      */
     async createTipoActivo(req: Request, res: Response) {
         try {
-            const { nombre, estado, admiteSoftware, admiteTelemetria } = req.body;
-            const newType = await this.createTipoActivoUC.execute({ nombre, estado, admiteSoftware, admiteTelemetria });
+            const { nombre, estado, admiteSoftware, admiteTelemetria, admiteSim } = req.body;
+            const newType = await this.createTipoActivoUC.execute({ nombre, estado, admiteSoftware, admiteTelemetria, admiteSim });
             res.status(201).json(newType.toJSON());
         } catch (error: any) {
             res.status(400).json({ message: error.message });

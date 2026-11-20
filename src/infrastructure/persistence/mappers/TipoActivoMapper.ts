@@ -9,7 +9,8 @@ export class TipoActivoMapper {
             nombre: entity.nombre,
             estado: entity.estado as EstadoTipoActivo,
             admiteSoftware: entity.admiteSoftware ?? false,
-            admiteTelemetria: entity.admiteTelemetria ?? entity.admiteSoftware ?? false
+            admiteTelemetria: entity.admiteTelemetria ?? entity.admiteSoftware ?? false,
+            admiteSim: entity.admiteSim ?? false
         });
     }
 
@@ -20,6 +21,7 @@ export class TipoActivoMapper {
         entity.estado = domain.estado;
         entity.admiteSoftware = domain.admiteSoftware;
         entity.admiteTelemetria = domain.admiteTelemetria;
+        entity.admiteSim = domain.admiteSim;
         return entity;
     }
 }

@@ -10,6 +10,7 @@ import { IMaintenanceReportRepository } from "../../../domain/repositories/IMain
 import { MaintenanceReport, ModalidadMantenimiento, TipoMantenimiento } from "../../../domain/entities/MaintenanceReport";
 import { IActivoDocumentHistoryRepository } from "../../../domain/repositories/IActivoDocumentHistoryRepository";
 import { ActivoDocumentHistory } from "../../../domain/entities/ActivoDocumentHistory";
+import { ISIMCardRepository } from "../../../domain/repositories/ISIMCardRepository";
 
 interface UpdateActivoInput {
     placa: string;
@@ -39,7 +40,8 @@ export class UpdateActivo {
         private readonly responsibleRepository: IResponsibleRepository,
         private readonly movementRepository: IMovementRepository,
         private readonly maintenanceRepository: IMaintenanceReportRepository,
-        private readonly documentHistoryRepository?: IActivoDocumentHistoryRepository
+        private readonly documentHistoryRepository?: IActivoDocumentHistoryRepository,
+        private readonly simCardRepository?: ISIMCardRepository
     ) { }
 
     async execute(input: UpdateActivoInput): Promise<Activo> {
@@ -188,6 +190,16 @@ export class UpdateActivo {
         });
 
         await this.activoRepository.save(activo);
+
+        // Modelo partícula-molécula: sincronizar locationId de SIMs adheridas si el activo cambió de sede
+        if (input.locationId && targetLocationId && this.simCardRepository && activo.simCards && activo.simCards.length > 0) {
+            const allSims = await this.simCardRepository.findAll();
+            const attachedSims = allSims.filter(s => s.activoId === activo.id);
+            for (const sim of attachedSims) {
+                sim.update({ locationId: targetLocationId });
+                await this.simCardRepository.save(sim);
+            }
+        }
 
         // Si el estado es MANTENIMIENTO, nos aseguramos de que exista una ficha de trabajo activa
         if (targetEstado === EstadoActivo.MANTENIMIENTO) {

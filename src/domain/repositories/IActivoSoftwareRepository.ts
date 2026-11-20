@@ -6,5 +6,6 @@ export interface IActivoSoftwareRepository {
     findActiveByActivoId(activoId: string): Promise<ActivoSoftwareHistory[]>;
     findHistoryByActivoId(activoId: string): Promise<ActivoSoftwareHistory[]>;
     findActiveByActivoAndAppId(activoId: string, softwareAppId: string): Promise<ActivoSoftwareHistory | null>;
+    countActiveByTipoActivoId(tipoActivoId: string): Promise<number>;
     update(history: ActivoSoftwareHistory): Promise<ActivoSoftwareHistory>;
 }

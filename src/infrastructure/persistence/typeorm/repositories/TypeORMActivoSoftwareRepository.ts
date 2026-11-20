@@ -50,6 +50,15 @@ export class TypeORMActivoSoftwareRepository implements IActivoSoftwareRepositor
         return entity ? ActivoSoftwareHistoryMapper.toDomain(entity) : null;
     }
 
+    async countActiveByTipoActivoId(tipoActivoId: string): Promise<number> {
+        return await this.repository
+            .createQueryBuilder("ash")
+            .innerJoin("ash.activo", "a")
+            .where("a.tipoActivoId = :tipoActivoId", { tipoActivoId })
+            .andWhere("ash.estado = :estado", { estado: 'INSTALADO' })
+            .getCount();
+    }
+
     async update(history: ActivoSoftwareHistory): Promise<ActivoSoftwareHistory> {
         const entity = ActivoSoftwareHistoryMapper.toPersistence(history);
         await this.repository.save(entity);

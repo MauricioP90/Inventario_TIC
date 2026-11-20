@@ -84,6 +84,21 @@ export class SendMovementDispatchedNotificationHandler {
                     } else if (assetsDetails.length > 3) {
                         const firstThree = assetsDetails.slice(0, 3).map(a => formatAssetName(a)).join(', ');
                         equiposSummary = `${assetsDetails.length} equipos: ${firstThree} y ${assetsDetails.length - 3} más`;
+                    } else if (assetsDetails.length === 0 && movement.simCards && movement.simCards.length > 0) {
+                        const sims = movement.simCards;
+                        if (sims.length === 1) {
+                            const s = sims[0];
+                            const iccidTail = s.iccid ? ` - ICCID ...${String(s.iccid).slice(-4)}` : '';
+                            equiposSummary = `1 SIM Card: ${s.numero} (${s.operador}${iccidTail})`;
+                        } else if (sims.length <= 3) {
+                            const items = sims.map((s: any) => `${s.numero} (${s.operador})`).join(', ');
+                            equiposSummary = `${sims.length} SIM Cards: ${items}`;
+                        } else {
+                            const firstThree = sims.slice(0, 3).map((s: any) => `${s.numero} (${s.operador})`).join(', ');
+                            equiposSummary = `${sims.length} SIM Cards: ${firstThree} y ${sims.length - 3} más`;
+                        }
+                    } else if (assetsDetails.length === 0 && movement.simCardIds && movement.simCardIds.length > 0) {
+                        equiposSummary = `${movement.simCardIds.length} SIM Card(s)`;
                     }
 
                     await this.whatsAppService.sendMovementDispatchNotification({

@@ -25,7 +25,8 @@ export const swaggerSchemas = {
             id: { type: 'string', format: 'uuid' },
             nombre: { type: 'string', example: 'Terminal POS' },
             estado: { type: 'string', enum: ['ACTIVO', 'INACTIVO'], example: 'ACTIVO' },
-            admiteSoftware: { type: 'boolean', example: true }
+            admiteSoftware: { type: 'boolean', example: true },
+            admiteSim: { type: 'boolean', example: true }
         }
     },
     ModeloActivo: {
@@ -199,7 +200,7 @@ export const swaggerSchemas = {
             ICCID: { type: 'string' },
             numero: { type: 'string' },
             operador: { type: 'string' },
-            estado: { type: 'string', enum: ['BODEGA', 'ASIGNADA', 'MANTENIMIENTO', 'BAJA'] },
+            estado: { type: 'string', enum: ['BODEGA', 'ASIGNADA', 'POR_REPOSICION', 'BAJA'] },
             activoId: { type: 'string', format: 'uuid', nullable: true },
             locationId: { type: 'string', format: 'uuid', nullable: true }
         }
@@ -228,10 +229,7 @@ export const swaggerSchemas = {
                     'SIM_RETIRO_TOTAL',
                     'SIM_TRASLADO',
                     'TRASLADO_AREA',
-                    'HURTO_PERDIDA',
-                    'ENTREGA_COMISION',
-                    'PRESTAMO_PARTICIPE',
-                    'REINTEGRO_PARCIAL'
+                    'HURTO_PERDIDA'
                 ],
                 example: 'TRASLADO_REGIONAL' 
             },

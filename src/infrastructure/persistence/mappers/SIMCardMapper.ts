@@ -13,7 +13,7 @@ export class SIMCardMapper {
             operador: entity.operador,
             estado: entity.estado as EstadoSIM,
             activoId: entity.activo?.id,
-            locationId: entity.location?.id || entity.activo?.location?.id,
+            locationId: entity.activo?.location?.id || entity.location?.id,
             responsibleId: entity.activo?.responsible?.id || entity.activo?.responsibleId,
             activo: entity.activo ? new Activo({
                 id: entity.activo.id,
@@ -31,7 +31,7 @@ export class SIMCardMapper {
                 location: entity.activo.location ? LocationMapper.toDomain(entity.activo.location) : undefined,
                 responsible: entity.activo.responsible ? ResponsibleMapper.toDomain(entity.activo.responsible) : undefined
             }) : null,
-            location: entity.location ? LocationMapper.toDomain(entity.location) : (entity.activo?.location ? LocationMapper.toDomain(entity.activo.location) : null),
+            location: entity.activo?.location ? LocationMapper.toDomain(entity.activo.location) : (entity.location ? LocationMapper.toDomain(entity.location) : null),
             responsible: entity.activo?.responsible ? ResponsibleMapper.toDomain(entity.activo.responsible) : null
         });
     }

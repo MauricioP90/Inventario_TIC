@@ -7,6 +7,7 @@ import { ICCID } from '../value-objects';
 export enum EstadoSIM {
     BODEGA = 'BODEGA',
     ASIGNADA = 'ASIGNADA',
+    POR_REPOSICION = 'POR_REPOSICION',
     BAJA = 'BAJA'
 }
 
@@ -41,6 +42,9 @@ export class SIMCard {
         if (!this.props.numero) throw new Error('El número es obligatorio');
         if (!this.props.operador) throw new Error('El operador es obligatorio');
         if (!this.props.estado) throw new Error('El estado es obligatorio');
+        if (!Object.values(EstadoSIM).includes(this.props.estado)) {
+            throw new Error(`El estado de SIM "${this.props.estado}" no es válido.`);
+        }
     }
 
     get id() { return this.props.id; }
@@ -56,11 +60,28 @@ export class SIMCard {
     get location() { return this.props.location; }
     get responsible() { return this.props.responsible; }
 
-    public asignarAActivo(activoId: string) {
+    public asignarAActivo(activoId: string, locationId?: string) {
         this.props.activoId = activoId;
         this.props.estado = EstadoSIM.ASIGNADA;
-        // Al estar asignada, hereda lógicamente la ubicación del activo, pero podemos limpiar locationId para no duplicar
-        this.props.locationId = undefined;
+        // Modelo partícula-molécula: cuando la SIM se inserta en un activo, hereda la ubicación física del activo
+        if (locationId !== undefined) {
+            this.props.locationId = locationId;
+        }
+    }
+
+    /**
+     * Desvincula formalmente la SIM de su dispositivo actual y la transiciona a BODEGA, BAJA o POR_REPOSICION.
+     */
+    public retirarDeActivo(nuevoEstado: EstadoSIM, locationId?: string) {
+        if (nuevoEstado === EstadoSIM.ASIGNADA) {
+            throw new Error('Al retirar una SIM Card de un equipo no puede quedar en estado ASIGNADA.');
+        }
+        this.props.activoId = undefined;
+        this.props.activo = null;
+        this.props.estado = nuevoEstado;
+        if (locationId !== undefined) {
+            this.props.locationId = locationId;
+        }
     }
 
     public darDeBajaSIM() {
@@ -71,7 +92,10 @@ export class SIMCard {
     }
 
     public update(props: Partial<SIMCardProps>) {
-        const targetActivoId = props.activoId !== undefined ? props.activoId : this.props.activoId;
+        const hasActivoIdProp = Object.prototype.hasOwnProperty.call(props, 'activoId');
+        const targetActivoId = hasActivoIdProp
+            ? (props.activoId || undefined)
+            : this.props.activoId;
         const targetEstado = props.estado !== undefined ? props.estado : this.props.estado;
 
         if (targetEstado === EstadoSIM.BAJA && targetActivoId) {
@@ -79,9 +103,23 @@ export class SIMCard {
             throw new Error(`No se puede dar de baja / inactivar la SIM Card porque está vinculada a un dispositivo${placa}. Primero debes desvincularla del dispositivo.`);
         }
 
+        const sanitizedProps: Partial<SIMCardProps> = {};
+        if (props.iccid !== undefined) sanitizedProps.iccid = props.iccid;
+        if (props.numero !== undefined) sanitizedProps.numero = props.numero;
+        if (props.operador !== undefined) sanitizedProps.operador = props.operador;
+        if (props.estado !== undefined) sanitizedProps.estado = props.estado;
+        if (props.locationId !== undefined) sanitizedProps.locationId = props.locationId;
+        if (props.responsibleId !== undefined) sanitizedProps.responsibleId = props.responsibleId;
+        if (props.location !== undefined) sanitizedProps.location = props.location;
+        if (props.responsible !== undefined) sanitizedProps.responsible = props.responsible;
+        if (hasActivoIdProp) {
+            sanitizedProps.activoId = targetActivoId;
+            if (!targetActivoId) sanitizedProps.activo = null;
+        }
+
         this.props = {
             ...this.props,
-            ...props,
+            ...sanitizedProps,
             id: this.props.id // El ID nunca cambia
         };
     }

@@ -95,11 +95,14 @@ export class ReceiveByMagicLink {
             }
         }
 
-        // Cargar SIM cards si existen
-        let simsInMovement: any[] = [];
-        if (movement.simCardIds && movement.simCardIds.length > 0) {
+        // Cargar SIM cards directas del movimiento y las adheridas a los activos trasladados (modelo partícula-molécula)
+        let simsToSyncLocation: any[] = [];
+        if ((movement.simCardIds && movement.simCardIds.length > 0) || movement.activoIds.length > 0) {
             const sims = await this.simCardRepository.findAll();
-            simsInMovement = sims.filter(s => movement.simCardIds.includes(s.id!));
+            simsToSyncLocation = sims.filter(s =>
+                (s.id && movement.simCardIds.includes(s.id)) ||
+                (s.activoId && movement.activoIds.includes(s.activoId))
+            );
         }
 
         // 3. Ejecutar mutaciones en una transacción atómica (ACID)
@@ -134,8 +137,8 @@ export class ReceiveByMagicLink {
                 }
             }
 
-            // Actualizar la ubicación de todas las SIM Cards involucradas
-            for (const sim of simsInMovement) {
+            // Actualizar la ubicación de todas las SIM Cards involucradas y las adheridas a los activos recibidos
+            for (const sim of simsToSyncLocation) {
                 sim.update({ locationId: movement.destinationLocationId });
                 await repos.simCardRepository.save(sim);
             }

@@ -19,8 +19,16 @@ export class CreateSIMCard {
         // Validar formato de ICCID mediante Value Object
         const iccidVo = ICCID.create(input.iccid);
 
-        // 1. Creamos la entidad de dominio
-        const simCard = new SIMCard(input);
+        if (!input.locationId || !input.locationId.trim()) {
+            throw new Error('La ubicación inicial en bodega es obligatoria para registrar una SIM Card.');
+        }
+
+        // Toda SIM nueva nace disponible en BODEGA (no se permite crearla directamente ASIGNADA o POR_REPOSICION)
+        const simCard = new SIMCard({
+            ...input,
+            estado: EstadoSIM.BODEGA,
+            locationId: input.locationId.trim()
+        });
 
         // 2. Validamos que no exista
         const existe = await this.simCardRepository.findByIccid(input.iccid);

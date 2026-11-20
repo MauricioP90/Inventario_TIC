@@ -18,6 +18,9 @@ export class TipoActivoEntity {
     @Column({ name: 'admite_telemetria', type: 'boolean', default: false })
     admiteTelemetria!: boolean;
 
+    @Column({ name: 'admite_sim', type: 'boolean', default: false })
+    admiteSim!: boolean;
+
     @OneToMany(() => ActivoEntity, (activo) => activo.tipoActivo)
     activos!: ActivoEntity[];
 

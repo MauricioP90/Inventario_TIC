@@ -20,6 +20,8 @@ import { MaintenanceReportEntity } from "../../persistence/typeorm/entities/Main
 import { TypeORMMaintenanceReportRepository } from "../../persistence/typeorm/repositories/TypeORMMaintenanceReportRepository";
 import { ActivoDocumentHistoryEntity } from "../../persistence/typeorm/entities/ActivoDocumentHistoryEntity";
 import { TypeORMActivoDocumentHistoryRepository } from "../../persistence/typeorm/repositories/TypeORMActivoDocumentHistoryRepository";
+import { ActivoSoftwareHistoryEntity } from "../../persistence/typeorm/entities/ActivoSoftwareHistoryEntity";
+import { TypeORMActivoSoftwareRepository } from "../../persistence/typeorm/repositories/TypeORMActivoSoftwareRepository";
 
 // Casos de Uso
 import { CreateActivo } from "../../../application/use-cases/activo/CreateActivo";
@@ -44,17 +46,19 @@ const tipoActivoRepo = new TypeORMTipoActivoRepository(AppDataSource.getReposito
 const movementRepo = new TypeORMMovementRepository(AppDataSource.getRepository(MovementEntity));
 const maintenanceRepo = new TypeORMMaintenanceReportRepository(AppDataSource.getRepository(MaintenanceReportEntity));
 const documentHistoryRepo = new TypeORMActivoDocumentHistoryRepository(AppDataSource.getRepository(ActivoDocumentHistoryEntity));
+const activoSoftwareRepo = new TypeORMActivoSoftwareRepository(AppDataSource.getRepository(ActivoSoftwareHistoryEntity));
+const simCardRepo = new TypeORMSIMCardRepository(AppDataSource.getRepository(SIMCardEntity));
 
 // 2. Inicializamos Casos de Uso
-const createUC = new CreateActivo(activoRepo, locationRepo, responsibleRepo);
+const createUC = new CreateActivo(activoRepo, locationRepo, responsibleRepo, tipoActivoRepo);
 const getAllUC = new GetAllActivo(activoRepo);
 const getOneUC = new GetOneActivo(activoRepo);
-const updateUC = new UpdateActivo(activoRepo, locationRepo, responsibleRepo, movementRepo, maintenanceRepo, documentHistoryRepo);
+const updateUC = new UpdateActivo(activoRepo, locationRepo, responsibleRepo, movementRepo, maintenanceRepo, documentHistoryRepo, simCardRepo);
 const getMetadataUC = new GetActivoMetadata(tipoActivoRepo, locationRepo);
 const getDashboardSummaryUC = new GetDashboardSummary(activoRepo);
 const createTipoActivoUC = new CreateTipoActivo(tipoActivoRepo);
 const getAllTipoActivoUC = new GetAllTipoActivo(tipoActivoRepo);
-const updateTipoActivoUC = new UpdateTipoActivo(tipoActivoRepo);
+const updateTipoActivoUC = new UpdateTipoActivo(tipoActivoRepo, activoSoftwareRepo, simCardRepo);
 const searchUC = new SearchActivos(activoRepo);
 const getActivoDocumentHistoryUC = new GetActivoDocumentHistory(documentHistoryRepo);
 

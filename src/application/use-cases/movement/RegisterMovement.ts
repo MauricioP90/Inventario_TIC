@@ -63,8 +63,36 @@ export class RegisterMovement {
             throw new Error('No se permiten traslados directos entre Proveedores.');
         }
 
-        // Deduplicar identificadores de activos
+        // Deduplicar identificadores de activos y SIM Cards
         dto.activoIds = Array.from(new Set(dto.activoIds || []));
+        dto.simCardIds = Array.from(new Set(dto.simCardIds || []));
+
+        // Validación de lote para traslados de SIM Cards (SIM_TRASLADO individual y grupal)
+        if (dto.type === 'SIM_TRASLADO') {
+            if (dto.simCardIds.length === 0) {
+                throw new Error('Debe seleccionar al menos una tarjeta SIM para el traslado.');
+            }
+            const activeMovements = typeof this.movementRepository.findAll === 'function'
+                ? (await this.movementRepository.findAll()).filter(m => m.status === MovementStatus.PENDING || m.status === MovementStatus.EN_TRANSIT)
+                : [];
+            for (const simId of dto.simCardIds) {
+                const sim = await this.simCardRepository.findById(simId);
+                if (!sim) {
+                    throw new Error('Una de las SIM Cards seleccionadas no existe.');
+                }
+                if (sim.estado !== EstadoSIM.BODEGA || sim.activoId) {
+                    throw new Error(`La SIM Card #${sim.numero} no está disponible en BODEGA para trasladar.`);
+                }
+                if (!sim.locationId || sim.locationId !== dto.originLocationId) {
+                    throw new Error(`La SIM Card #${sim.numero} no tiene sede asignada o no pertenece a la sede de origen seleccionada (${originLocation.nombre}).`);
+                }
+                const busyMovement = activeMovements.find(m => m.simCardIds.includes(simId));
+                if (busyMovement) {
+                    const movCode = (busyMovement.id || '').slice(-6).toUpperCase();
+                    throw new Error(`La SIM Card #${sim.numero} ya tiene un traslado en curso (#${movCode}).`);
+                }
+            }
+        }
 
         // Validación estricta de límites de activos por formato documental
         if (dto.type === 'HURTO_PERDIDA' && dto.activoIds.length > 1) {
@@ -204,6 +232,11 @@ export class RegisterMovement {
                 }
 
                 if (dto.type === 'SIM_ASIGNACION') {
+                    if (!targetActivo.tipoActivo?.admiteSim) {
+                        throw new Error(
+                            `El activo [${targetActivo.placa}] pertenece al tipo "${targetActivo.tipoActivo?.nombre || 'Sin tipo'}", el cual no admite instalación de tarjetas SIM.`
+                        );
+                    }
                     const simId = dto.simCardIdToAssign || (dto.simCardIds && dto.simCardIds[0]);
                     if (!simId) throw new Error('Debe seleccionar la SIM Card a asignar.');
                     if ((targetActivo.simCards?.length || 0) >= 2) {
@@ -214,10 +247,10 @@ export class RegisterMovement {
                     if (sim.estado !== EstadoSIM.BODEGA || sim.activoId) {
                         throw new Error('La SIM Card seleccionada no está disponible en Bodega.');
                     }
-                    if (sim.locationId && targetActivo.locationId && sim.locationId !== targetActivo.locationId) {
+                    if (!sim.locationId || !targetActivo.locationId || sim.locationId !== targetActivo.locationId) {
                         throw new Error('No se puede asignar la SIM Card: La SIM Card y el Dispositivo deben estar registrados en la misma sede física.');
                     }
-                    sim.asignarAActivo(targetActivo.id!);
+                    sim.asignarAActivo(targetActivo.id!, targetActivo.locationId);
                     await simCardRepo.save(sim);
                     targetActivo.asignarSIMCard(sim);
                     await activoRepo.save(targetActivo);
@@ -226,6 +259,11 @@ export class RegisterMovement {
                     dto.notes = dto.notes ? `${dto.notes}\n${noteTag}` : noteTag;
 
                 } else if (dto.type === 'SIM_CAMBIO') {
+                    if (!targetActivo.tipoActivo?.admiteSim) {
+                        throw new Error(
+                            `El activo [${targetActivo.placa}] pertenece al tipo "${targetActivo.tipoActivo?.nombre || 'Sin tipo'}", el cual no admite instalación de tarjetas SIM.`
+                        );
+                    }
                     const oldSimId = dto.simCardIdToReplace;
                     const newSimId = dto.simCardIdToAssign;
                     if (!oldSimId || !newSimId) {
@@ -240,14 +278,14 @@ export class RegisterMovement {
                     if (newSim.estado !== EstadoSIM.BODEGA || newSim.activoId) {
                         throw new Error('La nueva SIM Card no está disponible en Bodega.');
                     }
-                    if (newSim.locationId && targetActivo.locationId && newSim.locationId !== targetActivo.locationId) {
+                    if (!newSim.locationId || !targetActivo.locationId || newSim.locationId !== targetActivo.locationId) {
                         throw new Error('No se puede cambiar la SIM Card: La nueva SIM Card y el Dispositivo deben estar registrados en la misma sede física.');
                     }
                     // La SIM saliente siempre queda en la sede actual del equipo (Regla de negocio)
-                    oldSim.update({ estado: EstadoSIM.BODEGA, activoId: undefined, locationId: targetActivo.locationId });
+                    oldSim.retirarDeActivo(EstadoSIM.BODEGA, targetActivo.locationId);
                     await simCardRepo.save(oldSim);
 
-                    newSim.asignarAActivo(targetActivo.id!);
+                    newSim.asignarAActivo(targetActivo.id!, targetActivo.locationId);
                     await simCardRepo.save(newSim);
 
                     targetActivo.removerSIMCard(oldSim.id!);
@@ -267,7 +305,7 @@ export class RegisterMovement {
                     }
                     const targetState = (dto.removedSimNewState || 'BODEGA') as EstadoSIM;
                     // La SIM retirada siempre queda en la sede actual del equipo (Regla de negocio)
-                    simToRemove.update({ estado: targetState, activoId: undefined, locationId: targetActivo.locationId });
+                    simToRemove.retirarDeActivo(targetState, targetActivo.locationId);
                     await simCardRepo.save(simToRemove);
 
                     targetActivo.removerSIMCard(simToRemove.id!);
@@ -278,17 +316,28 @@ export class RegisterMovement {
                     dto.notes = dto.notes ? `${dto.notes}\n${noteTag}` : noteTag;
 
                 } else if (dto.type === 'SIM_RETIRO_TOTAL') {
-                    const allSims = (await simCardRepo.findAll()).filter(s => s.activoId === targetActivo.id);
-                    if (allSims.length === 0) {
+                    const attachedSims = (await simCardRepo.findAll()).filter(s => s.activoId === targetActivo.id);
+                    if (attachedSims.length === 0) {
                         throw new Error(`El equipo con placa "${targetActivo.placa}" no tiene SIM Cards asignadas para retirar.`);
                     }
+                    // Respetar el orden de SIMs enviado por el frontend para emparejar simStates[idx] exactamente
+                    const requestedSimIds = dto.simCardIds || [];
+                    const orderedSims = requestedSimIds.length > 0
+                        ? [
+                            ...requestedSimIds
+                                .map(id => attachedSims.find(s => s.id === id))
+                                .filter((s): s is NonNullable<typeof s> => !!s),
+                            ...attachedSims.filter(s => !requestedSimIds.includes(s.id!))
+                        ]
+                        : attachedSims;
+
                     const processedIds: string[] = [];
                     const numbers: string[] = [];
-                    for (let idx = 0; idx < allSims.length; idx++) {
-                        const sim = allSims[idx];
+                    for (let idx = 0; idx < orderedSims.length; idx++) {
+                        const sim = orderedSims[idx];
                         const targetState = ((dto.simStates && dto.simStates[idx]) || dto.removedSimNewState || 'BODEGA') as EstadoSIM;
                         // Siempre queda en la sede actual del equipo
-                        sim.update({ estado: targetState, activoId: undefined, locationId: targetActivo.locationId });
+                        sim.retirarDeActivo(targetState, targetActivo.locationId);
                         await simCardRepo.save(sim);
                         processedIds.push(sim.id!);
                         numbers.push(`#${sim.numero}`);
@@ -299,6 +348,34 @@ export class RegisterMovement {
                     dto.simCardIds = processedIds;
                     const noteTag = `[SIM] Retiro total de SIM Cards (${numbers.join(', ')}) a Bodega en sede`;
                     dto.notes = dto.notes ? `${dto.notes}\n${noteTag}` : noteTag;
+                }
+            }
+
+            // Procesamiento de SIMs adheridas en HURTO_PERDIDA (pasan a POR_REPOSICION para gestión con el operador)
+            if (isTheftOrLoss && typeof simCardRepo.findAll === 'function') {
+                const allSims = await simCardRepo.findAll();
+                const hurtoSimLogs: string[] = [];
+                const hurtoSimIds: string[] = [];
+
+                for (const activoId of dto.activoIds) {
+                    const act = await activoRepo.findById(activoId);
+                    const attachedSims = allSims.filter(s => s.activoId === activoId);
+                    for (const sim of attachedSims) {
+                        sim.retirarDeActivo(EstadoSIM.POR_REPOSICION, act?.locationId || dto.originLocationId);
+                        await simCardRepo.save(sim);
+                        hurtoSimIds.push(sim.id!);
+                        hurtoSimLogs.push(`SIM #${sim.numero} (ICCID: ${sim.iccid}, ${sim.operador})`);
+                    }
+                    if (act && attachedSims.length > 0) {
+                        act.limpiarSIMCards();
+                        await activoRepo.update(act);
+                    }
+                }
+
+                if (hurtoSimIds.length > 0) {
+                    dto.simCardIds = hurtoSimIds;
+                    const alertNote = `[ALERTA SIM - HURTO/PÉRDIDA] ${hurtoSimLogs.join(', ')} pasaron a estado POR_REPOSICION. Gestionar reposición de chip o cancelación de línea ante el proveedor.`;
+                    dto.notes = dto.notes ? `${dto.notes}\n${alertNote}` : alertNote;
                 }
             }
 

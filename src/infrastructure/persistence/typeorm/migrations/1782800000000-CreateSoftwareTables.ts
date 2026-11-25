@@ -61,6 +61,10 @@ export class CreateSoftwareTables1782800000000 implements MigrationInterface {
         await queryRunner.query(`
             CREATE INDEX IF NOT EXISTS "IDX_activo_software_version_id" ON "activo_software_history" ("software_version_id")
         `);
+
+        await queryRunner.query(`
+            ALTER TABLE "tipo_activos" ADD COLUMN IF NOT EXISTS "admite_software" boolean NOT NULL DEFAULT false
+        `);
     }
 
     public async down(queryRunner: QueryRunner): Promise<void> {

@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { RegisterDeviceHeartbeat } from '../../../application/use-cases/telemetry/RegisterDeviceHeartbeat';
 import { GetActivoTelemetry } from '../../../application/use-cases/telemetry/GetActivoTelemetry';
 import { VerifyTelemetryAdminAuth } from '../../../application/use-cases/telemetry/VerifyTelemetryAdminAuth';
+import { ResolveTelemetryControversy } from '../../../application/use-cases/telemetry/ResolveTelemetryControversy';
 import { IEmailService } from '../../../domain/services/IEmailService';
 import { IWhatsAppNotificationService } from '../../../domain/services/IWhatsAppNotificationService';
 import { IResponsibleRepository } from '../../../domain/repositories/IResponsibleRepository';
@@ -14,7 +15,8 @@ export class TelemetryController {
         private readonly emailService?: IEmailService,
         private readonly whatsAppService?: IWhatsAppNotificationService,
         private readonly responsibleRepository?: IResponsibleRepository,
-        private readonly verifyAdminAuthUC: VerifyTelemetryAdminAuth = new VerifyTelemetryAdminAuth()
+        private readonly verifyAdminAuthUC: VerifyTelemetryAdminAuth = new VerifyTelemetryAdminAuth(),
+        private readonly resolveControversyUC?: ResolveTelemetryControversy
     ) {}
 
     /**
@@ -372,6 +374,45 @@ export class TelemetryController {
                 authorized: false,
                 message: error.message || 'Error validando credencial administrativa.'
             });
+        }
+    }
+
+    /**
+     * @swagger
+     * /api/telemetry/controversies/{id}/resolve:
+     *   patch:
+     *     summary: Resolver o descartar formalmente una controversia de ubicación GPS
+     *     tags: [Telemetría y Geocercas]
+     */
+    async resolveControversy(req: Request, res: Response) {
+        try {
+            if (!this.resolveControversyUC) {
+                return res.status(500).json({ message: 'Caso de uso de resolución no configurado.' });
+            }
+            const id = req.params.id as string;
+            const { resolutionStatus, resolutionType, resolutionNotes, applyToAllOpenForActivo } = req.body || {};
+            const tokenContent = (req as any).kauth?.grant?.access_token?.content;
+            const resolvedBy =
+                tokenContent?.name ||
+                tokenContent?.preferred_username ||
+                tokenContent?.email ||
+                'Super Administrador';
+
+            const result = await this.resolveControversyUC.execute({
+                logId: id,
+                resolutionStatus,
+                resolutionType: resolutionType || 'OTRO',
+                resolutionNotes,
+                resolvedBy,
+                applyToAllOpenForActivo
+            });
+
+            return res.status(200).json({
+                resolvedLog: result.resolvedLog.toJSON(),
+                additionalClosedCount: result.additionalClosedCount
+            });
+        } catch (error: any) {
+            return res.status(400).json({ message: error.message || 'Error al resolver controversia.' });
         }
     }
 }

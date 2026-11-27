@@ -14,6 +14,11 @@ export class TypeORMActivoTelemetryRepository implements IActivoTelemetryReposit
         return ActivoTelemetryLogMapper.toDomain(saved);
     }
 
+    async findById(id: string): Promise<ActivoTelemetryLog | null> {
+        const entity = await this.ormRepo.findOne({ where: { id } });
+        return entity ? ActivoTelemetryLogMapper.toDomain(entity) : null;
+    }
+
     async findLatestByActivoId(activoId: string): Promise<ActivoTelemetryLog | null> {
         const entity = await this.ormRepo.findOne({
             where: { activoId },
@@ -49,6 +54,33 @@ export class TypeORMActivoTelemetryRepository implements IActivoTelemetryReposit
             take: limit
         });
         return entities.map(e => ActivoTelemetryLogMapper.toDomain(e));
+    }
+
+    async resolveOpenControversiesByActivoId(
+        activoId: string,
+        resolution: {
+            status: 'RESUELTA' | 'DESCARTADA';
+            type: string;
+            notes: string;
+            resolvedBy: string;
+        }
+    ): Promise<number> {
+        const result = await this.ormRepo
+            .createQueryBuilder()
+            .update(ActivoTelemetryLogEntity)
+            .set({
+                resolutionStatus: resolution.status,
+                resolutionType: resolution.type,
+                resolutionNotes: resolution.notes,
+                resolvedBy: resolution.resolvedBy,
+                resolvedAt: new Date()
+            })
+            .where('activo_id = :activoId', { activoId })
+            .andWhere('status = :status', { status: 'CONTROVERSIA_UBICACION' })
+            .andWhere('(resolution_status IS NULL OR resolution_status = :pending)', { pending: 'PENDIENTE' })
+            .execute();
+
+        return result.affected || 0;
     }
 
     async getAdminPasswordHash(): Promise<string | null> {

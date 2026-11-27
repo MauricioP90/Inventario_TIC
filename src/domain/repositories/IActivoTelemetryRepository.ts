@@ -14,10 +14,20 @@ export interface TelemetrySettings {
 
 export interface IActivoTelemetryRepository {
     save(log: ActivoTelemetryLog): Promise<ActivoTelemetryLog>;
+    findById?(id: string): Promise<ActivoTelemetryLog | null>;
     findLatestByActivoId(activoId: string): Promise<ActivoTelemetryLog | null>;
     findHistoryByActivoId(activoId: string, limit?: number): Promise<ActivoTelemetryLog[]>;
     findLatestForAllActivos(): Promise<ActivoTelemetryLog[]>;
     findRecentControversies(limit?: number): Promise<ActivoTelemetryLog[]>;
+    resolveOpenControversiesByActivoId?(
+        activoId: string,
+        resolution: {
+            status: 'RESUELTA' | 'DESCARTADA';
+            type: string;
+            notes: string;
+            resolvedBy: string;
+        }
+    ): Promise<number>;
     getSettings(): Promise<TelemetrySettings>;
     getAdminPasswordHash(): Promise<string | null>;
     updateSettings(settings: Partial<TelemetrySettings>): Promise<TelemetrySettings>;

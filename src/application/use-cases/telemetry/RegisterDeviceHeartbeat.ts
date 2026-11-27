@@ -198,6 +198,17 @@ export class RegisterDeviceHeartbeat {
 
         const savedLog = await this.telemetryRepository.save(log);
 
+        // 4.1 Auto-normalización: si el equipo vuelve a reportar CONFORME dentro de su geocerca oficial,
+        // cerrar automáticamente las controversias pendientes previas de ese activo para mantener limpia la bandeja.
+        if (status === 'CONFORME' && this.telemetryRepository.resolveOpenControversiesByActivoId) {
+            await this.telemetryRepository.resolveOpenControversiesByActivoId(activo.id!, {
+                status: 'RESUELTA',
+                type: 'AUTO_NORMALIZADA',
+                notes: `Normalizada automáticamente al verificar encendido CONFORME en ${expectedLocationName}.`,
+                resolvedBy: 'Sistema (Telemetría GPS)'
+            });
+        }
+
         // 5. Publicar Evento de Dominio si aplica alerta por controversia o sabotaje
         if (shouldSendAlert && this.eventBus && (distanceKm !== null || isTampered)) {
             await this.eventBus.publish(

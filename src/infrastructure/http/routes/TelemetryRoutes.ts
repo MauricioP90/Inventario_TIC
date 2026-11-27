@@ -13,13 +13,14 @@ import { TypeORMResponsibleRepository } from '../../persistence/typeorm/reposito
 import { RegisterDeviceHeartbeat } from '../../../application/use-cases/telemetry/RegisterDeviceHeartbeat';
 import { GetActivoTelemetry } from '../../../application/use-cases/telemetry/GetActivoTelemetry';
 import { VerifyTelemetryAdminAuth } from '../../../application/use-cases/telemetry/VerifyTelemetryAdminAuth';
+import { ResolveTelemetryControversy } from '../../../application/use-cases/telemetry/ResolveTelemetryControversy';
 import { SendUnauthorizedLocationAlertHandler } from '../../../application/handlers/SendUnauthorizedLocationAlertHandler';
 import { InMemoryEventBus } from '../../events/InMemoryEventBus';
 import { UnauthorizedLocationDetectedDomainEvent } from '../../../domain/events/UnauthorizedLocationDetectedDomainEvent';
 import { EmailServiceFactory } from '../../services/EmailServiceFactory';
 import { WasapiNotificationService } from '../../services/WasapiNotificationService';
 import { TelemetryController } from '../controllers/TelemetryController';
-import { requireRoles, deviceOrKeycloakAuth } from '../middleware/RoleMiddleware';
+import { requireRoles, requirePermission, deviceOrKeycloakAuth } from '../middleware/RoleMiddleware';
 import { adminAuthRateLimiter } from '../middleware/RateLimitMiddleware';
 
 const telemetryRouter = Router();
@@ -54,6 +55,7 @@ const registerHeartbeatUC = new RegisterDeviceHeartbeat(
 );
 const getActivoTelemetryUC = new GetActivoTelemetry(telemetryRepo);
 const verifyAdminAuthUC = new VerifyTelemetryAdminAuth(telemetryRepo);
+const resolveControversyUC = new ResolveTelemetryControversy(telemetryRepo);
 
 const controller = new TelemetryController(
     registerHeartbeatUC,
@@ -61,15 +63,17 @@ const controller = new TelemetryController(
     emailService,
     whatsAppService,
     responsibleRepo,
-    verifyAdminAuthUC
+    verifyAdminAuthUC,
+    resolveControversyUC
 );
 
 telemetryRouter.post('/heartbeat', deviceOrKeycloakAuth, (req, res) => controller.registerHeartbeat(req, res));
 telemetryRouter.post('/admin-auth', adminAuthRateLimiter, deviceOrKeycloakAuth, (req, res) => controller.verifyAdminAuth(req, res));
-telemetryRouter.post('/test-alert', requireRoles('admin'), (req, res) => controller.sendTestAlert(req, res));
+telemetryRouter.post('/test-alert', requirePermission('catalogs:access'), (req, res) => controller.sendTestAlert(req, res));
 telemetryRouter.get('/overview', requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getOverview(req, res));
 telemetryRouter.get('/settings', requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getSettings(req, res));
-telemetryRouter.put('/settings', requireRoles('admin'), (req, res) => controller.updateSettings(req, res));
+telemetryRouter.put('/settings', requirePermission('catalogs:access'), (req, res) => controller.updateSettings(req, res));
+telemetryRouter.patch('/controversies/:id/resolve', requirePermission('catalogs:access'), (req, res) => controller.resolveControversy(req, res));
 telemetryRouter.get('/activos/:activoId', requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getActivoHistory(req, res));
 
 export { telemetryRouter };

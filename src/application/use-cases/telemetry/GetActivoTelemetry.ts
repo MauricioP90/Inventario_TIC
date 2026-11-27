@@ -16,7 +16,7 @@ export class GetActivoTelemetry {
         const [settings, latestList, controversies] = await Promise.all([
             this.telemetryRepository.getSettings(),
             this.telemetryRepository.findLatestForAllActivos(),
-            this.telemetryRepository.findRecentControversies(25)
+            this.telemetryRepository.findRecentControversies(200)
         ]);
 
         const latestByActivo: Record<string, ReturnType<ActivoTelemetryLog['toJSON']>> = {};

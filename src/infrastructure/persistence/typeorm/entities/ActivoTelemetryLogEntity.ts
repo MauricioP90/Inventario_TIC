@@ -47,6 +47,21 @@ export class ActivoTelemetryLogEntity {
     @Column({ type: 'text', nullable: true })
     observaciones!: string | null;
 
+    @Column({ name: 'resolution_status', type: 'varchar', length: 30, nullable: true })
+    resolutionStatus!: string | null;
+
+    @Column({ name: 'resolution_type', type: 'varchar', length: 50, nullable: true })
+    resolutionType!: string | null;
+
+    @Column({ name: 'resolution_notes', type: 'text', nullable: true })
+    resolutionNotes!: string | null;
+
+    @Column({ name: 'resolved_by', type: 'varchar', length: 150, nullable: true })
+    resolvedBy!: string | null;
+
+    @Column({ name: 'resolved_at', type: 'timestamp', nullable: true })
+    resolvedAt!: Date | null;
+
     @CreateDateColumn({ name: 'reported_at' })
     reportedAt!: Date;
 }

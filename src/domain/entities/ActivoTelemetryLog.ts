@@ -6,6 +6,17 @@ export type TelemetryStatus =
     | 'CONTROVERSIA_UBICACION'
     | 'SIN_COORDENADAS_SEDE';
 
+export type ControversyResolutionStatus = 'PENDIENTE' | 'RESUELTA' | 'DESCARTADA';
+
+export type ControversyResolutionType =
+    | 'TRASLADO_REGULARIZADO'
+    | 'COORDENADA_SEDE_AJUSTADA'
+    | 'FALSO_POSITIVO_GPS'
+    | 'SABOTAJE_ATENDIDO'
+    | 'MANTENIMIENTO_REGISTRADO'
+    | 'AUTO_NORMALIZADA'
+    | 'OTRO';
+
 export interface ActivoTelemetryLogProps {
     id?: string;
     activoId: string;
@@ -22,6 +33,11 @@ export interface ActivoTelemetryLogProps {
     notificationUuid?: string | null;
     observaciones?: string | null;
     reportedAt?: Date;
+    resolutionStatus?: ControversyResolutionStatus | null;
+    resolutionType?: ControversyResolutionType | null;
+    resolutionNotes?: string | null;
+    resolvedBy?: string | null;
+    resolvedAt?: Date | null;
 }
 
 export class ActivoTelemetryLog {
@@ -38,6 +54,13 @@ export class ActivoTelemetryLog {
             throw new Error('Las coordenadas reportadas son obligatorias.');
         }
 
+        const defaultResolutionStatus: ControversyResolutionStatus | null =
+            props.resolutionStatus !== undefined
+                ? props.resolutionStatus
+                : props.status === 'CONTROVERSIA_UBICACION'
+                ? 'PENDIENTE'
+                : null;
+
         this.props = {
             ...props,
             id: props.id || randomUUID(),
@@ -52,7 +75,12 @@ export class ActivoTelemetryLog {
             alertSent: props.alertSent ?? false,
             notificationUuid: props.notificationUuid ?? null,
             observaciones: props.observaciones ?? null,
-            reportedAt: props.reportedAt || new Date()
+            reportedAt: props.reportedAt || new Date(),
+            resolutionStatus: defaultResolutionStatus,
+            resolutionType: props.resolutionType ?? null,
+            resolutionNotes: props.resolutionNotes ?? null,
+            resolvedBy: props.resolvedBy ?? null,
+            resolvedAt: props.resolvedAt ?? null
         };
     }
 
@@ -71,12 +99,37 @@ export class ActivoTelemetryLog {
     get notificationUuid(): string | null { return this.props.notificationUuid ?? null; }
     get observaciones(): string | null { return this.props.observaciones ?? null; }
     get reportedAt(): Date { return this.props.reportedAt!; }
+    get resolutionStatus(): ControversyResolutionStatus | null { return this.props.resolutionStatus ?? null; }
+    get resolutionType(): ControversyResolutionType | null { return this.props.resolutionType ?? null; }
+    get resolutionNotes(): string | null { return this.props.resolutionNotes ?? null; }
+    get resolvedBy(): string | null { return this.props.resolvedBy ?? null; }
+    get resolvedAt(): Date | null { return this.props.resolvedAt ?? null; }
 
     public markAlertSent(notificationUuid?: string | null): void {
         this.props.alertSent = true;
         if (notificationUuid) {
             this.props.notificationUuid = notificationUuid;
         }
+    }
+
+    public resolveControversy(input: {
+        status: 'RESUELTA' | 'DESCARTADA';
+        type: ControversyResolutionType;
+        notes: string;
+        resolvedBy: string;
+    }): void {
+        if (this.props.status !== 'CONTROVERSIA_UBICACION') {
+            throw new Error('Solo los registros en estado CONTROVERSIA_UBICACION pueden ser resueltos.');
+        }
+        const trimmedNotes = (input.notes || '').trim();
+        if (trimmedNotes.length < 5) {
+            throw new Error('Debe ingresar una justificación detallada (mínimo 5 caracteres) para cerrar la controversia.');
+        }
+        this.props.resolutionStatus = input.status;
+        this.props.resolutionType = input.type;
+        this.props.resolutionNotes = trimmedNotes;
+        this.props.resolvedBy = (input.resolvedBy || 'Administrador').trim();
+        this.props.resolvedAt = new Date();
     }
 
     public toJSON() {
@@ -95,8 +148,12 @@ export class ActivoTelemetryLog {
             alertSent: this.alertSent,
             notificationUuid: this.notificationUuid,
             observaciones: this.observaciones,
-            reportedAt: this.reportedAt
+            reportedAt: this.reportedAt,
+            resolutionStatus: this.resolutionStatus,
+            resolutionType: this.resolutionType,
+            resolutionNotes: this.resolutionNotes,
+            resolvedBy: this.resolvedBy,
+            resolvedAt: this.resolvedAt
         };
     }
 }
-

@@ -1,4 +1,9 @@
-import { ActivoTelemetryLog, TelemetryStatus } from '../../../../domain/entities/ActivoTelemetryLog';
+import {
+    ActivoTelemetryLog,
+    ControversyResolutionStatus,
+    ControversyResolutionType,
+    TelemetryStatus
+} from '../../../../domain/entities/ActivoTelemetryLog';
 import { ActivoTelemetryLogEntity } from '../entities/ActivoTelemetryLogEntity';
 
 export class ActivoTelemetryLogMapper {
@@ -18,7 +23,12 @@ export class ActivoTelemetryLogMapper {
             alertSent: entity.alertSent,
             notificationUuid: entity.notificationUuid,
             observaciones: entity.observaciones,
-            reportedAt: entity.reportedAt
+            reportedAt: entity.reportedAt,
+            resolutionStatus: (entity.resolutionStatus as ControversyResolutionStatus | null) ?? null,
+            resolutionType: (entity.resolutionType as ControversyResolutionType | null) ?? null,
+            resolutionNotes: entity.resolutionNotes ?? null,
+            resolvedBy: entity.resolvedBy ?? null,
+            resolvedAt: entity.resolvedAt ?? null
         });
     }
 
@@ -39,6 +49,11 @@ export class ActivoTelemetryLogMapper {
         entity.notificationUuid = domain.notificationUuid;
         entity.observaciones = domain.observaciones;
         entity.reportedAt = domain.reportedAt;
+        entity.resolutionStatus = domain.resolutionStatus;
+        entity.resolutionType = domain.resolutionType;
+        entity.resolutionNotes = domain.resolutionNotes;
+        entity.resolvedBy = domain.resolvedBy;
+        entity.resolvedAt = domain.resolvedAt;
         return entity;
     }
 }

@@ -163,6 +163,9 @@ export class Movement {
         if (this.props.type === 'TRASLADO_AREA') {
             throw new Error('Los traslados entre áreas no requieren despacho. Se confirman directamente por magic link.');
         }
+        if (this.props.type === 'HURTO_PERDIDA') {
+            throw new Error('Los reportes de hurto o pérdida no requieren despacho logístico. Deben ser aprobados por un Administrador.');
+        }
         if (this.props.status !== MovementStatus.PENDING) {
             throw new Error('Solo se pueden despachar movimientos pendientes');
         }
@@ -176,13 +179,14 @@ export class Movement {
     }
 
     public receive(receiverId: string | undefined, receivedEvidenceUrl: string, physicalReceiverName?: string) {
-        if (this.props.status !== MovementStatus.EN_TRANSIT) {
+        const canReceiveFromPendingHurto = this.props.status === MovementStatus.PENDING && this.props.type === 'HURTO_PERDIDA';
+        if (this.props.status !== MovementStatus.EN_TRANSIT && !canReceiveFromPendingHurto) {
             throw new Error('Solo se pueden recibir movimientos que estén en tránsito');
         }
         this.props.status = MovementStatus.RECEIVED;
         this.props.receivedAt = new Date();
         if (receiverId) this.props.receiverId = receiverId; // Solo se asigna si viene un ID válido
-        this.props.receivedEvidenceUrl = receivedEvidenceUrl;
+        if (receivedEvidenceUrl) this.props.receivedEvidenceUrl = receivedEvidenceUrl;
         this.props.physicalReceiverName = physicalReceiverName;
         
         // El token mágico se consume

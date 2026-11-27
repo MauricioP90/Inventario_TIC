@@ -6,6 +6,7 @@ import { IMaintenanceReportRepository } from "../../../domain/repositories/IMain
 import { IResponsibleRepository } from "../../../domain/repositories/IResponsibleRepository";
 import { ILocationRepository } from "../../../domain/repositories/ILocationRepository";
 import { MaintenanceReport, ModalidadMantenimiento, TipoMantenimiento, EstadoFicha } from "../../../domain/entities/MaintenanceReport";
+import { EstadoSIM } from "../../../domain/entities/SIMCard";
 import { IUnitOfWork } from "../../../domain/repositories/IUnitOfWork";
 import { IEventBus, MovementReceivedDomainEvent } from "../../../domain/events";
 
@@ -21,18 +22,22 @@ export class ReceiveMovement {
         private readonly unitOfWork?: IUnitOfWork
     ) { }
 
-    async execute(id: string, receiverId: string, receiverEvidenceUrl: string, destinationLocationId?: string): Promise<Movement> {
+    async execute(id: string, receiverId: string, receiverEvidenceUrl: string, destinationLocationId?: string, canApproveBaja: boolean = true): Promise<Movement> {
         // 1. Buscar el movimiento
         const movement = await this.movementRepository.findById(id);
         if (!movement) {
             throw new Error('Movimiento no encontrado');
+        }
+        if (movement.type === 'HURTO_PERDIDA' && canApproveBaja === false) {
+            throw new Error('Acceso denegado: solo un Administrador o Super Administrador puede aprobar la baja definitiva por Hurto o Pérdida.');
         }
         // 2. Si se suministra una sede destino diferente al recibir, la actualizamos en el movimiento
         if (destinationLocationId && destinationLocationId !== movement.destinationLocationId) {
             movement.changeDestinationLocation(destinationLocationId);
         }
         // 3. Aplicar lógica de dominio para recibir
-        movement.receive(receiverId, receiverEvidenceUrl);
+        const effectiveEvidence = receiverEvidenceUrl || movement.documentUrl || movement.evidenceUrl || '';
+        movement.receive(receiverId, effectiveEvidence);
 
         // Cargar el custodio destino
         const destinationResponsible = await this.responsibleRepository.findById(movement.responsibleId);
@@ -79,11 +84,14 @@ export class ReceiveMovement {
             maintenanceReportRepository: IMaintenanceReportRepository;
         }): Promise<Movement> => {
             for (const activo of assetsInMovement) {
-                // Actualizar estado operativo del activo
-                activo.aplicarRecepcionDeMovimiento(movement.type, movement.destinationLocationId);
+                if (movement.type === 'HURTO_PERDIDA') {
+                    activo.limpiarSIMCards();
+                }
                 // Actualizar custodia (responsable) y área
                 activo.asignarResponsable(destinationResponsible);
                 activo.changeArea(newAreaId);
+                // Actualizar estado operativo final del activo (BAJA para HURTO_PERDIDA/BAJA_ACTIVO, MANTENIMIENTO, etc.)
+                activo.aplicarRecepcionDeMovimiento(movement.type, movement.destinationLocationId);
                 
                 await repos.activoRepository.update(activo);
 
@@ -116,9 +124,26 @@ export class ReceiveMovement {
             }
 
             // Actualizar la ubicación de todas las SIM Cards involucradas y las adheridas a los activos recibidos
-            for (const sim of simsToSyncLocation) {
-                sim.update({ locationId: movement.destinationLocationId });
-                await repos.simCardRepository.save(sim);
+            if (movement.type === 'HURTO_PERDIDA') {
+                const hurtoSimLogs: string[] = [];
+                for (const sim of simsToSyncLocation) {
+                    sim.retirarDeActivo(EstadoSIM.POR_REPOSICION, movement.originLocationId);
+                    await repos.simCardRepository.save(sim);
+                    hurtoSimLogs.push(`SIM #${sim.numero} (ICCID: ${sim.iccid}, ${sim.operador})`);
+                }
+                for (const activo of assetsInMovement) {
+                    activo.limpiarSIMCards();
+                    await repos.activoRepository.update(activo);
+                }
+                if (hurtoSimLogs.length > 0) {
+                    movement.appendNotes(`[ALERTA SIM - HURTO/PÉRDIDA] ${hurtoSimLogs.join(', ')} pasaron a estado POR_REPOSICION.`);
+                }
+                movement.appendNotes(`[BAJA POR HURTO APROBADA] Baja definitiva verificada y aprobada por Administrador.`);
+            } else {
+                for (const sim of simsToSyncLocation) {
+                    sim.update({ locationId: movement.destinationLocationId });
+                    await repos.simCardRepository.save(sim);
+                }
             }
 
             // Persistir cambios del movimiento recibido

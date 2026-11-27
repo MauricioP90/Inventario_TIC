@@ -19,6 +19,7 @@ import { SoftwareAppEntity } from "./infrastructure/persistence/typeorm/entities
 import { SoftwareVersionEntity } from "./infrastructure/persistence/typeorm/entities/SoftwareVersionEntity";
 import { ActivoSoftwareHistoryEntity } from "./infrastructure/persistence/typeorm/entities/ActivoSoftwareHistoryEntity";
 import { ActivoTelemetryLogEntity } from "./infrastructure/persistence/typeorm/entities/ActivoTelemetryLogEntity";
+import { RolePermissionEntity } from "./infrastructure/database/entities/RolePermissionEntity";
 
 if (process.env.NODE_ENV === "production" && (!process.env.DB_PASSWORD || process.env.DB_PASSWORD === "admin123")) {
     console.warn("⚠️ [SECURITY WARNING] La base de datos está configurada con credenciales por defecto o vacías en producción. Configure DB_PASSWORD en el archivo .env.");
@@ -50,7 +51,8 @@ export const AppDataSource = new DataSource({
         SoftwareAppEntity,
         SoftwareVersionEntity,
         ActivoSoftwareHistoryEntity,
-        ActivoTelemetryLogEntity
+        ActivoTelemetryLogEntity,
+        RolePermissionEntity
     ],
     migrations: [
         process.env.NODE_ENV === "production"

@@ -8,7 +8,7 @@ import { UpdateNotificationRecipient } from "../../../application/use-cases/noti
 import { DeleteNotificationRecipient } from "../../../application/use-cases/notification-recipient/DeleteNotificationRecipient";
 import { ToggleNotificationRecipientStatus } from "../../../application/use-cases/notification-recipient/ToggleNotificationRecipientStatus";
 import { NotificationRecipientController } from "../controllers/NotificationRecipientController";
-import { requireRoles } from "../middleware/RoleMiddleware";
+import { requireRoles, requirePermission } from "../middleware/RoleMiddleware";
 
 const notificationRecipientRouter = Router();
 
@@ -32,9 +32,9 @@ const controller = new NotificationRecipientController(
 
 // Endpoints
 notificationRecipientRouter.get("/", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getAll(req, res));
-notificationRecipientRouter.post("/", requireRoles('admin'), (req, res) => controller.create(req, res));
-notificationRecipientRouter.put("/:id", requireRoles('admin'), (req, res) => controller.update(req, res));
-notificationRecipientRouter.delete("/:id", requireRoles('admin'), (req, res) => controller.delete(req, res));
-notificationRecipientRouter.patch("/:id/toggle", requireRoles('admin'), (req, res) => controller.toggleStatus(req, res));
+notificationRecipientRouter.post("/", requirePermission('catalogs:access'), (req, res) => controller.create(req, res));
+notificationRecipientRouter.put("/:id", requirePermission('catalogs:access'), (req, res) => controller.update(req, res));
+notificationRecipientRouter.delete("/:id", requirePermission('catalogs:access'), (req, res) => controller.delete(req, res));
+notificationRecipientRouter.patch("/:id/toggle", requirePermission('catalogs:access'), (req, res) => controller.toggleStatus(req, res));
 
 export { notificationRecipientRouter, recipientRepo };

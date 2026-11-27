@@ -28,7 +28,7 @@ import { WasapiNotificationService } from "../../services/WasapiNotificationServ
 import { StorageAdapterFactory } from "../../storage/StorageAdapterFactory";
 import { MovementController } from "../controllers/MovementController";
 import { TypeORMUnitOfWork } from "../../persistence/typeorm/TypeORMUnitOfWork";
-import { requireRoles } from "../middleware/RoleMiddleware";
+import { requirePermission } from "../middleware/RoleMiddleware";
 import { magicLinkRateLimiter } from "../middleware/RateLimitMiddleware";
 import { InMemoryEventBus } from "../../events/InMemoryEventBus";
 import { MovementDispatchedDomainEvent, MovementReceivedDomainEvent } from "../../../domain/events";
@@ -99,14 +99,14 @@ const controller = new MovementController(
 );
 
 // 4. Definimos Rutas con RBAC
-movementRouter.post("/", requireRoles('admin', 'coordinador', 'tecnico', 'auxiliar_inventario'), (req, res) => controller.register(req, res));
-movementRouter.get("/", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getAll(req, res));
-movementRouter.patch("/:id/dispatch", requireRoles('admin', 'coordinador', 'tecnico', 'auxiliar_inventario'), (req, res) => controller.dispatch(req, res));
-movementRouter.patch("/:id/receive", requireRoles('admin', 'coordinador', 'tecnico', 'auxiliar_inventario'), (req, res) => controller.receive(req, res));
-movementRouter.patch("/:id/reject", requireRoles('admin', 'coordinador', 'tecnico', 'auxiliar_inventario'), (req, res) => controller.reject(req, res));
-movementRouter.patch("/:id/notes", requireRoles('admin', 'coordinador', 'tecnico', 'auxiliar_inventario'), (req, res) => controller.updateNotes(req, res));
-movementRouter.patch("/:id/cancel", requireRoles('admin', 'coordinador', 'tecnico', 'auxiliar_inventario'), (req, res) => controller.cancel(req, res));
-movementRouter.patch("/:id/documents", requireRoles('admin', 'coordinador', 'tecnico', 'auxiliar_inventario'), (req, res) => controller.attachDocuments(req, res));
+movementRouter.post("/", requirePermission('movements:register'), (req, res) => controller.register(req, res));
+movementRouter.get("/", requirePermission('movements:view'), (req, res) => controller.getAll(req, res));
+movementRouter.patch("/:id/dispatch", requirePermission('movements:register'), (req, res) => controller.dispatch(req, res));
+movementRouter.patch("/:id/receive", requirePermission('movements:register'), (req, res) => controller.receive(req, res));
+movementRouter.patch("/:id/reject", requirePermission('movements:register'), (req, res) => controller.reject(req, res));
+movementRouter.patch("/:id/notes", requirePermission('movements:register'), (req, res) => controller.updateNotes(req, res));
+movementRouter.patch("/:id/cancel", requirePermission('movements:cancel'), (req, res) => controller.cancel(req, res));
+movementRouter.patch("/:id/documents", requirePermission('movements:register'), (req, res) => controller.attachDocuments(req, res));
 
 // Rutas Públicas (Magic Links) protegidas por Rate Limiter estricto
 movementRouter.get("/public/magic-link/:token", magicLinkRateLimiter, (req, res) => controller.getPublicMovement(req, res));

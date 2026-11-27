@@ -126,7 +126,7 @@ export class Activo {
             this.setStatus(EstadoActivo.DISPONIBLE);
         } else if (tipo === 'ENVIO_PROVEEDOR' || tipo === 'RETORNO_POR_RECHAZO' || tipo === 'INGRESO_MANTENIMIENTO') {
             this.setStatus(EstadoActivo.MANTENIMIENTO);
-        } else if (tipo === 'BAJA_ACTIVO') {
+        } else if (tipo === 'BAJA_ACTIVO' || tipo === 'HURTO_PERDIDA') {
             this.setStatus(EstadoActivo.BAJA);
         }
     }

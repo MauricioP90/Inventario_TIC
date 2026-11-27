@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { AppDataSource } from "../../../data-source";
 import { ActivoController } from "../controllers/ActivoController";
-import { requireRoles } from "../middleware/RoleMiddleware";
+import { requireRoles, requirePermission } from "../middleware/RoleMiddleware";
 
 // Entidades y Repositorios
 import { ActivoEntity } from "../../persistence/typeorm/entities/ActivoEntity";
@@ -77,15 +77,15 @@ const controller = new ActivoController(
 );
 
 // 4. Definimos Rutas con Control de Acceso Basado en Roles (RBAC)
-activoRouter.post("/", requireRoles('admin'), (req, res) => controller.create(req, res));
-activoRouter.post("/types", requireRoles('admin'), (req, res) => controller.createTipoActivo(req, res));
+activoRouter.post("/", requirePermission('activos:create'), (req, res) => controller.create(req, res));
+activoRouter.post("/types", requirePermission('catalogs:access'), (req, res) => controller.createTipoActivo(req, res));
 activoRouter.get("/types", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getAllTipoActivo(req, res));
-activoRouter.put("/types/:id", requireRoles('admin'), (req, res) => controller.updateTipoActivo(req, res));
-activoRouter.get("/", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getAll(req, res));
-activoRouter.get("/metadata", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getActivoMetadata(req, res));
-activoRouter.get("/dashboard", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getDashboardSummary(req, res));
-activoRouter.get("/:id/audit-history", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getAuditHistory(req, res));
-activoRouter.get("/:placa", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getOne(req, res));
-activoRouter.put("/:placa", requireRoles('admin', 'coordinador', 'tecnico'), (req, res) => controller.update(req, res));
+activoRouter.put("/types/:id", requirePermission('catalogs:access'), (req, res) => controller.updateTipoActivo(req, res));
+activoRouter.get("/", requirePermission('activos:view'), (req, res) => controller.getAll(req, res));
+activoRouter.get("/metadata", requirePermission('activos:view'), (req, res) => controller.getActivoMetadata(req, res));
+activoRouter.get("/dashboard", requirePermission('activos:view'), (req, res) => controller.getDashboardSummary(req, res));
+activoRouter.get("/:id/audit-history", requirePermission('activos:view'), (req, res) => controller.getAuditHistory(req, res));
+activoRouter.get("/:placa", requirePermission('activos:view'), (req, res) => controller.getOne(req, res));
+activoRouter.put("/:placa", requirePermission('activos:edit'), (req, res) => controller.update(req, res));
 
 export { activoRouter };

@@ -12,6 +12,7 @@ import { RejectByMagicLink } from "../../../application/use-cases/movement/Rejec
 import { UpdateMovementNotes } from "../../../application/use-cases/movement/UpdateMovementNotes";
 import { CancelMovement } from "../../../application/use-cases/movement/CancelMovement";
 import { AttachMovementDocument } from "../../../application/use-cases/movement/AttachMovementDocument";
+import { isAdminRequest, sanitizeMovementForRole, hasPermissionRequest } from "../middleware/RoleMiddleware";
 
 export class MovementController {
     constructor(
@@ -54,8 +55,33 @@ export class MovementController {
      */
     async register(req: Request, res: Response) {
         try {
-            const result = await this.registerMovement.execute(req.body);
-            res.status(201).json(result);
+            const movementType = req.body?.type;
+            const canApproveBaja = hasPermissionRequest(req, 'movements:approve_baja');
+
+            if (movementType === 'BAJA_ACTIVO' && !canApproveBaja) {
+                return res.status(403).json({
+                    statusCode: 403,
+                    error: 'Forbidden',
+                    message: 'Acceso denegado: solo el rol Administrador o Super Administrador puede registrar movimientos de BAJA_ACTIVO.'
+                });
+            }
+
+            if (movementType === 'HURTO_PERDIDA') {
+                const canReportHurto = hasPermissionRequest(req, 'movements:report_hurto') || canApproveBaja;
+                if (!canReportHurto) {
+                    return res.status(403).json({
+                        statusCode: 403,
+                        error: 'Forbidden',
+                        message: 'Acceso denegado: su rol no está autorizado para registrar reportes de HURTO_PERDIDA.'
+                    });
+                }
+            }
+
+            const result = await this.registerMovement.execute({
+                ...req.body,
+                canApproveBaja
+            });
+            res.status(201).json(sanitizeMovementForRole(result, isAdminRequest(req)));
         } catch (error: any) {
             res.status(500).json({ message: error.message });
         }
@@ -134,10 +160,19 @@ export class MovementController {
      */
     async receive(req: Request, res: Response) {
         try {
-            const result = await this.receiveMovement.execute(req.params.id as string, req.body.receiverId, req.body.receiverEvidenceUrl, req.body.destinationLocationId);
-            res.status(200).json(result);
+            const canApproveBaja = hasPermissionRequest(req, 'movements:approve_baja');
+            const result = await this.receiveMovement.execute(
+                req.params.id as string,
+                req.body.receiverId,
+                req.body.receiverEvidenceUrl,
+                req.body.destinationLocationId,
+                canApproveBaja
+            );
+            res.status(200).json(sanitizeMovementForRole(result, isAdminRequest(req)));
         } catch (error: any) {
-            res.status(500).json({ message: error.message });
+            const msg = error?.message || 'Error al procesar recepción';
+            const status = msg.startsWith('Acceso denegado') ? 403 : 500;
+            res.status(status).json({ message: msg });
         }
     }
 
@@ -160,12 +195,13 @@ export class MovementController {
      */
     async getAll(req: Request, res: Response) {
         try {
+            const isAdmin = isAdminRequest(req);
             const filters = {
                 activoId: req.query.activoId as string | undefined,
                 locationId: req.query.locationId as string | undefined
             };
             const result = await this.getMovements.execute(filters);
-            res.status(200).json(result);
+            res.status(200).json(result.map(m => sanitizeMovementForRole(m, isAdmin)));
         } catch (error: any) {
             res.status(500).json({ message: error.message });
         }
@@ -228,7 +264,7 @@ export class MovementController {
     async getPublicMovement(req: Request, res: Response) {
         try {
             const result = await this.getMovementByMagicLink.execute(req.params.token as string);
-            res.status(200).json(result);
+            res.status(200).json(sanitizeMovementForRole(result, false));
         } catch (error: any) {
             res.status(404).json({ message: error.message });
         }

@@ -70,20 +70,30 @@ export const adminAuthRateLimiter = createRateLimiter({
 });
 
 /**
- * 2. Rate limiter para enlaces públicos Magic Link (25 peticiones / 15 min)
+ * 2. Rate limiter para enlaces públicos Magic Link (25 req / 15 min en prod; 200 en dev/QA)
  */
+const magicLinkMax = Number(
+    process.env.MAGIC_LINK_RATE_LIMIT_MAX || (process.env.NODE_ENV === 'production' ? 25 : 200)
+);
+
 export const magicLinkRateLimiter = createRateLimiter({
     windowMs: 15 * 60 * 1000,
-    max: 25,
+    max: magicLinkMax,
     message: 'Límite de solicitudes para enlaces de recepción superado. Intente nuevamente en unos minutos.'
 });
 
 /**
- * 3. Rate limiter general para la API REST (300 peticiones / 15 min)
+ * 3. Rate limiter general para la API REST
+ * En producción protege contra abuso por IP (1200 req / 15 min) manteniendo holgura para sedes tras NAT.
+ * En desarrollo / pruebas E2E permite 5000 req / 15 min (configurable vía API_RATE_LIMIT_MAX).
  */
+const apiGeneralMax = Number(
+    process.env.API_RATE_LIMIT_MAX || (process.env.NODE_ENV === 'production' ? 1200 : 5000)
+);
+
 export const apiGeneralRateLimiter = createRateLimiter({
     windowMs: 15 * 60 * 1000,
-    max: 300,
+    max: apiGeneralMax,
     message: 'Límite global de peticiones a la API excedido. Por favor intente más tarde.'
 });
 

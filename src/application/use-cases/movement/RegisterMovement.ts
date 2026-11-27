@@ -28,6 +28,7 @@ export interface RegisterMovementDto {
     simCardIdToRemove?: string;
     removedSimNewState?: string;
     simStates?: string[];
+    canApproveBaja?: boolean;
 }
 
 export class RegisterMovement {
@@ -43,7 +44,10 @@ export class RegisterMovement {
 
     async execute(dto: RegisterMovementDto): Promise<Movement> {
         const isTheftOrLoss = dto.type === 'HURTO_PERDIDA';
+        const isImmediateTheftOrLoss = isTheftOrLoss && (dto.canApproveBaja !== false);
+        const isPendingTheftOrLoss = isTheftOrLoss && (dto.canApproveBaja === false);
         const isLocalSIM = ['SIM_ASIGNACION', 'SIM_CAMBIO', 'SIM_RETIRO', 'SIM_RETIRO_TOTAL', 'INGRESO_MANTENIMIENTO', 'SALIDA_MANTENIMIENTO', 'BAJA_ACTIVO', 'HURTO_PERDIDA'].includes(dto.type);
+        const isImmediateLocalEvent = isLocalSIM && !isPendingTheftOrLoss;
         const isAreaTransfer = dto.type === 'TRASLADO_AREA';
 
         // Obtener ubicaciones de origen y destino
@@ -351,8 +355,8 @@ export class RegisterMovement {
                 }
             }
 
-            // Procesamiento de SIMs adheridas en HURTO_PERDIDA (pasan a POR_REPOSICION para gestión con el operador)
-            if (isTheftOrLoss && typeof simCardRepo.findAll === 'function') {
+            // Procesamiento de SIMs adheridas en HURTO_PERDIDA inmediato (Admin/SuperAdmin -> pasan a POR_REPOSICION)
+            if (isImmediateTheftOrLoss && typeof simCardRepo.findAll === 'function') {
                 const allSims = await simCardRepo.findAll();
                 const hurtoSimLogs: string[] = [];
                 const hurtoSimIds: string[] = [];
@@ -377,6 +381,9 @@ export class RegisterMovement {
                     const alertNote = `[ALERTA SIM - HURTO/PÉRDIDA] ${hurtoSimLogs.join(', ')} pasaron a estado POR_REPOSICION. Gestionar reposición de chip o cancelación de línea ante el proveedor.`;
                     dto.notes = dto.notes ? `${dto.notes}\n${alertNote}` : alertNote;
                 }
+            } else if (isPendingTheftOrLoss) {
+                const pendingTag = `[PENDIENTE APROBACIÓN BAJA] Reporte de Hurto/Pérdida radicado con denuncio adjunto. Pendiente de verificación y aprobación definitiva de baja por un Administrador.`;
+                dto.notes = dto.notes ? `${dto.notes}\n${pendingTag}` : pendingTag;
             }
 
             // 1. Crear la instancia de dominio (esto ya valida los campos básicos)
@@ -387,19 +394,19 @@ export class RegisterMovement {
                 evidenceUrl: dto.evidenceUrl || undefined,
                 destinationLocationId,
                 destinationAreaId: dto.destinationAreaId,
-                status: isLocalSIM ? MovementStatus.RECEIVED
+                status: isImmediateLocalEvent ? MovementStatus.RECEIVED
                        : isAreaTransfer ? MovementStatus.EN_TRANSIT
                        : MovementStatus.PENDING,
-                shippedAt: isLocalSIM ? new Date() : isAreaTransfer ? new Date() : undefined,
-                receivedAt: isLocalSIM ? new Date() : undefined,
+                shippedAt: isImmediateLocalEvent ? new Date() : isAreaTransfer ? new Date() : undefined,
+                receivedAt: isImmediateLocalEvent ? new Date() : undefined,
                 magicLinkToken: areaTransferToken
             });
 
             // 2. Persistir en la base de datos
             const saved = await movementRepo.create(movement);
 
-            // 2.1 Si es HURTO_PERDIDA o BAJA_ACTIVO, actualizamos inmediatamente el estado del activo a BAJA
-            if (isTheftOrLoss || dto.type === 'BAJA_ACTIVO') {
+            // 2.1 Si es HURTO_PERDIDA aprobado inmediatamente o BAJA_ACTIVO, actualizamos inmediatamente el estado del activo a BAJA
+            if (isImmediateTheftOrLoss || dto.type === 'BAJA_ACTIVO') {
                 for (const activoId of dto.activoIds) {
                     const act = await activoRepo.findById(activoId);
                     if (act) {

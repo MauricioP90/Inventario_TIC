@@ -38,17 +38,17 @@ const updateUC = new UpdateResponsible(repo, areaRepo, cargoRepo);
 const inactiveUC = new InactiveResponsible(repo, activoRepo, locationRepo);
 const getResponsibleStatsUC = new GetResponsibleStats(activoRepo, simCardRepo);
 
-import { requireRoles } from "../middleware/RoleMiddleware";
+import { requirePermission } from "../middleware/RoleMiddleware";
 
 // 3. Inicializamos Controlador
 const controller = new ResponsibleController(createUC, getAllUC, getOneUC, updateUC, inactiveUC, getResponsibleStatsUC);
 
 // 4. Definimos Rutas con RBAC
-responsibleRouter.post("/", requireRoles('admin', 'coordinador', 'auxiliar_inventario'), (req, res) => controller.create(req, res));
-responsibleRouter.get("/", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getAll(req, res));
-responsibleRouter.get("/:id", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getOne(req, res));
-responsibleRouter.put("/:id", requireRoles('admin', 'coordinador', 'auxiliar_inventario'), (req, res) => controller.update(req, res));
-responsibleRouter.patch("/:id/inactive", requireRoles('admin', 'coordinador', 'auxiliar_inventario'), (req, res) => controller.inactive(req, res));
-responsibleRouter.get("/:id/stats", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => controller.getStats(req, res));
+responsibleRouter.post("/", requirePermission('responsables:manage'), (req, res) => controller.create(req, res));
+responsibleRouter.get("/", requirePermission('responsables:view'), (req, res) => controller.getAll(req, res));
+responsibleRouter.get("/:id", requirePermission('responsables:view'), (req, res) => controller.getOne(req, res));
+responsibleRouter.put("/:id", requirePermission('responsables:manage'), (req, res) => controller.update(req, res));
+responsibleRouter.patch("/:id/inactive", requirePermission('responsables:manage'), (req, res) => controller.inactive(req, res));
+responsibleRouter.get("/:id/stats", requirePermission('responsables:view'), (req, res) => controller.getStats(req, res));
 
 export { responsibleRouter };

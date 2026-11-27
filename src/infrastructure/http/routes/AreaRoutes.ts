@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { AppDataSource } from "../../../data-source";
 import { AreaController } from "../controllers/AreaController";
-import { requireRoles } from "../middleware/RoleMiddleware";
+import { requireRoles, requirePermission } from "../middleware/RoleMiddleware";
 import { CreateArea } from "../../../application/use-cases/area/CreateArea";
 import { GetAllAreas } from "../../../application/use-cases/area/GetAllAreas";
 import { UpdateArea } from "../../../application/use-cases/area/UpdateArea";
@@ -26,9 +26,9 @@ const areaController = new AreaController(
     getOneAreaUC
 );
 
-AreaRouter.post("/", requireRoles('admin'), (req, res) => areaController.create(req, res));
+AreaRouter.post("/", requirePermission('catalogs:access'), (req, res) => areaController.create(req, res));
 AreaRouter.get("/", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => areaController.getAll(req, res));
 AreaRouter.get("/:id", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => areaController.getOne(req, res));
-AreaRouter.put("/:id", requireRoles('admin'), (req, res) => areaController.update(req, res));
+AreaRouter.put("/:id", requirePermission('catalogs:access'), (req, res) => areaController.update(req, res));
 
 export { AreaRouter };

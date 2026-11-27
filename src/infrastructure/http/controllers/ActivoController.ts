@@ -10,6 +10,7 @@ import { GetAllTipoActivo } from "../../../application/use-cases/tipoActivo/GetA
 import { UpdateTipoActivo } from "../../../application/use-cases/tipoActivo/UpdateTipoActivo";
 import { SearchActivos } from "../../../application/use-cases/activo/SearchActivos";
 import { GetActivoDocumentHistory } from "../../../application/use-cases/activo/GetActivoDocumentHistory";
+import { isAdminRequest, sanitizeActivoForRole } from "../middleware/RoleMiddleware";
 
 export class ActivoController {
     constructor(
@@ -142,6 +143,7 @@ export class ActivoController {
                 req.query.limit !== undefined;
 
             if (hasQueryParams) {
+                const isAdmin = isAdminRequest(req);
                 const result = await this.searchActivosUC.execute({
                     search: req.query.search as string,
                     tipoActivoId: req.query.tipoActivoId as string,
@@ -152,11 +154,15 @@ export class ActivoController {
                     page: req.query.page ? Number(req.query.page) : 1,
                     limit: req.query.limit ? Number(req.query.limit) : 10
                 });
-                return res.json(result);
+                return res.json({
+                    ...result,
+                    data: result.data.map(a => sanitizeActivoForRole(a, isAdmin))
+                });
             }
 
+            const isAdmin = isAdminRequest(req);
             const activos = await this.getAllActivo.execute();
-            res.json(activos);
+            res.json(activos.map(a => sanitizeActivoForRole(a, isAdmin)));
         } catch (error: any) {
             res.status(500).json({ message: error.message });
         }
@@ -189,7 +195,7 @@ export class ActivoController {
         try {
             const placa = req.params.placa || req.params.id;
             const activo = await this.getOneActivo.execute({ placa: placa as string });
-            res.json(activo);
+            res.json(sanitizeActivoForRole(activo, isAdminRequest(req)));
         } catch (error: any) {
             res.status(404).json({ message: error.message });
         }
@@ -220,8 +226,10 @@ export class ActivoController {
     async update(req: Request, res: Response) {
         try {
             const { placa } = req.params;
-            const activo = await this.updateActivo.execute({ placa: placa as string, ...req.body });
-            res.json(activo);
+            const isAdmin = isAdminRequest(req);
+            const payload = isAdmin ? req.body : (({ precioCompra: _ignored, ...rest }) => rest)(req.body || {});
+            const activo = await this.updateActivo.execute({ placa: placa as string, ...payload });
+            res.json(sanitizeActivoForRole(activo, isAdmin));
         } catch (error: any) {
             res.status(400).json({ message: error.message });
         }
@@ -257,8 +265,16 @@ export class ActivoController {
             if (!this.getActivoDocumentHistoryUC) {
                 return res.json([]);
             }
+            const isAdmin = isAdminRequest(req);
             const history = await this.getActivoDocumentHistoryUC.execute({ activoId: id });
-            res.json(history.map(h => h.toJSON ? h.toJSON() : h));
+            res.json(history.map(h => {
+                const json = h.toJSON ? h.toJSON() : { ...h };
+                if (!isAdmin) {
+                    delete (json as any).previousPrecioCompra;
+                    delete (json as any).newPrecioCompra;
+                }
+                return json;
+            }));
         } catch (error: any) {
             res.status(500).json({ message: error.message });
         }

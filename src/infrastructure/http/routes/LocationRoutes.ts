@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { AppDataSource } from "../../../data-source";
 import { LocationController } from "../controllers/LocationController";
-import { requireRoles } from "../middleware/RoleMiddleware";
+import { requirePermission } from "../middleware/RoleMiddleware";
 import { CreateLocation } from "../../../application/use-cases/location/createLocation";
 import { GetAllLocations } from "../../../application/use-cases/location/GetAllLocations";
 import { UpdateLocation } from "../../../application/use-cases/location/updateLocation";
@@ -49,10 +49,10 @@ const locationController = new LocationController(
 );
 
 // 5. Definimos las rutas con RBAC
-LocationRouter.post("/", requireRoles('admin', 'coordinador'), (req, res) => locationController.create(req, res));
-LocationRouter.get("/", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => locationController.getAll(req, res));
-LocationRouter.get("/reverse-geocode", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => locationController.reverseGeocode(req, res));
-LocationRouter.get("/:code", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => locationController.getOne(req, res));
-LocationRouter.put("/:code", requireRoles('admin', 'coordinador'), (req, res) => locationController.update(req, res));
+LocationRouter.post("/", requirePermission('locations:manage'), (req, res) => locationController.create(req, res));
+LocationRouter.get("/", requirePermission('locations:view'), (req, res) => locationController.getAll(req, res));
+LocationRouter.get("/reverse-geocode", requirePermission('locations:view'), (req, res) => locationController.reverseGeocode(req, res));
+LocationRouter.get("/:code", requirePermission('locations:view'), (req, res) => locationController.getOne(req, res));
+LocationRouter.put("/:code", requirePermission('locations:manage'), (req, res) => locationController.update(req, res));
 
 export { LocationRouter };

@@ -19,6 +19,8 @@ import { cargoRouter } from "./infrastructure/http/routes/CargoRoutes";
 import { modeloActivoRouter } from "./infrastructure/http/routes/ModeloActivoRoutes";
 import { softwareRouter } from "./infrastructure/http/routes/SoftwareRoutes";
 import { telemetryRouter } from "./infrastructure/http/routes/TelemetryRoutes";
+import { rolePermissionRouter } from "./infrastructure/http/routes/RolePermissionRoutes";
+import { RolePermissionService } from "./infrastructure/security/RolePermissionService";
 import { setupSwagger } from "./infrastructure/http/swagger";
 import { keycloak, memoryStore } from "./infrastructure/http/middleware/KeycloakConfig";
 import { securityHeadersMiddleware } from "./infrastructure/http/middleware/SecurityHeadersMiddleware";
@@ -129,6 +131,7 @@ app.use("/api/cargos", cargoRouter);
 app.use("/api/modelos-activos", modeloActivoRouter);
 app.use("/api/software", softwareRouter);
 app.use("/api/telemetry", telemetryRouter);
+app.use("/api/role-permissions", rolePermissionRouter);
 
 
 /**
@@ -158,8 +161,9 @@ app.get("/health", (req, res) => {
 
 // Inicialización de Base de Datos y Servidor
 AppDataSource.initialize()
-    .then(() => {
+    .then(async () => {
         console.log("✅ Base de Datos conectada.");
+        await RolePermissionService.getInstance().loadFromDatabase();
         app.listen(PORT, () => {
             console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
         });

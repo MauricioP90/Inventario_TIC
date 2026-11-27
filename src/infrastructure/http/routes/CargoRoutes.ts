@@ -7,7 +7,7 @@ import { CreateCargo } from "../../../application/use-cases/cargo/CreateCargo";
 import { UpdateCargo } from "../../../application/use-cases/cargo/UpdateCargo";
 import { ToggleCargoStatus } from "../../../application/use-cases/cargo/ToggleCargoStatus";
 import { CargoController } from "../controllers/CargoController";
-import { requireRoles } from "../middleware/RoleMiddleware";
+import { requireRoles, requirePermission } from "../middleware/RoleMiddleware";
 
 const cargoRouter = Router();
 
@@ -21,8 +21,8 @@ const toggleCargoStatusUC = new ToggleCargoStatus(cargoRepo);
 const cargoController = new CargoController(getAllCargosUC, createCargoUC, updateCargoUC, toggleCargoStatusUC);
 
 cargoRouter.get("/", requireRoles('admin', 'coordinador', 'tecnico', 'consultor', 'auxiliar_inventario'), (req, res) => cargoController.getAll(req, res));
-cargoRouter.post("/", requireRoles('admin'), (req, res) => cargoController.create(req, res));
-cargoRouter.put("/:id", requireRoles('admin'), (req, res) => cargoController.update(req, res));
-cargoRouter.patch("/:id/toggle", requireRoles('admin'), (req, res) => cargoController.toggleStatus(req, res));
+cargoRouter.post("/", requirePermission('catalogs:access'), (req, res) => cargoController.create(req, res));
+cargoRouter.put("/:id", requirePermission('catalogs:access'), (req, res) => cargoController.update(req, res));
+cargoRouter.patch("/:id/toggle", requirePermission('catalogs:access'), (req, res) => cargoController.toggleStatus(req, res));
 
 export { cargoRouter };
